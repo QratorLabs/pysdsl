@@ -6,12 +6,12 @@ The Succinct Data Structure Library ([SDSL][SDSL]) is a powerful and flexible C+
 
 Core classes:
 
- * `pysdsl.IntVector` --- dynamic bit size
- * `pysdsl.BitVector` --- static bit size
- * `pysdsl.Int8Vector` --- static bit size
- * `pysdsl.Int16Vector` --- static bit size
- * `pysdsl.Int32Vector` --- static bit size
- * `pysdsl.Int64Vector` --- static bit size
+ * `pysdsl.IntVector(size, default_value, bit_width=64)` — dynamic bit width
+ * `pysdsl.BitVector(size, default_value)` — static bit width (1)
+ * `pysdsl.Int8Vector(size, default_value)` — static bit width (8)
+ * `pysdsl.Int16Vector(size, default_value)` — static bit width (16)
+ * `pysdsl.Int32Vector(size, default_value)` — static bit width (32)
+ * `pysdsl.Int64Vector(size, default_value)` — static bit width (64)
 
 
 [SDSL]: https://github.com/simongog/sdsl-lite
