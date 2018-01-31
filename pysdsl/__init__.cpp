@@ -6,10 +6,12 @@ cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
 %>
 */
 
+#include <algorithm>
 #include <cstdint>
 #include <string>
 
 #include "sdsl/vectors.hpp"
+#include "sdsl/enc_vector.hpp"
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
@@ -27,6 +29,7 @@ auto add_class_(py::module& m, const char* name) {
         .def_property_readonly_static("max_size",  [](py::object /* self */) {
             return T::max_size();
         }, "Maximum size of the int_vector.")
+        .def_property_readonly("size_in_mega_bytes", [](const T& self) { return sdsl::size_in_mega_bytes(self); })
         .def_property_readonly("bit_size", &T::bit_size, "The number of bits in the int_vector.")
         .def("resize", &T::resize, "Resize the int_vector in terms of elements.")
         .def("bit_resize", &T::bit_resize, "Resize the int_vector in terms of bits.")
@@ -46,24 +49,40 @@ auto add_class_(py::module& m, const char* name) {
             }
             self[position] = value;
         })
-        .def("set_to_id", [](T &self) {
-           sdsl::util::set_to_id(self);
-        }, "Sets each entry of the numerical vector `v` at position `i` to value `i`")
-        .def("set_to_value", [](T &self, S value) {
-           sdsl::util::set_to_value(self, value);
-        }, py::arg("k"), "Set all entries of int_vector to value k. This method pre-calculates the "
-                         "content of at most 64 words and then repeatedly inserts these words.")
+        .def(
+            "set_to_id",
+            [](T &self) {
+               sdsl::util::set_to_id(self);
+            },
+            py::call_guard<py::gil_scoped_release>(),
+            "Sets each entry of the numerical vector `v` at position `i` to value `i`"
+        )
+        .def(
+            "set_to_value",
+            [](T &self, S value) {
+                sdsl::util::set_to_value(self, value);
+            },
+            py::call_guard<py::gil_scoped_release>(),
+            py::arg("k"),
+            "Set all entries of int_vector to value k. This method pre-calculates the "
+            "content of at most 64 words and then repeatedly inserts these words."
+        )
         .def("set_zero_bits", [](T &self) {
            sdsl::util::_set_zero_bits(self);
-        }, "Sets all bits of the int_vector to 0-bits.")
+        }, py::call_guard<py::gil_scoped_release>(), "Sets all bits of the int_vector to 0-bits.")
         .def("set_one_bits", [](T &self) {
            sdsl::util::_set_one_bits(self);
-        }, "Sets all bits of the int_vector to 1-bits.")
-        .def("set_random_bits", [](T &self, int seed) {
-           sdsl::util::set_random_bits(self, seed);
-        }, py::arg_v("seed", 0, "If seed = 0, the time is used to initialize the pseudo random number "
+        }, py::call_guard<py::gil_scoped_release>(), "Sets all bits of the int_vector to 1-bits.")
+        .def(
+            "set_random_bits",
+            [](T &self, int seed) {
+                 sdsl::util::set_random_bits(self, seed);
+            },
+            py::call_guard<py::gil_scoped_release>(),
+            py::arg_v("seed", 0, "If seed = 0, the time is used to initialize the pseudo random number "
                                 "generator, otherwise the seed parameter is used."),
-           "Sets all bits of the int_vector to pseudo-random bits.")
+           "Sets all bits of the int_vector to pseudo-random bits."
+        )
         .def("__imod__", [](T &self, uint64_t m) {
            sdsl::util::mod(self, m);
            return self;
@@ -91,6 +110,18 @@ auto add_class_(py::module& m, const char* name) {
         }, py::arg("idx"), "Get the largest position `i` <= `idx` where a bit is set")
         .def("__str__", [](const T& self) {return sdsl::util::to_string(self); })
         .def("to_latex", [](const T& self) {return sdsl::util::to_latex_string(self); })
+
+
+
+        .def("max", [](const T& self) {
+            return std::max_element(self.begin(), self.end());
+        }, py::call_guard<py::gil_scoped_release>())
+        .def("min", [](const T& self) {
+            return std::min_element(self.begin(), self.end());
+        }, py::call_guard<py::gil_scoped_release>())
+        .def("minmax", [](const T& self) {
+            return std::minmax_element(self.begin(), self.end());
+        }, py::call_guard<py::gil_scoped_release>())
     ;
 }
 
