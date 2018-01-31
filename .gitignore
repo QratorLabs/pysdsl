@@ -1,3 +1,4 @@
 .rendered.*
 .*.cppimporthash
 *.so
+.vscode/*
