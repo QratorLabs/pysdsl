@@ -3,12 +3,14 @@
 cfg['compiler_args'] = ['-std=c++14', '-fvisibility=hidden']
 cfg['include_dirs'] = ['sdsl-lite/include']
 cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
+cfg['dependencies'] = ['converters.hpp']
 %>
 */
 
 #include <algorithm>
 #include <cstdint>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include <sdsl/vectors.hpp>
@@ -17,15 +19,20 @@ cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "converters.hpp"
+
+
 namespace py = pybind11;
+
 
 using sdsl::enc_vector;
 using sdsl::int_vector;
 
+
 template <class T, typename S = uint64_t>
-auto add_class_(py::module &m, const char *name)
+auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
 {
-    return py::class_<T>(m, name)
+    auto cls = py::class_<T>(m, name)
         .def_property_readonly("width", (uint8_t(T::*)(void) const) & T::width)
         .def_property_readonly("data",
                                (const uint64_t *(T::*)(void)const) & T::data)
@@ -35,9 +42,7 @@ auto add_class_(py::module &m, const char *name)
                                "The number of elements in the int_vector.")
         .def_property_readonly_static(
             "max_size",
-            [](py::object /* self */) {
-                return T::max_size();
-            },
+            [](py::object /* self */) { return T::max_size(); },
             "Maximum size of the int_vector."
         )
         .def_property_readonly(
@@ -183,21 +188,23 @@ auto add_class_(py::module &m, const char *name)
             py::call_guard<py::gil_scoped_release>()
         )
     ;
+
+    if (doc) cls.doc() = doc;
+
+    return cls;
 }
 
 
-template <class T = enc_vector<>>
-auto add_enc_class(py::module &m)
+template <class T, class Tup>
+auto add_enc_class(py::module &m, const char* name, Tup init_from,
+                   const char* doc = nullptr)
 {
-    return py::class_<T>(m, "EncVector")
+    auto cls = py::class_<T>(m, name)
         .def(py::init())
-        .def(py::init(
-            [](const std::vector<uint64_t>& source) { return T(source); }
-        ))
 
-        .def("__len__", &T::size, "The number of elements in the enc_vector.")
+        .def("__len__", &T::size, "The number of elements in the vector.")
         .def_property_readonly("size", &T::size,
-                               "The number of elements in the enc_vector.")
+                               "The number of elements in the vector.")
         .def_property_readonly_static(
             "max_size",
             [](py::object /* self */) {
@@ -240,8 +247,19 @@ auto add_enc_class(py::module &m)
              [](const T &self) { return sdsl::util::to_string(self); })
         .def("to_latex",
              [](const T &self) { return sdsl::util::to_latex_string(self); })
-
     ;
+
+    for_each_in_tuple(init_from, make_inits_functor(cls));
+
+    cls.def(py::init(
+        [](const std::vector<uint64_t>& source) {
+            py::print("Slow"); return T(source);
+        }
+    ));
+
+    if (doc) cls.doc() = doc;
+
+    return cls;
 }
 
 
@@ -249,60 +267,89 @@ PYBIND11_MODULE(pysdsl, m)
 {
     m.doc() = "sdsl-lite bindings for python";
 
-    add_enc_class(m)
-        .doc() = "A vector `v` is stored more space-efficiently by "
-                 "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
-    ;
+    auto iv_classes = std::make_tuple(
+        add_class_<int_vector<0>>(m, "IntVector",
+                                  "This generic vector class could be used to "
+                                  "generate a vector that contains integers "
+                                  "of fixed width `w` in [1..64].")
+            .def(
+                py::init([](size_t size,
+                            uint64_t default_value,
+                            uint8_t bit_width) {
+                    return int_vector<0>(size, default_value, bit_width);
+                }),
+                py::arg("size") = 0,
+                py::arg("default_value") = 0,
+                py::arg("bit_width") = 64)
+            .def(
+                "expand_width",
+                [](int_vector<0> &self, size_t width) {
+                    sdsl::util::expand_width(self, width);
+                },
+                "Expands the integer width to new_width >= v.width()."
+            )
+            .def("bit_compress",
+                [](int_vector<0> &self) { sdsl::util::bit_compress(self); },
+                "Bit compress the int_vector. Determine the biggest value X "
+                "and then set the int_width to the smallest possible so that "
+                "we still can represent X."),
 
-    add_class_<int_vector<0>>(m, "IntVector")
-        .def(
-            py::init([](size_t size,
-                        uint64_t default_value,
-                        uint8_t bit_width) {
-                return int_vector<0>(size, default_value, bit_width);
-            }),
-            py::arg("size") = 0,
-            py::arg("default_value") = 0,
-            py::arg("bit_width") = 64)
-        .def(
-            "expand_width",
-            [](int_vector<0> &self, size_t width) {
-                sdsl::util::expand_width(self, width);
-            },
-            "Expands the integer width to new_width >= v.width()."
-        )
-        .def("bit_compress",
-             [](int_vector<0> &self) { sdsl::util::bit_compress(self); },
-             "Bit compress the int_vector. Determine the biggest value X "
-             "and then set the int_width to the smallest possible so that we "
-             "still can represent X.")
-        .doc() = "This generic vector class could be used to generate a vector "
-                 "that contains integers of fixed width `w` in [1..64].";
+        add_class_<int_vector<1>, bool>(m, "BitVector")
+            .def(py::init([](size_t size, bool default_value) {
+                    return int_vector<1>(size, default_value, 1);
+                }), py::arg("size") = 0, py::arg("default_value") = false)
+            .def("flip", &int_vector<1>::flip, "Flip all bits of bit_vector"),
 
-    add_class_<int_vector<1>, bool>(m, "BitVector")
-        .def(py::init([](size_t size, bool default_value) {
-                 return int_vector<1>(size, default_value, 1);
-             }), py::arg("size") = 0, py::arg("default_value") = false)
-        .def("flip", &int_vector<1>::flip, "Flip all bits of bit_vector");
+        add_class_<int_vector<8>, uint8_t>(m, "Int8Vector")
+            .def(py::init([](size_t size, uint8_t default_value) {
+                    return int_vector<8>(size, default_value, 8);
+                }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-    add_class_<int_vector<8>, uint8_t>(m, "Int8Vector")
-        .def(py::init([](size_t size, uint8_t default_value) {
-                 return int_vector<8>(size, default_value, 8);
-             }), py::arg("size") = 0, py::arg("default_value") = 0);
+        add_class_<int_vector<16>, uint16_t>(m, "Int16Vector")
+            .def(py::init([](size_t size, uint16_t default_value) {
+                     return int_vector<16>(size, default_value, 16);
+                 }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-    add_class_<int_vector<16>, uint16_t>(m, "Int16Vector")
-        .def(py::init([](size_t size, uint16_t default_value) {
-                 return int_vector<16>(size, default_value, 16);
-             }), py::arg("size") = 0, py::arg("default_value") = 0);
+        add_class_<int_vector<32>, uint32_t>(m, "Int32Vector")
+            .def(py::init([](size_t size, uint32_t default_value) {
+                    return int_vector<32>(size, default_value, 32);
+                }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-    add_class_<int_vector<32>, uint32_t>(m, "Int32Vector")
-        .def(py::init([](size_t size, uint32_t default_value) {
-                 return int_vector<32>(size, default_value, 32);
-             }), py::arg("size") = 0, py::arg("default_value") = 0);
+        add_class_<int_vector<64>, uint64_t>(m, "Int64Vector")
+            .def(py::init([](size_t size, uint64_t default_value) {
+                    return int_vector<64>(size, default_value, 64);
+                }), py::arg("size") = 0, py::arg("default_value") = 0)
+    );
 
-    add_class_<int_vector<64>, uint64_t>(m, "Int64Vector")
-        .def(py::init([](size_t size, uint64_t default_value) {
-                 return int_vector<64>(size, default_value, 64);
-             }), py::arg("size") = 0, py::arg("default_value") = 0);
+    add_enc_class<enc_vector<sdsl::coder::elias_delta>>(
+        m,
+        "EncVectorEliasDelta",
+        iv_classes,
+        "A vector `v` is stored more space-efficiently by "
+        "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
+    );
 
+    add_enc_class<enc_vector<sdsl::coder::elias_gamma>>(
+        m,
+        "EncVectorEliasGamma",
+        iv_classes,
+        "A vector `v` is stored more space-efficiently by "
+        "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
+    );
+
+    add_enc_class<enc_vector<sdsl::coder::fibonacci>>(
+        m,
+        "EncVectorFibonacci",
+        iv_classes,
+        "A vector `v` is stored more space-efficiently by "
+        "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
+    );
+
+    add_enc_class<enc_vector<sdsl::coder::comma<>>>(
+        m,
+        "EncVectorComma",
+        iv_classes,
+        "A vector `v` is stored more space-efficiently by "
+        "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
+    );
 }
