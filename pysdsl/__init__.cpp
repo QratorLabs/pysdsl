@@ -15,8 +15,6 @@ cfg['dependencies'] = ['converters.hpp']
 #include <vector>
 
 #include <sdsl/vectors.hpp>
-#include <sdsl/enc_vector.hpp>
-#include <sdsl/vlc_vector.hpp>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -32,32 +30,96 @@ using sdsl::int_vector;
 using sdsl::vlc_vector;
 
 
-template <class T>
-auto add_std_algo(py::class_<T>& cls)
+template <class Sequence>
+auto add_std_algo(py::class_<Sequence>& cls)
 {
     cls.def(
+        "__iter__",
+        [](const Sequence &s) { return py::make_iterator(s.begin(), s.end()); },
+        py::keep_alive<0, 1>()
+    );
+    cls.def(
+        "__contains__",
+        [](const Sequence &self, typename Sequence::value_type element) {
+            return std::find(self.begin(), self.end(), element) != self.end();
+        },
+        py::call_guard<py::gil_scoped_release>()
+    );
+    cls.def(
+        "__getitem__",
+        [](const Sequence &self, size_t position) {
+            if (position >= self.size())
+            {
+                throw py::index_error(std::to_string(position));
+            }
+            return self[position];
+        }
+    );
+    cls.def(
+        "__getitem__",
+        [](const Sequence &self, int64_t position) {
+            auto abs_position = std::abs(position);
+            if (position >= 0)
+            {
+                throw std::exception();
+            }
+            if (abs_position > self.size())
+            {
+                throw py::index_error(std::to_string(position));
+            }
+            return self[self.size() - abs_position];
+        }
+    );
+    cls.def(
         "max",
-        [](const T &self) -> typename T::const_reference {
+        [](const Sequence &self) {
             return *std::max_element(self.begin(), self.end());
         },
         py::call_guard<py::gil_scoped_release>()
     );
     cls.def(
         "min",
-        [](const T &self) {
+        [](const Sequence &self) {
             return *std::min_element(self.begin(), self.end());
         },
         py::call_guard<py::gil_scoped_release>()
     );
     cls.def(
         "minmax",
-        [](const T &self) {
+        [](const Sequence &self) {
             auto result = std::minmax_element(self.begin(), self.end());
             return std::make_pair(*std::get<0>(result), *std::get<1>(result));
         },
         py::call_guard<py::gil_scoped_release>()
     );
+    cls.def(
+        "sum",
+        [](const Sequence &self) {
+            return std::accumulate(self.begin(), self.end(),
+                                   uint64_t(0));
+        },
+        py::call_guard<py::gil_scoped_release>()
+    );
 
+    return cls;
+}
+
+
+template <class T>
+auto add_sizes(py::class_<T>& cls)
+{
+    cls.def("__len__", &T::size, "The number of elements in the int_vector.");
+    cls.def_property_readonly("size", &T::size,
+                              "The number of elements in the int_vector.");
+    cls.def_property_readonly_static(
+        "max_size",
+        [](py::object /* self */) { return T::max_size(); },
+        "Maximum size of the int_vector."
+    );
+    cls.def_property_readonly(
+        "size_in_mega_bytes",
+        [](const T &self) { return sdsl::size_in_mega_bytes(self); }
+    );
     return cls;
 }
 
@@ -79,18 +141,6 @@ auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
         .def_property_readonly("data",
                                (const uint64_t *(T::*)(void)const) & T::data)
 
-        .def("__len__", &T::size, "The number of elements in the int_vector.")
-        .def_property_readonly("size", &T::size,
-                               "The number of elements in the int_vector.")
-        .def_property_readonly_static(
-            "max_size",
-            [](py::object /* self */) { return T::max_size(); },
-            "Maximum size of the int_vector."
-        )
-        .def_property_readonly(
-            "size_in_mega_bytes",
-            [](const T &self) { return sdsl::size_in_mega_bytes(self); }
-        )
         .def_property_readonly("bit_size", &T::bit_size,
                                "The number of bits in the int_vector.")
 
@@ -104,16 +154,6 @@ auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
                                "greater or equal to the bit_size of the "
                                "vector: capacity >= bit_size).")
 
-        .def(
-            "__getitem__",
-            [](const T &self, size_t position) -> S {
-            if (position >= self.size())
-            {
-                throw py::index_error(std::to_string(position));
-            }
-            return self[position];
-            }
-        )
         .def(
             "__setitem__",
             [](T &self, size_t position, S value) {
@@ -209,6 +249,8 @@ auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
              [](const T &self) { return sdsl::util::to_latex_string(self); })
     ;
 
+    add_sizes(cls);
+
     add_std_algo(cls);
 
     if (doc) cls.doc() = doc;
@@ -223,32 +265,6 @@ auto add_enc_class(py::module &m, const std::string& name, Tup init_from,
 {
     auto cls = py::class_<T>(m, name.c_str())
         .def(py::init())
-
-        .def("__len__", &T::size, "The number of elements in the vector.")
-        .def_property_readonly("size", &T::size,
-                               "The number of elements in the vector.")
-        .def_property_readonly_static(
-            "max_size",
-            [](py::object /* self */) {
-                return T::max_size();
-            },
-            "The largest size that this container can ever have."
-        )
-        .def_property_readonly(
-            "size_in_mega_bytes",
-            [](const T &self) { return sdsl::size_in_mega_bytes(self); }
-        )
-
-        .def(
-            "__getitem__",
-            [](const T &self, size_t position) {
-                if (position >= self.size())
-                {
-                    throw py::index_error(std::to_string(position));
-                }
-                return self[position];
-            }
-        )
 
         //.def("get_sample_dens", &T::get_sample_dens)
 
@@ -281,6 +297,8 @@ auto add_enc_class(py::module &m, const std::string& name, Tup init_from,
     //          "i: The index of the sample. 0 <= i < size()/get_sample_dens()"
     //     );
     // }
+
+    add_sizes(cls);
 
     add_std_algo(cls);
 
@@ -397,6 +415,11 @@ PYBIND11_MODULE(pysdsl, m)
                      return int_vector<16>(size, default_value, 16);
                  }), py::arg("size") = 0, py::arg("default_value") = 0),
 
+        add_class_<int_vector<24>, uint32_t>(m, "Int24Vector")
+            .def(py::init([](size_t size, uint32_t default_value) {
+                     return int_vector<24>(size, default_value, 24);
+                 }), py::arg("size") = 0, py::arg("default_value") = 0),
+
         add_class_<int_vector<32>, uint32_t>(m, "Int32Vector")
             .def(py::init([](size_t size, uint32_t default_value) {
                     return int_vector<32>(size, default_value, 32);
@@ -418,5 +441,4 @@ PYBIND11_MODULE(pysdsl, m)
 
     for_each_in_tuple(coders, make_enc_coders_functor(m, iv_classes));
     for_each_in_tuple(coders, make_vlc_coders_functor(m, iv_classes));
-
 }
