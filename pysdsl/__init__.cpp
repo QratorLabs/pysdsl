@@ -29,6 +29,36 @@ using sdsl::enc_vector;
 using sdsl::int_vector;
 
 
+template <class T>
+auto add_std_algo(py::class_<T>& cls)
+{
+    cls.def(
+        "max",
+        [](const T &self) -> typename T::const_reference {
+            return *std::max_element(self.begin(), self.end());
+        },
+        py::call_guard<py::gil_scoped_release>()
+    );
+    cls.def(
+        "min",
+        [](const T &self) {
+            return *std::min_element(self.begin(), self.end());
+        },
+        py::call_guard<py::gil_scoped_release>()
+    );
+    cls.def(
+        "minmax",
+        [](const T &self) {
+            auto result = std::minmax_element(self.begin(), self.end());
+            return std::make_pair(*std::get<0>(result), *std::get<1>(result));
+        },
+        py::call_guard<py::gil_scoped_release>()
+    );
+
+    return cls;
+}
+
+
 template <class T, typename S = uint64_t>
 auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
 {
@@ -165,29 +195,9 @@ auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
              [](const T &self) { return sdsl::util::to_string(self); })
         .def("to_latex",
              [](const T &self) { return sdsl::util::to_latex_string(self); })
-
-        .def(
-            "max",
-            [](const T &self) {
-                return std::max_element(self.begin(), self.end());
-            },
-            py::call_guard<py::gil_scoped_release>()
-        )
-        .def(
-            "min",
-            [](const T &self) {
-                return std::min_element(self.begin(), self.end());
-            },
-            py::call_guard<py::gil_scoped_release>()
-        )
-        .def(
-            "minmax",
-            [](const T &self) {
-                return std::minmax_element(self.begin(), self.end());
-            },
-            py::call_guard<py::gil_scoped_release>()
-        )
     ;
+
+    add_std_algo(cls);
 
     if (doc) cls.doc() = doc;
 
@@ -256,6 +266,8 @@ auto add_enc_class(py::module &m, const char* name, Tup init_from,
             py::print("Slow"); return T(source);
         }
     ));
+
+    add_std_algo(cls);
 
     if (doc) cls.doc() = doc;
 
