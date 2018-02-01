@@ -1,6 +1,7 @@
 /*cppimport
 <%
 cfg['compiler_args'] = ['-std=c++14', '-fvisibility=hidden']
+cfg['linker_args'] = ['-fvisibility=hidden']
 cfg['include_dirs'] = ['sdsl-lite/include']
 cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
 cfg['dependencies'] = ['converters.hpp']
@@ -15,6 +16,7 @@ cfg['dependencies'] = ['converters.hpp']
 
 #include <sdsl/vectors.hpp>
 #include <sdsl/enc_vector.hpp>
+#include <sdsl/vlc_vector.hpp>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -27,6 +29,7 @@ namespace py = pybind11;
 
 using sdsl::enc_vector;
 using sdsl::int_vector;
+using sdsl::vlc_vector;
 
 
 template <class T>
@@ -63,6 +66,15 @@ template <class T, typename S = uint64_t>
 auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
 {
     auto cls = py::class_<T>(m, name)
+        .def(py::init([](const py::sequence& v) {
+            const auto vsize = v.size();
+            T result(vsize);
+            for (size_t i = 0; i < vsize; i++)
+            {
+                result[i] = py::cast<typename T::value_type>(v[i]);
+            }
+            return result;
+        }))
         .def_property_readonly("width", (uint8_t(T::*)(void) const) & T::width)
         .def_property_readonly("data",
                                (const uint64_t *(T::*)(void)const) & T::data)
@@ -206,10 +218,10 @@ auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
 
 
 template <class T, class Tup>
-auto add_enc_class(py::module &m, const char* name, Tup init_from,
+auto add_enc_class(py::module &m, const std::string& name, Tup init_from,
                    const char* doc = nullptr)
 {
-    auto cls = py::class_<T>(m, name)
+    auto cls = py::class_<T>(m, name.c_str())
         .def(py::init())
 
         .def("__len__", &T::size, "The number of elements in the vector.")
@@ -238,20 +250,7 @@ auto add_enc_class(py::module &m, const char* name, Tup init_from,
             }
         )
 
-        .def(
-            "sample",
-            [](const T &self, uint64_t i) {
-                if (i >= self.size() / self.get_sample_dens())
-                {
-                    throw py::index_error(std::to_string(i));
-                }
-                return self.sample(i);
-            },
-             "Returns the i-th sample of enc_vector"
-             "i: The index of the sample. 0 <= i < size()/get_sample_dens()"
-        )
-
-        .def("get_sample_dens", &T::get_sample_dens)
+        //.def("get_sample_dens", &T::get_sample_dens)
 
         .def("__str__",
              [](const T &self) { return sdsl::util::to_string(self); })
@@ -267,11 +266,87 @@ auto add_enc_class(py::module &m, const char* name, Tup init_from,
         }
     ));
 
+    // if (sample)
+    // {
+    //     cls.def(
+    //         "sample",
+    //         [](const T &self, typename T::size_type i) {
+    //             if (i >= self.size() / self.get_sample_dens())
+    //             {
+    //                 throw py::index_error(std::to_string(i));
+    //             }
+    //             return self.sample(i);
+    //         },
+    //          "Returns the i-th sample of the compressed vector"
+    //          "i: The index of the sample. 0 <= i < size()/get_sample_dens()"
+    //     );
+    // }
+
     add_std_algo(cls);
 
     if (doc) cls.doc() = doc;
 
     return cls;
+}
+
+template <class VTuple>
+class add_enc_coders_functor
+{
+public:
+    add_enc_coders_functor(py::module& m, const VTuple& iv_classes):
+    m(m), iv_classes(iv_classes) {}
+
+    template <typename Coder>
+    void operator()(const std::pair<const char*, Coder> &t)
+    {
+        add_enc_class<enc_vector<Coder>>(
+            m,
+            std::string("EncVector") + std::get<0>(t),
+            iv_classes,
+            "A vector `v` is stored more space-efficiently by "
+            "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
+        );
+    }
+
+private:
+    py::module& m;
+    const VTuple& iv_classes;
+};
+
+template <class VTuple>
+auto make_enc_coders_functor(py::module& m, const VTuple& iv_classes)
+{
+    return add_enc_coders_functor<VTuple>(m, iv_classes);
+}
+
+
+template <class VTuple>
+class add_vlc_coders_functor
+{
+public:
+    add_vlc_coders_functor(py::module& m, const VTuple& iv_classes):
+    m(m), iv_classes(iv_classes) {}
+
+    template <typename Coder>
+    void operator()(const std::pair<const char*, Coder> &t)
+    {
+        add_enc_class<vlc_vector<Coder>>(
+            m,
+            std::string("VlcVector") + std::get<0>(t),
+            iv_classes,
+            "A vector which stores the values with variable length codes."
+        );
+    }
+
+private:
+    py::module& m;
+    const VTuple& iv_classes;
+};
+
+template <class VTuple>
+auto make_vlc_coders_functor(py::module& m, const VTuple& iv_classes)
+{
+    return add_vlc_coders_functor<VTuple>(m, iv_classes);
 }
 
 
@@ -333,35 +408,15 @@ PYBIND11_MODULE(pysdsl, m)
                 }), py::arg("size") = 0, py::arg("default_value") = 0)
     );
 
-    add_enc_class<enc_vector<sdsl::coder::elias_delta>>(
-        m,
-        "EncVectorEliasDelta",
-        iv_classes,
-        "A vector `v` is stored more space-efficiently by "
-        "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
+    auto coders = std::make_tuple(
+        std::make_pair("EliasDelta", sdsl::coder::elias_delta()),
+        std::make_pair("EliasGamma", sdsl::coder::elias_gamma()),
+        std::make_pair("Fibonacci", sdsl::coder::fibonacci()),
+        std::make_pair("Comma2", sdsl::coder::comma<2>()),
+        std::make_pair("Comma4", sdsl::coder::comma<4>())
     );
 
-    add_enc_class<enc_vector<sdsl::coder::elias_gamma>>(
-        m,
-        "EncVectorEliasGamma",
-        iv_classes,
-        "A vector `v` is stored more space-efficiently by "
-        "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
-    );
+    for_each_in_tuple(coders, make_enc_coders_functor(m, iv_classes));
+    for_each_in_tuple(coders, make_vlc_coders_functor(m, iv_classes));
 
-    add_enc_class<enc_vector<sdsl::coder::fibonacci>>(
-        m,
-        "EncVectorFibonacci",
-        iv_classes,
-        "A vector `v` is stored more space-efficiently by "
-        "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
-    );
-
-    add_enc_class<enc_vector<sdsl::coder::comma<>>>(
-        m,
-        "EncVectorComma",
-        iv_classes,
-        "A vector `v` is stored more space-efficiently by "
-        "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
-    );
 }
