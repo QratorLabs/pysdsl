@@ -4,7 +4,7 @@ cfg['compiler_args'] = ['-std=c++14', '-fvisibility=hidden']
 cfg['linker_args'] = ['-fvisibility=hidden']
 cfg['include_dirs'] = ['sdsl-lite/include']
 cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
-cfg['dependencies'] = ['converters.hpp']
+cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp']
 %>
 */
 
@@ -17,9 +17,9 @@ cfg['dependencies'] = ['converters.hpp']
 #include <sdsl/vectors.hpp>
 
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
 #include "converters.hpp"
+#include "pysequence.hpp"
 
 
 namespace py = pybind11;
@@ -301,11 +301,9 @@ auto add_enc_class(py::module &m, const std::string& name, Tup init_from,
 
     for_each_in_tuple(init_from, make_inits_functor(cls));
 
-    cls.def(py::init(
-        [](const std::vector<uint64_t>& source) {
-            py::print("Slow"); return T(source);
-        }
-    ));
+    cls.def(py::init([](const py::sequence& v) {
+        return T(sequence_wrapper<typename T::value_type>(v));
+    }), py::arg("v"));
 
     add_sizes(cls);
     add_io(cls);
