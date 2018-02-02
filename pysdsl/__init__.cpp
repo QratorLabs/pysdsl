@@ -474,4 +474,42 @@ PYBIND11_MODULE(pysdsl, m)
 
     for_each_in_tuple(coders, make_enc_coders_functor(m, iv_classes));
     for_each_in_tuple(coders, make_vlc_coders_functor(m, iv_classes));
+
+    add_enc_class<sdsl::dac_vector<>>(
+        m, "DacVector", iv_classes,
+        "A generic immutable space-saving vector class for unsigned integers.\n"
+        "The values of a dac_vector are immutable after the constructor call.\n"
+        "The `escaping` technique is used to encode values.\n"
+        "This is defined as follows (see [1]):\n"
+        "A k-bit integer is split into `K=k/(b-1)` bits each and "
+        "encoded into `K` blocks of `b` bits each. All but the last block "
+        "are marked with by a 1 in the most significant bit. Escaping with "
+        "`b=8` is also known as vbyte-coding (see [2]). A experimental study "
+        "of using escaping for the LCP array is given in [3].\n"
+        "Time complexity: Order{log n/b} worst case, where b is the number "
+        "of bits in a block\nReferences:\n"
+        "[1] F. Transier and P. Sanders: `Engineering Basic Search Algorithms "
+        "of an In-Memory Text Search Engine`, ACM Transactions on "
+        "Information Systems, Vol. 29, No.1, Article 2, 2010\n"
+        "[2] H.E. Williams and J. Zobel: `Compressing integers for fast file "
+        "access`, Computing Journal Vol 43, No.3, 1999\n"
+        "[3] N. Brisboa, S. Ladra, G. Navarro: `Directly addressable "
+        "variable-length codes'', Proceedings of SPIRE 2009."
+    )
+    .def_property_readonly("levels", &sdsl::dac_vector<>::levels)
+    ;
+
+// add_enc_class<sdsl::dac_vector_dp<>>(
+//     m, "DacVectorDP", iv_classes,
+//     "A generic immutable space-saving vector class for unsigned integers.\n"
+//     "The values of a dac_vector are immutable after the constructor call.\n"
+//     "The ,,escaping'' technique is used to encode values. Bit widths of "
+//     "each encoding level are chosen optimally via dynamic programming.\n"
+//     "References\n [1] N. Brisaboa and S. Ladra and G. Navarro: `DACs: "
+//     "Bringing Direct Access to Variable-Length Codes`, "
+//     "Information Processing and Management (IPM) 2013"
+// )
+// .def("cost", &sdsl::dac_vector_dp<>::cost)
+// .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels)
+// ;
 }
