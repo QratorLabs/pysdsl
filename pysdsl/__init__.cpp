@@ -124,6 +124,44 @@ auto add_sizes(py::class_<T>& cls)
 }
 
 
+
+template <class T>
+auto add_io(py::class_<T>& cls)
+{
+    cls.def(
+        "__str__",
+        [](const T &self) { return "[" + sdsl::util::to_string(self) + "]";}
+    );
+    cls.def("to_latex",
+            [](const T &self) { return sdsl::util::to_latex_string(self); });
+
+    cls.def(
+        "store_to_file",
+        [](const T &self, const std::string& file_name) {
+            return sdsl::store_to_file(self, file_name);
+        },
+        py::arg("file_name"),
+        py::call_guard<py::gil_scoped_release>()
+    );
+
+    cls.def_static(
+        "load_from_file",
+        [](const std::string& file_name) {
+            T self;
+            if (sdsl::load_from_file(self, file_name))
+            {
+                return self;
+            }
+            throw std::exception();
+        },
+        py::arg("file_name"),
+        py::call_guard<py::gil_scoped_release>()
+    );
+
+    return cls;
+}
+
+
 template <class T, typename S = uint64_t>
 auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
 {
@@ -242,14 +280,10 @@ auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
             py::arg("idx"),
             "Get the largest position `i` <= `idx` where a bit is set"
         )
-
-        .def("__str__",
-             [](const T &self) { return sdsl::util::to_string(self); })
-        .def("to_latex",
-             [](const T &self) { return sdsl::util::to_latex_string(self); })
     ;
 
     add_sizes(cls);
+    add_io(cls);
 
     add_std_algo(cls);
 
@@ -267,11 +301,6 @@ auto add_enc_class(py::module &m, const std::string& name, Tup init_from,
         .def(py::init())
 
         //.def("get_sample_dens", &T::get_sample_dens)
-
-        .def("__str__",
-             [](const T &self) { return sdsl::util::to_string(self); })
-        .def("to_latex",
-             [](const T &self) { return sdsl::util::to_latex_string(self); })
     ;
 
     for_each_in_tuple(init_from, make_inits_functor(cls));
@@ -299,6 +328,7 @@ auto add_enc_class(py::module &m, const std::string& name, Tup init_from,
     // }
 
     add_sizes(cls);
+    add_io(cls);
 
     add_std_algo(cls);
 
