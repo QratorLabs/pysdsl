@@ -297,11 +297,7 @@ template <class T, class Tup>
 auto add_enc_class(py::module &m, const std::string& name, Tup init_from,
                    const char* doc = nullptr)
 {
-    auto cls = py::class_<T>(m, name.c_str())
-        .def(py::init())
-
-        //.def("get_sample_dens", &T::get_sample_dens)
-    ;
+    auto cls = py::class_<T>(m, name.c_str()).def(py::init());
 
     for_each_in_tuple(init_from, make_inits_functor(cls));
 
@@ -310,22 +306,6 @@ auto add_enc_class(py::module &m, const std::string& name, Tup init_from,
             py::print("Slow"); return T(source);
         }
     ));
-
-    // if (sample)
-    // {
-    //     cls.def(
-    //         "sample",
-    //         [](const T &self, typename T::size_type i) {
-    //             if (i >= self.size() / self.get_sample_dens())
-    //             {
-    //                 throw py::index_error(std::to_string(i));
-    //             }
-    //             return self.sample(i);
-    //         },
-    //          "Returns the i-th sample of the compressed vector"
-    //          "i: The index of the sample. 0 <= i < size()/get_sample_dens()"
-    //     );
-    // }
 
     add_sizes(cls);
     add_io(cls);
@@ -344,16 +324,32 @@ public:
     add_enc_coders_functor(py::module& m, const VTuple& iv_classes):
     m(m), iv_classes(iv_classes) {}
 
-    template <typename Coder>
+    template <typename Coder, uint32_t t_dens=128, uint8_t t_width=0>
     void operator()(const std::pair<const char*, Coder> &t)
     {
-        add_enc_class<enc_vector<Coder>>(
+        typedef enc_vector<Coder, t_dens, t_width> enc;
+
+        add_enc_class<enc>(
             m,
             std::string("EncVector") + std::get<0>(t),
             iv_classes,
             "A vector `v` is stored more space-efficiently by "
             "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
-        );
+        )
+        .def_property_readonly("sample_dens", &enc::get_sample_dens)
+        .def(
+            "sample",
+            [](const enc &self, typename enc::size_type i) {
+                if (i >= self.size() / self.get_sample_dens())
+                {
+                    throw py::index_error(std::to_string(i));
+                }
+                return self.sample(i);
+            },
+             "Returns the i-th sample of the compressed vector"
+             "i: The index of the sample. 0 <= i < size()/get_sample_dens()"
+        )
+        ;
     }
 
 private:
@@ -375,15 +371,19 @@ public:
     add_vlc_coders_functor(py::module& m, const VTuple& iv_classes):
     m(m), iv_classes(iv_classes) {}
 
-    template <typename Coder>
+    template <typename Coder, uint32_t t_dens = 128, uint8_t t_width = 0>
     void operator()(const std::pair<const char*, Coder> &t)
     {
-        add_enc_class<vlc_vector<Coder>>(
+        typedef vlc_vector<Coder, t_dens, t_width> vlc;
+
+        add_enc_class<vlc>(
             m,
             std::string("VlcVector") + std::get<0>(t),
             iv_classes,
             "A vector which stores the values with variable length codes."
-        );
+        )
+        .def_property_readonly("sample_dens", &vlc::get_sample_dens)
+        ;
     }
 
 private:
@@ -434,6 +434,11 @@ PYBIND11_MODULE(pysdsl, m)
                     return int_vector<1>(size, default_value, 1);
                 }), py::arg("size") = 0, py::arg("default_value") = false)
             .def("flip", &int_vector<1>::flip, "Flip all bits of bit_vector"),
+
+        add_class_<int_vector<4>, uint8_t>(m, "Int4Vector")
+            .def(py::init([](size_t size, uint8_t default_value) {
+                    return int_vector<4>(size, default_value, 4);
+                }), py::arg("size") = 0, py::arg("default_value") = 0),
 
         add_class_<int_vector<8>, uint8_t>(m, "Int8Vector")
             .def(py::init([](size_t size, uint8_t default_value) {
