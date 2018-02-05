@@ -2,3 +2,4 @@
 .*.cppimporthash
 *.so
 .vscode/*
+python?.*/

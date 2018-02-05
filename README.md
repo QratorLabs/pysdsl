@@ -76,6 +76,7 @@ Encoding values with "escaping" technique:
 
  * `DacVector(IntVector)`
 
+Construction from python sequences is also supported.
 
 [SDSL]: https://github.com/simongog/sdsl-lite
 [SDSLLIT]: https://github.com/simongog/sdsl-lite/wiki/Literature "Succinct Data Structure Literature"

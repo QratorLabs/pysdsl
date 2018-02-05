@@ -13,21 +13,26 @@ cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
 #include <pybind11/pybind11.h>
 
 
-// Convert array into a tuple
-template<typename Array, std::size_t... I>
-decltype(auto) a2t_impl(const Array& a, std::index_sequence<I...>)
+namespace py = pybind11;
+
+
+namespace detail
 {
-    return std::make_tuple(a[I]...);
+    // Convert array into a tuple
+    template<typename Array, std::size_t... I>
+    decltype(auto) a2t_impl(const Array& a, std::index_sequence<I...>)
+    {
+        return std::make_tuple(a[I]...);
+    }
 }
 
-template<typename T, std::size_t N, typename Indices = std::make_index_sequence<N>>
+
+template<typename T, std::size_t N,
+         typename Indices = std::make_index_sequence<N>>
 decltype(auto) as_tuple(const T (&a) [N])
 {
-    return a2t_impl(a, Indices{});
+    return detail::a2t_impl(a, Indices{});
 }
-
-
-namespace py = pybind11;
 
 
 auto cnt11 = [] (uint64_t x, uint64_t& c) {
