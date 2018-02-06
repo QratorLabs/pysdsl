@@ -174,7 +174,7 @@ auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
                 result[i] = py::cast<typename T::value_type>(v[i]);
             }
             return result;
-        }))
+        }), py::arg("v"))
         .def_property_readonly("width", (uint8_t(T::*)(void) const) & T::width)
         .def_property_readonly("data",
                                (const uint64_t *(T::*)(void)const) & T::data)
@@ -323,11 +323,11 @@ public:
     m(m), iv_classes(iv_classes) {}
 
     template <typename Coder, uint32_t t_dens=128, uint8_t t_width=0>
-    void operator()(const std::pair<const char*, Coder> &t)
+    decltype(auto) operator()(const std::pair<const char*, Coder> &t)
     {
         typedef enc_vector<Coder, t_dens, t_width> enc;
 
-        add_enc_class<enc>(
+        return add_enc_class<enc>(
             m,
             std::string("EncVector") + std::get<0>(t),
             iv_classes,
@@ -370,11 +370,11 @@ public:
     m(m), iv_classes(iv_classes) {}
 
     template <typename Coder, uint32_t t_dens = 128, uint8_t t_width = 0>
-    void operator()(const std::pair<const char*, Coder> &t)
+    decltype(auto) operator()(const std::pair<const char*, Coder> &t)
     {
         typedef vlc_vector<Coder, t_dens, t_width> vlc;
 
-        add_enc_class<vlc>(
+        return add_enc_class<vlc>(
             m,
             std::string("VlcVector") + std::get<0>(t),
             iv_classes,
@@ -388,6 +388,7 @@ private:
     py::module& m;
     const VTuple& iv_classes;
 };
+
 
 template <class VTuple>
 auto make_vlc_coders_functor(py::module& m, const VTuple& iv_classes)

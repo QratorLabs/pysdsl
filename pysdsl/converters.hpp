@@ -10,19 +10,16 @@ namespace py = pybind11;
 
 namespace detail
 {
-    template<int... Is>
-    struct seq { };
-
-    template<int N, int... Is>
-    struct gen_seq : gen_seq<N - 1, N - 1, Is...> { };
-
-    template<int... Is>
-    struct gen_seq<0, Is...> : seq<Is...> { };
-
-    template<typename T, typename F, int... Is>
-    void for_each(T&& t, F f, seq<Is...>)
+    template<typename P, typename Function, std::size_t... Is>
+    decltype(auto) for_each_impl(P&& t, Function f, std::index_sequence<Is...>)
     {
-        auto l = { (f(std::get<Is>(t)), 0)... };
+        return std::make_tuple(f(std::get<Is>(t))...);
+    }
+
+    template<typename... T, typename Function>
+    decltype(auto) for_each(const std::tuple<T...>& t, Function f)
+    {
+        return for_each_impl(t, f, std::index_sequence_for<T...>{});
     }
 
     template <class ToCls>
@@ -32,12 +29,13 @@ namespace detail
         add_inits_functor(ToCls &cls_to) : m_cls_to(cls_to) {}
 
         template <typename FromCls>
-        void operator()(FromCls &t)
+        decltype(auto) operator()(FromCls &t)
         {
             m_cls_to.def(py::init([](const typename FromCls::type& from) {
                 //py::print("Fast!");
                 return typename ToCls::type(from);
             }), py::arg("v"), py::call_guard<py::gil_scoped_release>());
+            return m_cls_to;
         }
 
     private:
@@ -47,9 +45,9 @@ namespace detail
 
 
 template <typename... Ts, typename F>
-void for_each_in_tuple(std::tuple<Ts...> const &t, F f)
+decltype(auto) for_each_in_tuple(const std::tuple<Ts...> &t, F f)
 {
-    detail::for_each(t, f, detail::gen_seq<sizeof...(Ts)>());
+    return detail::for_each(t, f);
 }
 
 

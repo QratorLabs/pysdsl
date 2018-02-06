@@ -19,19 +19,18 @@ namespace detail
             return m_it != other.m_it;
         }
 
-        T operator*() { return py::cast<T>(*m_it); }
+        decltype(auto) operator*() { return py::cast<T>(*m_it); }
 
-        auto operator++() {
+        decltype(auto) operator++() {
             ++m_it;
             return *this;
         }
 
-        auto operator++(int) {
+        decltype(auto) operator++(int) {
             return *sequence_iterator_wrapper<T, Base>(m_it++);
         }
 
-        sequence_iterator_wrapper&
-        operator=(sequence_iterator_wrapper other)
+        decltype(auto) operator=(sequence_iterator_wrapper other)
         {
             if (this != &other) {
                 m_it = other.m_it;
@@ -67,7 +66,8 @@ public:
 
     size_t size() const { return m_seq.size(); }
 
-    T operator[] (const size_t i) const { return py::cast<T>(m_seq[i]); }
+    decltype(auto)
+    operator[] (const size_t i) const { return py::cast<T>(m_seq[i]); }
 
 private:
     const py::sequence& m_seq;
