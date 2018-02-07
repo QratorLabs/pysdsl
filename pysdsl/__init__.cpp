@@ -19,15 +19,12 @@ cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp']
 #include <pybind11/pybind11.h>
 
 #include "converters.hpp"
-#include "pysequence.hpp"
 
 
 namespace py = pybind11;
 
 
-using sdsl::enc_vector;
 using sdsl::int_vector;
-using sdsl::vlc_vector;
 
 
 template <class Sequence>
@@ -163,18 +160,9 @@ auto add_io(py::class_<T>& cls)
 
 
 template <class T, typename S = uint64_t>
-auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
+auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
 {
     auto cls = py::class_<T>(m, name)
-        .def(py::init([](const py::sequence& v) {
-            const auto vsize = v.size();
-            T result(vsize);
-            for (size_t i = 0; i < vsize; i++)
-            {
-                result[i] = py::cast<typename T::value_type>(v[i]);
-            }
-            return result;
-        }), py::arg("v"))
         .def_property_readonly("width", (uint8_t(T::*)(void) const) & T::width)
         .def_property_readonly("data",
                                (const uint64_t *(T::*)(void)const) & T::data)
@@ -293,17 +281,11 @@ auto add_class_(py::module &m, const char *name, const char *doc = nullptr)
 }
 
 
-template <class T, class Tup>
-auto add_enc_class(py::module &m, const std::string& name, Tup init_from,
-                   const char* doc = nullptr)
+template <class T>
+auto add_compressed_class(py::module &m, const std::string& name,
+                          const char* doc = nullptr)
 {
     auto cls = py::class_<T>(m, name.c_str()).def(py::init());
-
-    for_each_in_tuple(init_from, make_inits_functor(cls));
-
-    cls.def(py::init([](const py::sequence& v) {
-        return T(sequence_wrapper<typename T::value_type>(v));
-    }), py::arg("v"));
 
     add_sizes(cls);
     add_io(cls);
@@ -315,22 +297,19 @@ auto add_enc_class(py::module &m, const std::string& name, Tup init_from,
     return cls;
 }
 
-template <class VTuple>
+
 class add_enc_coders_functor
 {
 public:
-    add_enc_coders_functor(py::module& m, const VTuple& iv_classes):
-    m(m), iv_classes(iv_classes) {}
+    add_enc_coders_functor(py::module& m): m(m) {}
 
     template <typename Coder, uint32_t t_dens=128, uint8_t t_width=0>
     decltype(auto) operator()(const std::pair<const char*, Coder> &t)
     {
-        typedef enc_vector<Coder, t_dens, t_width> enc;
-
-        return add_enc_class<enc>(
+        typedef sdsl::enc_vector<Coder, t_dens, t_width> enc;
+        auto cls = add_compressed_class<enc>(
             m,
             std::string("EncVector") + std::get<0>(t),
-            iv_classes,
             "A vector `v` is stored more space-efficiently by "
             "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
         )
@@ -344,57 +323,43 @@ public:
                 }
                 return self.sample(i);
             },
-             "Returns the i-th sample of the compressed vector"
-             "i: The index of the sample. 0 <= i < size()/get_sample_dens()"
+            "Returns the i-th sample of the compressed vector"
+            "i: The index of the sample. 0 <= i < size()/get_sample_dens()"
         )
         ;
+
+        return cls;
     }
 
 private:
     py::module& m;
-    const VTuple& iv_classes;
 };
 
-template <class VTuple>
-auto make_enc_coders_functor(py::module& m, const VTuple& iv_classes)
-{
-    return add_enc_coders_functor<VTuple>(m, iv_classes);
-}
 
-
-template <class VTuple>
 class add_vlc_coders_functor
 {
 public:
-    add_vlc_coders_functor(py::module& m, const VTuple& iv_classes):
-    m(m), iv_classes(iv_classes) {}
+    add_vlc_coders_functor(py::module& m): m(m) {}
 
     template <typename Coder, uint32_t t_dens = 128, uint8_t t_width = 0>
     decltype(auto) operator()(const std::pair<const char*, Coder> &t)
     {
-        typedef vlc_vector<Coder, t_dens, t_width> vlc;
+        typedef sdsl::vlc_vector<Coder, t_dens, t_width> vlc;
 
-        return add_enc_class<vlc>(
+        auto cls = add_compressed_class<vlc>(
             m,
             std::string("VlcVector") + std::get<0>(t),
-            iv_classes,
             "A vector which stores the values with variable length codes."
         )
         .def_property_readonly("sample_dens", &vlc::get_sample_dens)
         ;
+
+        return cls;
     }
 
 private:
     py::module& m;
-    const VTuple& iv_classes;
 };
-
-
-template <class VTuple>
-auto make_vlc_coders_functor(py::module& m, const VTuple& iv_classes)
-{
-    return add_vlc_coders_functor<VTuple>(m, iv_classes);
-}
 
 
 PYBIND11_MODULE(pysdsl, m)
@@ -402,10 +367,10 @@ PYBIND11_MODULE(pysdsl, m)
     m.doc() = "sdsl-lite bindings for python";
 
     auto iv_classes = std::make_tuple(
-        add_class_<int_vector<0>>(m, "IntVector",
-                                  "This generic vector class could be used to "
-                                  "generate a vector that contains integers "
-                                  "of fixed width `w` in [1..64].")
+        add_int_class<int_vector<0>>(m, "IntVector",
+                                     "This generic vector class could be used "
+                                     "to generate a vector that contains "
+                                     "integers of fixed width `w` in [1..64].")
             .def(
                 py::init([](size_t size,
                             uint64_t default_value,
@@ -428,44 +393,44 @@ PYBIND11_MODULE(pysdsl, m)
                 "and then set the int_width to the smallest possible so that "
                 "we still can represent X."),
 
-        add_class_<int_vector<1>, bool>(m, "BitVector")
+        add_int_class<int_vector<1>, bool>(m, "BitVector")
             .def(py::init([](size_t size, bool default_value) {
                     return int_vector<1>(size, default_value, 1);
                 }), py::arg("size") = 0, py::arg("default_value") = false)
             .def("flip", &int_vector<1>::flip, "Flip all bits of bit_vector"),
 
-        add_class_<int_vector<4>, uint8_t>(m, "Int4Vector")
+        add_int_class<int_vector<4>, uint8_t>(m, "Int4Vector")
             .def(py::init([](size_t size, uint8_t default_value) {
                     return int_vector<4>(size, default_value, 4);
                 }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-        add_class_<int_vector<8>, uint8_t>(m, "Int8Vector")
+        add_int_class<int_vector<8>, uint8_t>(m, "Int8Vector")
             .def(py::init([](size_t size, uint8_t default_value) {
                     return int_vector<8>(size, default_value, 8);
                 }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-        add_class_<int_vector<16>, uint16_t>(m, "Int16Vector")
+        add_int_class<int_vector<16>, uint16_t>(m, "Int16Vector")
             .def(py::init([](size_t size, uint16_t default_value) {
                      return int_vector<16>(size, default_value, 16);
                  }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-        add_class_<int_vector<24>, uint32_t>(m, "Int24Vector")
+        add_int_class<int_vector<24>, uint32_t>(m, "Int24Vector")
             .def(py::init([](size_t size, uint32_t default_value) {
                      return int_vector<24>(size, default_value, 24);
                  }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-        add_class_<int_vector<32>, uint32_t>(m, "Int32Vector")
+        add_int_class<int_vector<32>, uint32_t>(m, "Int32Vector")
             .def(py::init([](size_t size, uint32_t default_value) {
                     return int_vector<32>(size, default_value, 32);
                 }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-        add_class_<int_vector<64>, uint64_t>(m, "Int64Vector")
+        add_int_class<int_vector<64>, uint64_t>(m, "Int64Vector")
             .def(py::init([](size_t size, uint64_t default_value) {
                     return int_vector<64>(size, default_value, 64);
                 }), py::arg("size") = 0, py::arg("default_value") = 0)
     );
 
-    auto coders = std::make_tuple(
+    auto const coders = std::make_tuple(
         std::make_pair("EliasDelta", sdsl::coder::elias_delta()),
         std::make_pair("EliasGamma", sdsl::coder::elias_gamma()),
         std::make_pair("Fibonacci", sdsl::coder::fibonacci()),
@@ -473,11 +438,11 @@ PYBIND11_MODULE(pysdsl, m)
         std::make_pair("Comma4", sdsl::coder::comma<4>())
     );
 
-    for_each_in_tuple(coders, make_enc_coders_functor(m, iv_classes));
-    for_each_in_tuple(coders, make_vlc_coders_functor(m, iv_classes));
-
-    add_enc_class<sdsl::dac_vector<>>(
-        m, "DacVector", iv_classes,
+    auto enc_classes = for_each_in_tuple(coders, add_enc_coders_functor(m));
+    auto vlc_classes = for_each_in_tuple(coders, add_vlc_coders_functor(m));
+    auto dac_classes = std::make_tuple(
+        add_compressed_class<sdsl::dac_vector<>>(
+        m, "DacVector",
         "A generic immutable space-saving vector class for unsigned integers.\n"
         "The values of a dac_vector are immutable after the constructor call.\n"
         "The `escaping` technique is used to encode values.\n"
@@ -498,9 +463,7 @@ PYBIND11_MODULE(pysdsl, m)
         "variable-length codes'', Proceedings of SPIRE 2009."
     )
     .def_property_readonly("levels", &sdsl::dac_vector<>::levels)
-    ;
-
-// add_enc_class<sdsl::dac_vector_dp<>>(
+// add_compressed_class<sdsl::dac_vector_dp<>>(
 //     m, "DacVectorDP", iv_classes,
 //     "A generic immutable space-saving vector class for unsigned integers.\n"
 //     "The values of a dac_vector are immutable after the constructor call.\n"
@@ -512,5 +475,26 @@ PYBIND11_MODULE(pysdsl, m)
 // )
 // .def("cost", &sdsl::dac_vector_dp<>::cost)
 // .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels)
-// ;
+    );
+
+    for_each_in_tuple(enc_classes, make_inits_many_functor(iv_classes));
+    for_each_in_tuple(enc_classes, make_inits_many_functor(enc_classes));
+    for_each_in_tuple(enc_classes, make_inits_many_functor(vlc_classes));
+    for_each_in_tuple(enc_classes, make_inits_many_functor(dac_classes));
+
+    for_each_in_tuple(vlc_classes, make_inits_many_functor(iv_classes));
+    for_each_in_tuple(vlc_classes, make_inits_many_functor(enc_classes));
+    for_each_in_tuple(vlc_classes, make_inits_many_functor(vlc_classes));
+    for_each_in_tuple(vlc_classes, make_inits_many_functor(dac_classes));
+
+    for_each_in_tuple(dac_classes, make_inits_many_functor(iv_classes));
+    for_each_in_tuple(dac_classes, make_inits_many_functor(enc_classes));
+    for_each_in_tuple(dac_classes, make_inits_many_functor(vlc_classes));
+    for_each_in_tuple(dac_classes, make_inits_many_functor(dac_classes));
+
+    for_each_in_tuple(iv_classes, make_pysequence_init_functor());
+    for_each_in_tuple(enc_classes, make_pysequence_init_functor());
+    for_each_in_tuple(vlc_classes, make_pysequence_init_functor());
+    for_each_in_tuple(dac_classes, make_pysequence_init_functor());
+
 }
