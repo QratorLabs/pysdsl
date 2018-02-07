@@ -50,9 +50,10 @@ class sequence_wrapper
 {
 private:
     // dummy function to help with decltype(m_seq)::const_iterator
-    decltype(auto) _begin() const { return m_seq.begin(); }
-    typedef decltype(_begin) raw_;
-    typedef std::result_of_t<raw_> raw_iterator;
+    //decltype(auto) _begin() const { return m_seq.begin(); }
+    //typedef decltype(&py::sequence::begin) raw_;
+    //typedef std::result_of_t<raw_> raw_iterator;
+    typedef py::detail::sequence_iterator raw_iterator;
 
 public:
     typedef detail::sequence_iterator_wrapper<T, raw_iterator> const_iterator;
