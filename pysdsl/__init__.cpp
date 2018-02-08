@@ -117,6 +117,11 @@ auto add_sizes(py::class_<T>& cls)
         "size_in_mega_bytes",
         [](const T &self) { return sdsl::size_in_mega_bytes(self); }
     );
+    cls.def_property_readonly(
+        "size_in_bytes",
+        [](const T &self) { return sdsl::size_in_bytes(self); }
+    );
+
     return cls;
 }
 
@@ -146,6 +151,29 @@ auto add_io(py::class_<T>& cls)
         [](const std::string& file_name) {
             T self;
             if (sdsl::load_from_file(self, file_name))
+            {
+                return self;
+            }
+            throw std::exception();
+        },
+        py::arg("file_name"),
+        py::call_guard<py::gil_scoped_release>()
+    );
+
+    cls.def(
+        "store_to_checked_file",
+        [](const T &self, const std::string& file_name) {
+            return sdsl::store_to_checked_file(self, file_name);
+        },
+        py::arg("file_name"),
+        py::call_guard<py::gil_scoped_release>()
+    );
+
+    cls.def_static(
+        "load_from_checkded_file",
+        [](const std::string& file_name) {
+            T self;
+            if (sdsl::load_from_checked_file(self, file_name))
             {
                 return self;
             }
@@ -224,6 +252,18 @@ auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
                 "random number generator, otherwise the seed parameter is used."
             ),
             "Sets all bits of the int_vector to pseudo-random bits."
+        )
+        .def_static(
+            "rnd_positions",
+            [](uint8_t log_s, uint64_t mod, uint64_t seed) {
+                uint64_t mask;
+
+                auto res = sdsl::util::rnd_positions<T>(log_s, mask, mod, seed);
+
+                return std::make_tuple(res, mask);
+            },
+            py::arg("log_s"), py::arg("mod") = 0, py::arg("seed") = 0,
+            "Create `2**{log_s}` random integers mod `mod` with seed `seed`"
         )
         .def(
             "__imod__",
