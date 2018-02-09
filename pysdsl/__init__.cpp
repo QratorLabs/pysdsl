@@ -15,6 +15,7 @@ cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp']
 #include <vector>
 
 #include <sdsl/vectors.hpp>
+#include <sdsl/sd_vector.hpp>
 
 #include <pybind11/pybind11.h>
 
@@ -108,11 +109,11 @@ auto add_sizes(py::class_<T>& cls)
     cls.def("__len__", &T::size, "The number of elements in the int_vector.");
     cls.def_property_readonly("size", &T::size,
                               "The number of elements in the int_vector.");
-    cls.def_property_readonly_static(
-        "max_size",
-        [](py::object /* self */) { return T::max_size(); },
-        "Maximum size of the int_vector."
-    );
+    // cls.def_property_readonly_static(
+    //     "max_size",
+    //     [](py::object /* self */) { return T::max_size(); },
+    //     "Maximum size of the int_vector."
+    // );
     cls.def_property_readonly(
         "size_in_mega_bytes",
         [](const T &self) { return sdsl::size_in_mega_bytes(self); }
@@ -470,6 +471,9 @@ PYBIND11_MODULE(pysdsl, m)
                 }), py::arg("size") = 0, py::arg("default_value") = 0)
     );
 
+    py::class_<int_vector<1>>& bit_vector_cls = std::get<1>(iv_classes);
+    auto bit_vector_classes = std::make_tuple(bit_vector_cls);
+
     auto const coders = std::make_tuple(
         std::make_pair("EliasDelta", sdsl::coder::elias_delta()),
         std::make_pair("EliasGamma", sdsl::coder::elias_gamma()),
@@ -517,6 +521,43 @@ PYBIND11_MODULE(pysdsl, m)
 // .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels)
     );
 
+    auto rrr_classes = std::make_tuple(
+        add_compressed_class<sdsl::rrr_vector<63>>(
+            m, "RRRVector63",
+            "An H_0-compressed bitvector representation.\n"
+            "References:\n"
+            "- Rasmus Pagh, Low redundancy in dictionaries with O(1) worst "
+            "case lookup time, Technical Report 1998. "
+            "ftp://ftp.cs.au.dk/BRICS/Reports/RS/98/28/BRICS-RS-98-28.pdf, "
+            "Section 2.\n"
+            "- Rajeev Raman, V. Raman and S. Srinivasa Rao, Succinct Indexable "
+            "Dictionaries with Applications to representations of k-ary trees "
+            "and multi-sets. SODA 2002.\n"
+            "- Francisco Claude, Gonzalo Navarro: Practical Rank/Select "
+            "Queries over Arbitrary Sequences. SPIRE 2008: 176-187\n"
+            "- On the fly-decoding and encoding was discovered in; Gonzalo "
+            "Navarro, Eliana Providel: Fast, Small, Simple Rank/Select on "
+            "Bitmaps. SEA 2012"
+        )
+    );
+
+    auto sd_classes = std::make_tuple(
+        add_compressed_class<sdsl::sd_vector<>>(
+            m, std::string("SDVector"),
+            "A bit vector which compresses very sparse populated bit vectors "
+            "by representing the positions of 1 by the Elias-Fano "
+            "representation for non-decreasing sequences\n"
+            "References:\n"
+            "- P. Elias: ''Efficient storage and retrieval by content and "
+            "address of static files'', Journal of the ACM, 1974\n"
+            "- R. Fano: ''On the number of bits required to implement an "
+            "associative memory'', Memorandum 61. Computer Structures Group, "
+            "Project MAC, MIT, 1971\n"
+            "- D. Okanohara, K. Sadakane: ''Practical Entropy-Compressed "
+            "Rank/Select Dictionary'', Proceedings of ALENEX 2007."
+        )
+    );
+
     for_each_in_tuple(enc_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(enc_classes, make_inits_many_functor(enc_classes));
     for_each_in_tuple(enc_classes, make_inits_many_functor(vlc_classes));
@@ -532,9 +573,16 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(dac_classes, make_inits_many_functor(vlc_classes));
     for_each_in_tuple(dac_classes, make_inits_many_functor(dac_classes));
 
+    for_each_in_tuple(rrr_classes, make_inits_many_functor(bit_vector_classes));
+    for_each_in_tuple(rrr_classes, make_inits_many_functor(rrr_classes));
+
+    for_each_in_tuple(sd_classes, make_inits_many_functor(bit_vector_classes));
+    for_each_in_tuple(sd_classes, make_inits_many_functor(sd_classes));
+
     for_each_in_tuple(iv_classes, make_pysequence_init_functor());
     for_each_in_tuple(enc_classes, make_pysequence_init_functor());
     for_each_in_tuple(vlc_classes, make_pysequence_init_functor());
     for_each_in_tuple(dac_classes, make_pysequence_init_functor());
 
+    //for_each_in_tuple(sd_classes, make_pysequence_init_functor());
 }
