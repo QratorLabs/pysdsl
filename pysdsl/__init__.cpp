@@ -98,6 +98,11 @@ auto add_std_algo(py::class_<Sequence>& cls)
         },
         py::call_guard<py::gil_scoped_release>()
     );
+    cls.def(
+        "is_sorted",
+        [](const Sequence &self) {
+            return std::is_sorted(self.begin(), self.end());
+        }
 
     return cls;
 }
