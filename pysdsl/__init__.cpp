@@ -4,7 +4,7 @@ cfg['compiler_args'] = ['-std=c++14', '-fvisibility=hidden']
 cfg['linker_args'] = ['-fvisibility=hidden']
 cfg['include_dirs'] = ['sdsl-lite/include']
 cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
-cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp']
+cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'sizes.hpp']
 %>
 */
 
@@ -15,11 +15,12 @@ cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp']
 #include <vector>
 
 #include <sdsl/vectors.hpp>
-#include <sdsl/sd_vector.hpp>
+#include <sdsl/bit_vectors.hpp>
 
 #include <pybind11/pybind11.h>
 
 #include "converters.hpp"
+#include "sizes.hpp"
 
 
 namespace py = pybind11;
@@ -103,34 +104,10 @@ auto add_std_algo(py::class_<Sequence>& cls)
         [](const Sequence &self) {
             return std::is_sorted(self.begin(), self.end());
         }
-
-    return cls;
-}
-
-
-template <class T>
-auto add_sizes(py::class_<T>& cls)
-{
-    cls.def("__len__", &T::size, "The number of elements in the int_vector.");
-    cls.def_property_readonly("size", &T::size,
-                              "The number of elements in the int_vector.");
-    // cls.def_property_readonly_static(
-    //     "max_size",
-    //     [](py::object /* self */) { return T::max_size(); },
-    //     "Maximum size of the int_vector."
-    // );
-    cls.def_property_readonly(
-        "size_in_mega_bytes",
-        [](const T &self) { return sdsl::size_in_mega_bytes(self); }
-    );
-    cls.def_property_readonly(
-        "size_in_bytes",
-        [](const T &self) { return sdsl::size_in_bytes(self); }
     );
 
     return cls;
 }
-
 
 
 template <class T>

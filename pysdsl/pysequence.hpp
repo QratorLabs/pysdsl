@@ -46,8 +46,7 @@ namespace detail
             return sequence_iterator_wrapper<T, Base>(m_it - step);
         }
 
-        difference_type
-        operator-(sequence_iterator_wrapper other) const
+        difference_type operator-(sequence_iterator_wrapper other) const
         {
             return m_it - other.m_it;
         }

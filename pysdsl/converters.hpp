@@ -109,6 +109,21 @@ namespace detail
             }), py::arg("v"));
             return cls;
         }
+
+        template <class Th, class Ts1, class Ts0>
+        decltype(auto) operator()(py::class_<sdsl::sd_vector<Th, Ts1, Ts0>>& cls)
+        {
+            typedef typename py::class_<sdsl::sd_vector<Th, Ts1, Ts0>> py_class;
+            typedef typename py_class::type base_class;
+            typedef typename base_class::value_type value_type;
+            cls.def(py::init([](const py::sequence& v) {
+                sequence_wrapper<value_type> helper(v);
+
+                return base_class(helper.begin(), helper.end());
+            }), py::arg("v"));
+            return cls;
+        }
+
     };
 }
 
