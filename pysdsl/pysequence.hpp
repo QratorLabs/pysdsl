@@ -12,14 +12,25 @@ namespace detail
     class sequence_iterator_wrapper
     {
     public:
+        typedef std::size_t                           difference_type;
+        typedef T                                          value_type;
+        typedef T*                                            pointer;
+        typedef T&                                          reference;
+        typedef std::random_access_iterator_tag     iterator_category;
+
         sequence_iterator_wrapper(Base it): m_it(it) {}
 
-        bool operator!=(const sequence_iterator_wrapper& other)
+        bool operator!=(const sequence_iterator_wrapper& other) const
         {
             return m_it != other.m_it;
         }
 
-        decltype(auto) operator*() { return py::cast<T>(*m_it); }
+        bool operator==(const sequence_iterator_wrapper& other) const
+        {
+            return m_it == other.m_it;
+        }
+
+        value_type operator*() { return py::cast<T>(*m_it); }
 
         decltype(auto) operator++() {
             ++m_it;
@@ -28,6 +39,17 @@ namespace detail
 
         decltype(auto) operator++(int) {
             return *sequence_iterator_wrapper<T, Base>(m_it++);
+        }
+
+        decltype(auto) operator-(difference_type step) const
+        {
+            return sequence_iterator_wrapper<T, Base>(m_it - step);
+        }
+
+        difference_type
+        operator-(sequence_iterator_wrapper other) const
+        {
+            return m_it - other.m_it;
         }
 
         decltype(auto) operator=(sequence_iterator_wrapper other)
