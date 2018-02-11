@@ -10,6 +10,7 @@ cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'sizes.hpp']
 
 #include <algorithm>
 #include <cstdint>
+#include <fstream>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -164,6 +165,38 @@ auto add_io(py::class_<T>& cls)
         },
         py::arg("file_name"),
         py::call_guard<py::gil_scoped_release>()
+    );
+
+    cls.def(
+        "write_structure_json",
+        [](const T& self, const std::string& file_name) {
+            std::ofstream fout;
+            fout.open(file_name, std::ios::out | std::ios::binary);
+            if (!fout.good()) throw std::runtime_error("Can't write to file");
+            sdsl::write_structure<sdsl::JSON_FORMAT>(self, fout);
+            if (!fout.good()) throw std::runtime_error("Error during write");
+            fout.close();
+        },
+        py::arg("file_name")
+    );
+
+    cls.def_property_readonly(
+        "structure_json",
+        [](const T& self) {
+            std::stringstream fout;
+            sdsl::write_structure<sdsl::JSON_FORMAT>(self, fout);
+            return fout.str();
+        }
+    );
+
+    cls.def_property_readonly(
+        "structure",
+        [](const T& self) {
+            std::stringstream fout;
+            sdsl::write_structure<sdsl::JSON_FORMAT>(self, fout);
+            auto json = py::module::import("json");
+            return json.attr("loads")(fout.str());
+        }
     );
 
     return cls;
