@@ -116,10 +116,29 @@ auto add_io(py::class_<T>& cls)
 {
     cls.def(
         "__str__",
-        [](const T &self) { return "[" + sdsl::util::to_string(self) + "]";}
+        [](const T &self) {
+            const size_t max_output = 100;
+
+            std::stringstream fout;
+            fout << '[';
+            size_t count = 0;
+            for (auto i: self)
+            {
+                if (count) fout << ", ";
+
+                fout << i;
+
+                if (count >= max_output)
+                {
+                    fout << ", ...(" << self.size() - count - 1 << " more)";
+                    break;
+                }
+                count++;
+            }
+            fout << ']';
+            return fout.str();
+        }
     );
-    cls.def("to_latex",
-            [](const T &self) { return sdsl::util::to_latex_string(self); });
 
     cls.def(
         "store_to_file",
@@ -548,24 +567,24 @@ PYBIND11_MODULE(pysdsl, m)
         "[3] N. Brisboa, S. Ladra, G. Navarro: `Directly addressable "
         "variable-length codes'', Proceedings of SPIRE 2009."
     )
-    .def_property_readonly("levels", &sdsl::dac_vector<>::levels)
-// add_compressed_class<sdsl::dac_vector_dp<>>(
-//     m, "DacVectorDP", iv_classes,
-//     "A generic immutable space-saving vector class for unsigned integers.\n"
-//     "The values of a dac_vector are immutable after the constructor call.\n"
-//     "The ,,escaping'' technique is used to encode values. Bit widths of "
-//     "each encoding level are chosen optimally via dynamic programming.\n"
-//     "References\n [1] N. Brisaboa and S. Ladra and G. Navarro: `DACs: "
-//     "Bringing Direct Access to Variable-Length Codes`, "
-//     "Information Processing and Management (IPM) 2013"
-// )
-// .def("cost", &sdsl::dac_vector_dp<>::cost)
-// .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels)
+    .def_property_readonly("levels", &sdsl::dac_vector<>::levels),
+    add_compressed_class<sdsl::dac_vector_dp<>>(
+        m, "DacVectorDP",
+        "A generic immutable space-saving vector class for unsigned integers.\n"
+        "The values of a dac_vector are immutable after the constructor call.\n"
+        "The ,,escaping'' technique is used to encode values. Bit widths of "
+        "each encoding level are chosen optimally via dynamic programming.\n"
+        "References\n [1] N. Brisaboa and S. Ladra and G. Navarro: `DACs: "
+        "Bringing Direct Access to Variable-Length Codes`, "
+        "Information Processing and Management (IPM) 2013"
+    )
+    .def("cost", &sdsl::dac_vector_dp<>::cost)
+    .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels)
     );
 
     auto bvil_classes = std::make_tuple(
-        add_bitvector_class<sdsl::bit_vector_il<>>(
-            m, "BitVectorIL",
+        add_bitvector_class<sdsl::bit_vector_il<512>>(
+            m, "BitVectorIL512",
             "A bit vector which interleaves the original bit_vector with rank "
             "information. \nThis class is a uncompressed bit vector "
             "representation. It copies the original bit_vector and interleaves "
@@ -613,7 +632,7 @@ PYBIND11_MODULE(pysdsl, m)
     );
 
     auto hyb_classes = std::make_tuple(
-        add_bitvector_class<sdsl::hyb_vector<>>(
+        add_bitvector_class<sdsl::hyb_vector<16>>(
             m, std::string("HybVector16"),
             "A hybrid-encoded compressed bitvector representation\n"
             "References:\n- Juha Karkkainen, Dominik Kempa and "

@@ -19,6 +19,12 @@ auto add_max_size(py::class_<T>& cls)
     return cls;
 }
 
+template <class BV, int ML>
+auto add_max_size(py::class_<sdsl::dac_vector_dp<BV, ML>>& cls)
+{
+    return cls;
+}
+
 template <uint32_t B>
 auto add_max_size(
     py::class_<sdsl::bit_vector_il<B>>& cls
@@ -41,6 +47,9 @@ template <uint16_t B, class R, uint16_t K>
 auto add_max_size(
     py::class_<sdsl::rrr_vector<B, R, K>>& cls
 ) { return cls; }
+
+template <uint32_t B>
+auto add_max_size(py::class_<sdsl::hyb_vector<B>>& cls) { return cls; }
 
 
 template <class T>
