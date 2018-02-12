@@ -75,8 +75,41 @@ Encoding values with variable length codes:
 Encoding values with "escaping" technique:
 
  * `DacVector(IntVector)`
+ * `DacVectorDP(IntVector)` — number of layers is choosen
+                              with dynamic programming
 
 Construction from python sequences is also supported.
 
+## Immutable compressed bit (boolean) vectors
+
+ * `BitVectorIL512(BitVector)` — A bit vector which interleaves the
+                                 original `BitVector` with rank information.
+ * `SDVector(BitVector)` — A bit vector which compresses very sparse populated
+                           bit vectors by representing the positions of 1 by the
+                           Elias-Fano representation for
+                           non-decreasing sequences
+ * `RRRVector63(BitVector)` — An H₀-compressed bitvector representation.
+ * `HybVector16(BitVector)` — A hybrid-encoded compressed bitvector
+                              representation
+
+## Objects memory structure
+
+Any object has a `.structure` property with technical information about an
+object. `.structure_json` also provided for web-view implementations.
+`.write_structure_json()` method puts that information into a file.
+
+`.size_in_bytes` and `.size_in_mega_bytes` properties show how much memory the
+object is occupying.
+
+## Saving/Loading objects
+
+All objects provide `.store_to_checked_file()` method allowing one to save
+object into a file.
+
+All classes provide `.load_from_checkded_file()` static method allowing one to
+load object stored  with `.store_to_checked_file()`
+
+
 [SDSL]: https://github.com/simongog/sdsl-lite
-[SDSLLIT]: https://github.com/simongog/sdsl-lite/wiki/Literature "Succinct Data Structure Literature"
+[SDSLLIT]: https://github.com/simongog/sdsl-lite/wiki/Literature
+"Succinct Data Structure Literature"

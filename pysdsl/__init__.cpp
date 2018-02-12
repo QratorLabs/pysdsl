@@ -578,7 +578,7 @@ PYBIND11_MODULE(pysdsl, m)
         "Bringing Direct Access to Variable-Length Codes`, "
         "Information Processing and Management (IPM) 2013"
     )
-    .def("cost", &sdsl::dac_vector_dp<>::cost)
+    .def("cost", &sdsl::dac_vector_dp<>::cost, py::arg("n"), py::arg("m"))
     .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels)
     );
 
