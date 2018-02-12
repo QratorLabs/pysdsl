@@ -354,6 +354,33 @@ auto add_compressed_class(py::module &m, const std::string& name,
 }
 
 
+template <class T>
+auto add_bitvector_class(py::module &m, const std::string& name,
+                         const char* doc = nullptr)
+{
+    auto cls = add_compressed_class<T>(m, name, doc);
+
+    cls.def(
+        "get_int",
+        [](const T &self, size_t idx, uint8_t len) {
+            if (idx + len - 1 >= self.size())
+            {
+                throw py::index_error(std::to_string(idx));
+            }
+            if (len > 64)
+            {
+                throw std::invalid_argument("len should be <= 64");
+            }
+            return self.get_int(idx, len);
+        },
+        py::arg("idx"),
+        py::arg("len") = 64
+    );
+
+    return cls;
+}
+
+
 class add_enc_coders_functor
 {
 public:
@@ -536,8 +563,20 @@ PYBIND11_MODULE(pysdsl, m)
 // .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels)
     );
 
+    auto bvil_classes = std::make_tuple(
+        add_bitvector_class<sdsl::bit_vector_il<>>(
+            m, "BitVectorIL",
+            "A bit vector which interleaves the original bit_vector with rank "
+            "information. \nThis class is a uncompressed bit vector "
+            "representation. It copies the original bit_vector and interleaves "
+            "the data every t_bs bits with a cumulative sum of set bits before "
+            "the current position. Each cumulative sum is stored in a 64 bit "
+            "word."
+        )
+    );
+
     auto rrr_classes = std::make_tuple(
-        add_compressed_class<sdsl::rrr_vector<63>>(
+        add_bitvector_class<sdsl::rrr_vector<63>>(
             m, "RRRVector63",
             "An H_0-compressed bitvector representation.\n"
             "References:\n"
@@ -557,7 +596,7 @@ PYBIND11_MODULE(pysdsl, m)
     );
 
     auto sd_classes = std::make_tuple(
-        add_compressed_class<sdsl::sd_vector<>>(
+        add_bitvector_class<sdsl::sd_vector<>>(
             m, std::string("SDVector"),
             "A bit vector which compresses very sparse populated bit vectors "
             "by representing the positions of 1 by the Elias-Fano "
@@ -570,6 +609,16 @@ PYBIND11_MODULE(pysdsl, m)
             "Project MAC, MIT, 1971\n"
             "- D. Okanohara, K. Sadakane: ''Practical Entropy-Compressed "
             "Rank/Select Dictionary'', Proceedings of ALENEX 2007."
+        )
+    );
+
+    auto hyb_classes = std::make_tuple(
+        add_bitvector_class<sdsl::hyb_vector<>>(
+            m, std::string("HybVector16"),
+            "A hybrid-encoded compressed bitvector representation\n"
+            "References:\n- Juha Karkkainen, Dominik Kempa and "
+            "Simon J. Puglisi. ''Hybrid Compression of Bitvectors for the "
+            "FM-Index.'' DCC 2014."
         )
     );
 
@@ -588,11 +637,18 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(dac_classes, make_inits_many_functor(vlc_classes));
     for_each_in_tuple(dac_classes, make_inits_many_functor(dac_classes));
 
+    for_each_in_tuple(bvil_classes,
+                      make_inits_many_functor(bit_vector_classes));
+    for_each_in_tuple(bvil_classes, make_inits_many_functor(bvil_classes));
+
     for_each_in_tuple(rrr_classes, make_inits_many_functor(bit_vector_classes));
     for_each_in_tuple(rrr_classes, make_inits_many_functor(rrr_classes));
 
     for_each_in_tuple(sd_classes, make_inits_many_functor(bit_vector_classes));
     for_each_in_tuple(sd_classes, make_inits_many_functor(sd_classes));
+
+    for_each_in_tuple(hyb_classes, make_inits_many_functor(bit_vector_classes));
+    for_each_in_tuple(hyb_classes, make_inits_many_functor(hyb_classes));
 
     for_each_in_tuple(iv_classes, make_pysequence_init_functor());
     for_each_in_tuple(enc_classes, make_pysequence_init_functor());
