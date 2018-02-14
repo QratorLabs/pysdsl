@@ -329,7 +329,108 @@ auto add_bitvector_class(py::module &m, const std::string&& name,
 
     return cls;
 }
+
+
+template <class T>
+class support_helper
+{
+private:
+    const sdsl::bit_vector& m_vec;
+    const T& m_support;
+public:
+    typedef T type;
+
+    support_helper(const sdsl::bit_vector& vec, const T& support):
+        m_vec(vec),
+        m_support(support)
+    {}
+    auto size() const { return m_vec.size(); }
+    auto operator()(size_t idx) const { return m_support(idx); }
+};
+
+
+template <class S>
+class bind_support_functor
+{
+public:
+    bind_support_functor(const char* call_name): m_call_name(call_name)
+    {}
+
+    template <class T>
+    decltype(auto) operator() (py::class_<T>& cls) const
+    {
+        cls.def(
+            m_call_name,
+            [](T& self)
+            {
+                S support;
+                sdsl::util::init_support(support, &self);
+
+                return support;
+            },
+            py::keep_alive<0, 1>()
+        );
+        return cls;
+    }
+
+private:
+    const char* m_call_name;
+};
+
+template <class S>
+class bind_support_functor<support_helper<S>>
+{
+public:
+    bind_support_functor(const char* call_name): m_call_name(call_name)
+    {}
+
+    template <class T>
+    decltype(auto) operator() (py::class_<T>& cls) const
+    {
+        cls.def(
+            m_call_name,
+            [](T& self)
+            {
+                S support;
+                sdsl::util::init_support(support, &self);
+
+                return support_helper<S>(self, support);
+            },
+            py::keep_alive<0, 1>()
+        );
+        return cls;
+    }
+
+private:
+    const char* m_call_name;
+};
+
+
+template <class Base, class...T>
+auto add_support_class(py::module &m, const std::string&& name,
+                       std::tuple<T...>& bind,
+                       const char* bind_name,
+                       const char* doc = nullptr)
+{
+    auto cls = py::class_<Base>(m, name.c_str());
+
+    cls.def(
+        "__call__",
+        [](const Base& self, size_t idx)
+        {
+            if (idx >= self.size())
+            {
+                throw std::out_of_range(std::to_string(idx));
+            }
+            return self(idx);
+        },
+        py::call_guard<py::gil_scoped_release>(),
+        py::arg("idx")
     );
+
+    if (doc) cls.doc() = doc;
+
+    for_each_in_tuple(bind, bind_support_functor<Base>(bind_name));
 
     return cls;
 }
@@ -581,6 +682,187 @@ PYBIND11_MODULE(pysdsl, m)
             "FM-Index.'' DCC 2014."
         )
     );
+
+    const char* doc_rank_v(
+        "A rank structure proposed by Sebastiano Vigna\nSpace complexity: "
+        "0.25n for a bit vector of length n bits.\n\nThe superblock size is "
+        "512. Each superblock is subdivided into 512/64 = 8 blocks. "
+        "So absolute counts for the superblock add 64/512 bits on top of each "
+        "supported bit. Since the first of the 8 relative count values is 0, "
+        "we can fit the remaining 7 (each of width log(512)=9) in a 64bit "
+        "word. The relative counts add another 64/512 bits on top of each "
+        "supported bit.\nIn total this results in 128/512=25% overhead.\n"
+        "Reference\nSebastiano Vigna: Broadword Implementation of Rank/Select "
+        "Queries. WEA 2008: 154-168"
+    );
+
+    add_support_class<sdsl::rank_support_v<0, 1>>(
+        m, "RankSupportV_0", bit_vector_classes, "init_rank_0", doc_rank_v
+    );
+    add_support_class<sdsl::rank_support_v<1, 1>>(
+        m, "RankSupportV_1", bit_vector_classes, "init_rank", doc_rank_v
+    );
+    add_support_class<sdsl::rank_support_v<10, 2>>(
+        m, "RankSupportV_10",  bit_vector_classes, "init_rank_10", doc_rank_v
+    );
+    add_support_class<sdsl::rank_support_v<11, 2>>(
+        m, "RankSupportV_11", bit_vector_classes, "init_rank_11", doc_rank_v
+    );
+
+    const char* doc_rank_v5(
+        "A class supporting rank queries in constant time.\n"
+        "Space complexity: 0.0625n bits for a bit vector of length n bits.\n\n"
+        "The superblock size is 2048. Each superblock is subdivided into "
+        "2048/(6*64) = 5 blocks (with some bit remaining). So absolute counts "
+        "for the superblock add 64/2048 bits on top of each supported bit. "
+        "Since the first of the 6 relative count values is 0, we can fit the "
+        "remaining 5 (each of width log(2048)=11) in a 64 bit word. The "
+        "relative counts add another 64/2048 bits bits on top of each "
+        "supported bit. In total this results in 128/2048=6.25% overhead."
+    );
+
+    add_support_class<sdsl::rank_support_v5<0, 1>>(
+        m, "RankSupportV5_0", bit_vector_classes, "init_rankV5_0", doc_rank_v5
+    );
+    add_support_class<sdsl::rank_support_v5<1, 1>>(
+        m, "RankSupportV5_1", bit_vector_classes, "init_rankV5", doc_rank_v5
+    );
+    add_support_class<sdsl::rank_support_v5<10, 2>>(
+        m, "RankSupportV5_10", bit_vector_classes, "init_rankV5_10", doc_rank_v5
+    );
+    add_support_class<sdsl::rank_support_v5<11, 2>>(
+        m, "RankSupportV5_11", bit_vector_classes, "init_rankV5_11", doc_rank_v5
+    );
+
+    const char* doc_rank_scan(
+        "A class supporting rank queries in linear time.\n"
+        "Space complexity: Constant.\n"
+        "Time complexity: Linear in the size of the supported vector."
+    );
+
+    add_support_class<sdsl::rank_support_scan<0, 1>>(
+        m, "RankSupportScan_0",  bit_vector_classes, "init_rankScan_0",
+        doc_rank_scan
+    );
+    add_support_class<sdsl::rank_support_scan<1, 1>>(
+        m, "RankSupportScan_1", bit_vector_classes, "init_rankScan",
+        doc_rank_scan);
+    add_support_class<sdsl::rank_support_scan<10, 2>>(
+        m, "RankSupportScan_10", bit_vector_classes, "init_rankScan_10",
+        doc_rank_scan);
+    add_support_class<sdsl::rank_support_scan<11, 2>>(
+        m, "RankSupportScan_11", bit_vector_classes, "init_rankScan_11",
+        doc_rank_scan);
+
+    add_support_class<sdsl::rank_support_il<0>>(m, "RankSupportIL_0",
+                                                bvil_classes, "init_rank_0");
+    add_support_class<sdsl::rank_support_il<1>>(m, "RankSupportIL_1",
+                                                bvil_classes, "init_rank");
+
+    add_support_class<sdsl::rank_support_rrr<0, 63>>(
+        m, "RankSupportRRR63_0", rrr_classes, "init_rank_0"
+    );
+    add_support_class<sdsl::rank_support_rrr<1, 63>>(
+        m, "RankSupportRRR63_1", rrr_classes, "init_rank"
+    );
+
+    add_support_class<sdsl::rank_support_sd<0>>(m, "RankSupportSD_0",
+                                                sd_classes, "init_rank_0");
+    add_support_class<sdsl::rank_support_sd<1>>(m, "RankSupportSD_1",
+                                                sd_classes, "init_rank");
+
+    add_support_class<sdsl::rank_support_hyb<0>>(m, "RankSupportHyb_0",
+                                                 hyb_classes, "init_rank_0");
+    add_support_class<sdsl::rank_support_hyb<1>>(m, "RankSupportHyb_1",
+                                                 hyb_classes, "init_rank");
+
+    const char* doc_select_mcl(
+        "A class supporting constant time select queries.\n"
+        "Space usage: The space usage of the data structure depends on the "
+        "number `m` of ones in the original bitvector `b`. We store the "
+        "position of every 4096th set bit (called L1-sampled bits) of `b`. "
+        "This takes in the worst case (m/4096) log(n) <= (n/64) bits.\n"
+        "Next,\n(1) if the distance of two adjacent L1-sampled bits "
+        "b[i] and b[j] is greater or equal than log^4 (n), then we store "
+        "each of the 4096 positions of the set `b` in [i..j-1] with "
+        "log(n) bits. This results in at most "
+        "`4096 log(n) / log^4(n)=4096 / log^3(n)` bits per bit.\nFor a "
+        "bitvector of 4GB, i.e. log(n) = 35 we get about 0.01 bits per bit.\n"
+        "If the j-i+1 < log^4(n) then\n(2) we store the relative position of "
+        "every 64th set bit (called L2-sampled bits) in b[i..j-1] in at most "
+        "4 log log (n) bits per L2-sampled bits.\nAn pessimistic upper bound "
+        "for the space would be `4 log log (n) / 64 <= 24/64 = 0.375` bit per "
+        "bit (since `log log (n) <= 6`. It is very pessimistic, since we store "
+        "the relative position in `log log (j-i+1) <= log log (n)` bits.\n\n"
+        "The implementation is a practical variant of the following reference:"
+        "\nDavid Clark: PhD Thesis: Compact Pat Trees, University of Waterloo, "
+        "1996 (Section 2.2.2). "
+        "http://www.nlc-bnc.ca/obj/s4/f2/dsk3/ftp04/nq21335.pdf"
+    );
+
+    add_support_class<support_helper<sdsl::select_support_mcl<0, 1>>>(
+        m, "SelectSupportMCL_0", bit_vector_classes, "init_select_0",
+        doc_select_mcl
+    );
+    add_support_class<support_helper<sdsl::select_support_mcl<1, 1>>>(
+        m, "SelectSupportMCL_1", bit_vector_classes, "init_select",
+        doc_select_mcl
+    );
+    add_support_class<support_helper<sdsl::select_support_mcl<10, 2>>>(
+        m, "SelectSupportMCL_10", bit_vector_classes, "init_select_10",
+        doc_select_mcl
+    );
+    add_support_class<support_helper<sdsl::select_support_mcl<11, 2>>>(
+        m, "SelectSupportMCL_11", bit_vector_classes, "init_select_11",
+        doc_select_mcl
+    );
+
+    const char* doc_select_scan(
+        "A class supporting linear time select queries.\n"
+        "Space complexity: Constant\n"
+        "Time complexity: Linear in the size of the supported vector."
+    );
+
+    add_support_class<support_helper<sdsl::select_support_scan<0, 1>>>(
+        m, "SelectSupportScan_0", bit_vector_classes, "init_selectScan_0",
+        doc_select_scan
+    );
+    add_support_class<support_helper<sdsl::select_support_scan<1, 1>>>(
+        m, "SelectSupportScan_1", bit_vector_classes, "init_selectScan",
+        doc_select_scan
+    );
+    add_support_class<support_helper<sdsl::select_support_scan<10, 2>>>(
+        m, "SelectSupportScan_10", bit_vector_classes, "init_selectScan_10",
+        doc_select_scan
+    );
+    add_support_class<support_helper<sdsl::select_support_scan<01, 2>>>(
+        m, "SelectSupportScan_11", bit_vector_classes, "init_selectScan_11",
+        doc_select_scan
+    );
+
+    add_support_class<sdsl::select_support_il<0>>(
+        m, "SelectSupportIL_0", bvil_classes, "init_select_0"
+    );
+    add_support_class<sdsl::select_support_il<1>>(
+        m, "SelectSupportIL_1", bvil_classes, "init_select"
+    );
+
+    add_support_class<sdsl::select_support_rrr<0, 63>>(
+        m, "SelectSupportRRR63_0", rrr_classes, "init_select_0"
+    );
+    add_support_class<sdsl::select_support_rrr<1, 63>>(
+        m, "SelectSupportRRR63_1", rrr_classes, "init_select"
+    );
+
+    add_support_class<sdsl::select_support_sd<0>>(
+        m, "SelectSupportSD_0", sd_classes, "init_select_0"
+    );
+    add_support_class<sdsl::select_support_sd<1>>(
+        m, "SelectSupportSD_1", sd_classes, "init_select"
+    );
+
+    //add_support_class<sdsl::select_support_hyb<>>(m, "SelectSupportHyb",
+    //                                              hyb_classes);
 
     for_each_in_tuple(enc_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(enc_classes, make_inits_many_functor(enc_classes));
