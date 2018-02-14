@@ -6,10 +6,21 @@ const char* doc_int_vector(
     "contains integers of fixed width `w` in [1..64]."
 );
 
+const char* doc_capacity(
+    "Returns the size of the occupied bits of the int_vector. The capacity of "
+    "a int_vector is greater or equal to the bit_size of the "
+    "vector: capacity >= bit_size)."
+);
+
 const char* doc_bit_compress(
     "Bit compress the int_vector. Determine the biggest value X "
     "and then set the int_width to the smallest possible so that "
     "we still can represent X."
+);
+
+const char* doc_set_to_value(
+    "Set all entries of int_vector to value k. This method pre-calculates "
+    "the content of at most 64 words and then repeatedly inserts these words."
 );
 
 const char* doc_dac_vector(

@@ -5,7 +5,7 @@ cfg['linker_args'] = ['-fvisibility=hidden']
 cfg['include_dirs'] = ['sdsl-lite/include']
 cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
 cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp',
-                       'sizes.hpp', 'calc.hpp']
+                       'sizes.hpp', 'calc.hpp', 'docstrings.hpp']
 %>
 */
 
@@ -160,11 +160,7 @@ auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
              "Resize the int_vector in terms of elements.")
         .def("bit_resize", &T::bit_resize,
              "Resize the int_vector in terms of bits.")
-        .def_property_readonly("capacity", &T::capacity,
-                               "Returns the size of the occupied bits of the "
-                               "int_vector. The capacity of a int_vector is "
-                               "greater or equal to the bit_size of the "
-                               "vector: capacity >= bit_size).")
+        .def_property_readonly("capacity", &T::capacity, doc_capacity)
 
         .def(
             "__setitem__",
@@ -184,9 +180,7 @@ auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
         .def("set_to_value",
              [](T &self, S value) { sdsl::util::set_to_value(self, value); },
              py::arg("k"),
-             "Set all entries of int_vector to value k. This method "
-             "pre-calculates the content of at most 64 words and then "
-             "repeatedly inserts these words.",
+             doc_set_to_value,
              py::call_guard<py::gil_scoped_release>()
         )
         .def("set_zero_bits",
@@ -584,39 +578,36 @@ PYBIND11_MODULE(pysdsl, m)
     auto enc_classes = for_each_in_tuple(coders, add_enc_coders_functor(m));
     auto vlc_classes = for_each_in_tuple(coders, add_vlc_coders_functor(m));
     auto dac_classes = std::make_tuple(
-        add_compressed_class<sdsl::dac_vector<>>(
-        m, "DacVector", doc_dac_vector
-    )
-    .def_property_readonly("levels", &sdsl::dac_vector<>::levels),
-    add_compressed_class<sdsl::dac_vector_dp<>>(
-        m, "DacVectorDP", doc_dac_vector_dp
-    )
-    .def("cost", &sdsl::dac_vector_dp<>::cost, py::arg("n"), py::arg("m"))
-    .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels)
+        add_compressed_class<sdsl::dac_vector<>>(m, "DacVector",
+                                                 doc_dac_vector)
+            .def_property_readonly("levels", &sdsl::dac_vector<>::levels),
+        add_compressed_class<sdsl::dac_vector_dp<>>(m, "DacVectorDP",
+                                                    doc_dac_vector_dp)
+            .def("cost", &sdsl::dac_vector_dp<>::cost, py::arg("n"),
+                 py::arg("m"))
+            .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels)
     );
 
     auto bvil_classes = std::make_tuple(
-        add_bitvector_class<sdsl::bit_vector_il<512>>(
-            m, "BitVectorIL512", doc_bit_vector_il
-        )
+        //add_bitvector_class<sdsl::bit_vector_il<64>>(m, "BitVectorIL64",
+        //                                              doc_bit_vector_il),
+        add_bitvector_class<sdsl::bit_vector_il<512>>(m, "BitVectorIL512",
+                                                      doc_bit_vector_il)
     );
 
     auto rrr_classes = std::make_tuple(
-        add_bitvector_class<sdsl::rrr_vector<63>>(
-            m, "RRRVector63", doc_rrr_vector
-        )
+        add_bitvector_class<sdsl::rrr_vector<63>>(m, "RRRVector63",
+                                                  doc_rrr_vector)
     );
 
     auto sd_classes = std::make_tuple(
-        add_bitvector_class<sdsl::sd_vector<>>(
-            m, std::string("SDVector"), doc_sd_vector
-        )
+        add_bitvector_class<sdsl::sd_vector<>>(m, std::string("SDVector"),
+                                               doc_sd_vector)
     );
 
     auto hyb_classes = std::make_tuple(
-        add_bitvector_class<sdsl::hyb_vector<16>>(
-            m, std::string("HybVector16"), doc_hyb_vector
-        )
+        add_bitvector_class<sdsl::hyb_vector<16>>(m, std::string("HybVector16"),
+                                                  doc_hyb_vector)
     );
 
     add_support_class<sdsl::rank_support_v<0, 1>>(
