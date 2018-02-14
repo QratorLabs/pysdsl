@@ -748,14 +748,26 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(bvil_classes,
                       make_inits_many_functor(bit_vector_classes));
     for_each_in_tuple(bvil_classes, make_inits_many_functor(bvil_classes));
+    for_each_in_tuple(bvil_classes, make_inits_many_functor(rrr_classes));
+    for_each_in_tuple(bvil_classes, make_inits_many_functor(sd_classes));
+    for_each_in_tuple(bvil_classes, make_inits_many_functor(hyb_classes));
 
     for_each_in_tuple(rrr_classes, make_inits_many_functor(bit_vector_classes));
+    for_each_in_tuple(rrr_classes, make_inits_many_functor(bvil_classes));
     for_each_in_tuple(rrr_classes, make_inits_many_functor(rrr_classes));
+    for_each_in_tuple(rrr_classes, make_inits_many_functor(sd_classes));
+    for_each_in_tuple(rrr_classes, make_inits_many_functor(hyb_classes));
 
     for_each_in_tuple(sd_classes, make_inits_many_functor(bit_vector_classes));
+    for_each_in_tuple(sd_classes, make_inits_many_functor(bvil_classes));
+    for_each_in_tuple(sd_classes, make_inits_many_functor(rrr_classes));
     for_each_in_tuple(sd_classes, make_inits_many_functor(sd_classes));
+    for_each_in_tuple(sd_classes, make_inits_many_functor(hyb_classes));
 
     for_each_in_tuple(hyb_classes, make_inits_many_functor(bit_vector_classes));
+    for_each_in_tuple(hyb_classes, make_inits_many_functor(bvil_classes));
+    for_each_in_tuple(hyb_classes, make_inits_many_functor(rrr_classes));
+    for_each_in_tuple(hyb_classes, make_inits_many_functor(sd_classes));
     for_each_in_tuple(hyb_classes, make_inits_many_functor(hyb_classes));
 
     for_each_in_tuple(iv_classes, make_pysequence_init_functor());

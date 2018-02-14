@@ -1,6 +1,6 @@
 #pragma once
 
-
+#include <algorithm>
 #include <tuple>
 
 #include <pybind11/pybind11.h>
@@ -38,36 +38,86 @@ namespace detail
         return for_each_impl(t, f, std::index_sequence_for<T...>{});
     }
 
-    template <class ToCls>
-    class add_inits_functor
+    template <class BindCls>
+    class add_init_functor
     {
     public:
-        add_inits_functor(ToCls &cls_to) : m_cls_to(cls_to) {}
+        add_init_functor(BindCls &cls_to_add_def) : m_cls_to(cls_to_add_def) {}
 
-        template <typename FromCls>
-        decltype(auto) operator()(FromCls &)
+        template <typename InputCls>
+        decltype(auto) operator()(const InputCls &)
         {
-            m_cls_to.def(py::init([](const typename FromCls::type& from) {
-                return typename ToCls::type(from);
+            m_cls_to.def(py::init([](const typename InputCls::type& from) {
+                return typename BindCls::type(from);
             }), py::arg("v"), py::call_guard<py::gil_scoped_release>());
             return m_cls_to;
         }
 
     private:
-        ToCls& m_cls_to;
+        BindCls& m_cls_to;
     };
 
+    #define CREATE_INIT_FUNCTOR(...)\
+    class add_init_functor<__VA_ARGS__>\
+    {\
+    public:\
+        typedef __VA_ARGS__ BindCls;\
+        add_init_functor(BindCls &cls_to_add_def) : m_cls_to(cls_to_add_def) {}\
+        auto operator()(const py::class_<sdsl::int_vector<1>>&)\
+        {\
+            m_cls_to.def(py::init([](const sdsl::bit_vector& from) {\
+                return typename BindCls::type(from);\
+            }), py::arg("v"), py::call_guard<py::gil_scoped_release>());\
+            return m_cls_to;\
+        }\
+        auto operator()(const BindCls&)\
+        {\
+            m_cls_to.def(py::init([](const typename BindCls::type& from) {\
+                return typename BindCls::type(from); /*just a copy*/ \
+            }), py::arg("v"), py::call_guard<py::gil_scoped_release>());\
+            return m_cls_to;\
+        }\
+        template <typename InputCls>\
+        decltype(auto) operator()(const InputCls &)\
+        {\
+            m_cls_to.def(\
+                py::init([](const typename InputCls::type& from) {\
+                    sdsl::bit_vector temp(from.size());\
+                    std::copy(from.begin(), from.end(), temp.begin());\
+                    return typename BindCls::type(temp);\
+                }),\
+                py::arg("v"), py::call_guard<py::gil_scoped_release>(),\
+                "\tInvolves intermediate BitVector creation"\
+            );\
+            return m_cls_to;\
+        }\
+    private:\
+        BindCls& m_cls_to;\
+    };
+
+    template <uint32_t B>
+    CREATE_INIT_FUNCTOR(py::class_<sdsl::bit_vector_il<B>>);
+
+    template <uint16_t B, class R, uint16_t K>
+    CREATE_INIT_FUNCTOR(py::class_<sdsl::rrr_vector<B, R, K>>);
+
+    template <class T, class Ts0, class Ts1>
+    CREATE_INIT_FUNCTOR(py::class_<sdsl::sd_vector<T, Ts0, Ts1>>);
+
+    template <uint32_t K>
+    CREATE_INIT_FUNCTOR(py::class_<sdsl::hyb_vector<K>>);
+
     template <class... From>
-    class add_inits_many_functor
+    class add_many_inits_to_each
     {
     public:
-        add_inits_many_functor(const std::tuple<From...>& from_each):
+        add_many_inits_to_each(const std::tuple<From...>& from_each):
                                m_from_each(from_each) {}
 
-        template <typename ToCls>
-        decltype(auto) operator()(ToCls &cls)
+        template <typename BindCls>
+        decltype(auto) operator()(BindCls &cls)
         {
-            return for_each(m_from_each, add_inits_functor<ToCls>(cls));
+            return for_each(m_from_each, add_init_functor<BindCls>(cls));
         }
 
     private:
@@ -79,10 +129,10 @@ namespace detail
     public:
         add_pysequence_init_functor() {}
 
-        template <class ToCls>
-        decltype(auto) operator()(ToCls& cls)
+        template <class BindCls>
+        decltype(auto) operator()(BindCls& cls)
         {
-            typedef typename ToCls::type base_class;
+            typedef typename BindCls::type base_class;
             typedef typename base_class::value_type value_type;
 
             cls.def(py::init([](const py::sequence& v) {
@@ -111,7 +161,9 @@ namespace detail
         }
 
         template <class Th, class Ts1, class Ts0>
-        decltype(auto) operator()(py::class_<sdsl::sd_vector<Th, Ts1, Ts0>>& cls)
+        decltype(auto) operator()(
+            py::class_<sdsl::sd_vector<Th, Ts1, Ts0>>& cls
+        )
         {
             typedef typename py::class_<sdsl::sd_vector<Th, Ts1, Ts0>> py_class;
             typedef typename py_class::type base_class;
@@ -142,28 +194,14 @@ decltype(auto) for_each_in_tuple(std::tuple<Ts...> &t, F f)
 }
 
 
-template <class ToCls>
-auto make_inits_functor(ToCls &cls_to)
-{
-    return detail::add_inits_functor<ToCls>(cls_to);
-}
-
-
 auto make_pysequence_init_functor()
 {
     return detail::add_pysequence_init_functor();
 }
 
 
-template <class ToCls>
-auto add_pysequence_init(ToCls &cls)
-{
-    return make_pysequence_init_functor()(cls);
-}
-
-
 template <class... From>
 auto make_inits_many_functor(const std::tuple<From...>& from_each)
 {
-    return detail::add_inits_many_functor<From...>(from_each);
+    return detail::add_many_inits_to_each<From...>(from_each);
 }
