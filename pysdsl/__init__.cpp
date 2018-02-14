@@ -116,7 +116,8 @@ auto add_io(py::class_<T>& cls)
             if (!fout.good()) throw std::runtime_error("Error during write");
             fout.close();
         },
-        py::arg("file_name")
+        py::arg("file_name"),
+        py::call_guard<py::gil_scoped_release>()
     );
 
     cls.def_property_readonly(
@@ -125,7 +126,8 @@ auto add_io(py::class_<T>& cls)
             std::stringstream fout;
             sdsl::write_structure<sdsl::JSON_FORMAT>(self, fout);
             return fout.str();
-        }
+        },
+        py::call_guard<py::gil_scoped_release>()
     );
 
     cls.def_property_readonly(
@@ -168,7 +170,7 @@ auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
             [](T &self, size_t position, S value) {
                 if (position >= self.size())
                 {
-                    throw py::index_error(std::to_string(position));
+                    throw std::out_of_range(std::to_string(position));
                 }
                 self[position] = value;
             }
@@ -180,33 +182,33 @@ auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
              "Sets each entry of the vector at position `i` to value `i`")
         .def("set_to_value",
              [](T &self, S value) { sdsl::util::set_to_value(self, value); },
-             py::call_guard<py::gil_scoped_release>(),
              py::arg("k"),
              "Set all entries of int_vector to value k. This method "
              "pre-calculates the content of at most 64 words and then "
-             "repeatedly inserts these words."
+             "repeatedly inserts these words.",
+             py::call_guard<py::gil_scoped_release>()
         )
         .def("set_zero_bits",
              [](T &self) { sdsl::util::_set_zero_bits(self); },
-             py::call_guard<py::gil_scoped_release>(),
-             "Sets all bits of the int_vector to 0-bits.")
+             "Sets all bits of the int_vector to 0-bits.",
+             py::call_guard<py::gil_scoped_release>())
         .def("set_one_bits",
              [](T &self) { sdsl::util::_set_one_bits(self); },
-             py::call_guard<py::gil_scoped_release>(),
-             "Sets all bits of the int_vector to 1-bits.")
+             "Sets all bits of the int_vector to 1-bits.",
+             py::call_guard<py::gil_scoped_release>())
         .def(
             "set_random_bits",
             [](T &self, int seed) {
                 sdsl::util::set_random_bits(self, seed);
             },
-            py::call_guard<py::gil_scoped_release>(),
             py::arg_v(
                 "seed",
                 0,
                 "If seed = 0, the time is used to initialize the pseudo "
                 "random number generator, otherwise the seed parameter is used."
             ),
-            "Sets all bits of the int_vector to pseudo-random bits."
+            "Sets all bits of the int_vector to pseudo-random bits.",
+            py::call_guard<py::gil_scoped_release>()
         )
         .def_static(
             "rnd_positions",
@@ -218,7 +220,8 @@ auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
                 return std::make_tuple(res, mask);
             },
             py::arg("log_s"), py::arg("mod") = 0, py::arg("seed") = 0,
-            "Create `2**{log_s}` random integers mod `mod` with seed `seed`"
+            "Create `2**{log_s}` random integers mod `mod` with seed `seed`",
+            py::call_guard<py::gil_scoped_release>()
         )
         .def(
             "__imod__",
@@ -231,37 +234,42 @@ auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
 
         .def("cnt_one_bits",
             [](const T &self) { return sdsl::util::cnt_one_bits(self); },
-            "Number of set bits in vector")
+            "Number of set bits in vector",
+            py::call_guard<py::gil_scoped_release>())
         .def("cnt_onezero_bits",
              [](const T &self) { return sdsl::util::cnt_onezero_bits(self); },
-             "Number of occurrences of bit pattern `10` in vector")
+             "Number of occurrences of bit pattern `10` in vector",
+             py::call_guard<py::gil_scoped_release>())
         .def("cnt_zeroone_bits",
              [](const T &self) { return sdsl::util::cnt_zeroone_bits(self); },
-             "Number of occurrences of bit pattern `01` in vector")
+             "Number of occurrences of bit pattern `01` in vector",
+             py::call_guard<py::gil_scoped_release>())
 
         .def(
             "next_bit",
             [](const T &self, size_t idx) {
                 if (idx >= self.bit_size())
                 {
-                    throw py::index_error(std::to_string(idx));
+                    throw std::out_of_range(std::to_string(idx));
                 }
                 return sdsl::util::next_bit(self, idx);
             },
             py::arg("idx"),
-            "Get the smallest position `i` >= `idx` where a bit is set"
+            "Get the smallest position `i` >= `idx` where a bit is set",
+            py::call_guard<py::gil_scoped_release>()
         )
         .def(
             "prev_bit",
             [](const T &self, size_t idx) {
                 if (idx >= self.bit_size())
                 {
-                    throw py::index_error(std::to_string(idx));
+                    throw std::out_of_range(std::to_string(idx));
                 }
                 return sdsl::util::prev_bit(self, idx);
             },
             py::arg("idx"),
-            "Get the largest position `i` <= `idx` where a bit is set"
+            "Get the largest position `i` <= `idx` where a bit is set",
+            py::call_guard<py::gil_scoped_release>()
         )
     ;
 
@@ -294,7 +302,7 @@ auto add_compressed_class(py::module &m, const std::string& name,
 
 
 template <class T>
-auto add_bitvector_class(py::module &m, const std::string& name,
+auto add_bitvector_class(py::module &m, const std::string&& name,
                          const char* doc = nullptr)
 {
     auto cls = add_compressed_class<T>(m, name, doc);
@@ -304,7 +312,7 @@ auto add_bitvector_class(py::module &m, const std::string& name,
         [](const T &self, size_t idx, uint8_t len) {
             if (idx + len - 1 >= self.size())
             {
-                throw py::index_error(std::to_string(idx));
+                throw std::out_of_range(std::to_string(idx));
             }
             if (len > 64)
             {
@@ -313,7 +321,14 @@ auto add_bitvector_class(py::module &m, const std::string& name,
             return self.get_int(idx, len);
         },
         py::arg("idx"),
-        py::arg("len") = 64
+        py::arg("len") = 64,
+        "Get the integer value of the binary string of length `len` "
+        "starting at position `idx`.",
+        py::call_guard<py::gil_scoped_release>()
+    );
+
+    return cls;
+}
     );
 
     return cls;
@@ -341,12 +356,13 @@ public:
             [](const enc &self, typename enc::size_type i) {
                 if (i >= self.size() / self.get_sample_dens())
                 {
-                    throw py::index_error(std::to_string(i));
+                    throw std::out_of_range(std::to_string(i));
                 }
                 return self.sample(i);
             },
             "Returns the i-th sample of the compressed vector"
-            "i: The index of the sample. 0 <= i < size()/get_sample_dens()"
+            "i: The index of the sample. 0 <= i < size()/get_sample_dens()",
+            py::call_guard<py::gil_scoped_release>()
         )
         ;
 
@@ -401,25 +417,30 @@ PYBIND11_MODULE(pysdsl, m)
                 }),
                 py::arg("size") = 0,
                 py::arg("default_value") = 0,
-                py::arg("bit_width") = 64)
+                py::arg("bit_width") = 64,
+                py::call_guard<py::gil_scoped_release>())
             .def(
                 "expand_width",
                 [](int_vector<0> &self, size_t width) {
                     sdsl::util::expand_width(self, width);
                 },
-                "Expands the integer width to new_width >= v.width()."
+                "Expands the integer width to new_width >= v.width().",
+                py::call_guard<py::gil_scoped_release>()
             )
             .def("bit_compress",
                 [](int_vector<0> &self) { sdsl::util::bit_compress(self); },
                 "Bit compress the int_vector. Determine the biggest value X "
                 "and then set the int_width to the smallest possible so that "
-                "we still can represent X."),
+                "we still can represent X.",
+                py::call_guard<py::gil_scoped_release>()),
 
         add_int_class<int_vector<1>, bool>(m, "BitVector")
             .def(py::init([](size_t size, bool default_value) {
                     return int_vector<1>(size, default_value, 1);
                 }), py::arg("size") = 0, py::arg("default_value") = false)
-            .def("flip", &int_vector<1>::flip, "Flip all bits of bit_vector"),
+            .def("flip", &int_vector<1>::flip,
+                 "Flip all bits of bit_vector",
+                 py::call_guard<py::gil_scoped_release>()),
 
         add_int_class<int_vector<4>, uint8_t>(m, "Int4Vector")
             .def(py::init([](size_t size, uint8_t default_value) {
@@ -492,7 +513,7 @@ PYBIND11_MODULE(pysdsl, m)
         m, "DacVectorDP",
         "A generic immutable space-saving vector class for unsigned integers.\n"
         "The values of a dac_vector are immutable after the constructor call.\n"
-        "The ,,escaping'' technique is used to encode values. Bit widths of "
+        "The \"escaping\" technique is used to encode values. Bit widths of "
         "each encoding level are chosen optimally via dynamic programming.\n"
         "References\n [1] N. Brisaboa and S. Ladra and G. Navarro: `DACs: "
         "Bringing Direct Access to Variable-Length Codes`, "
