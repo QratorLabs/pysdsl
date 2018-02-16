@@ -57,6 +57,39 @@ namespace detail
         BindCls& m_cls_to;
     };
 
+    template <uint8_t B>
+    class add_init_functor<py::class_<sdsl::int_vector<B>>>
+    {
+    public:
+        typedef py::class_<sdsl::int_vector<B>> BindCls;
+
+        add_init_functor(BindCls &cls_to_add_def) : m_cls_to(cls_to_add_def) {}
+
+        auto operator()(const BindCls&)
+        {
+            m_cls_to.def(py::init([](const typename BindCls::type& from) {
+                return typename BindCls::type(from); /*just a copy*/
+            }), py::arg("v"), py::call_guard<py::gil_scoped_release>());
+            return m_cls_to;
+        }
+
+        template <typename InputCls>
+        decltype(auto) operator()(const InputCls &)
+        {
+            m_cls_to.def(
+                py::init([](const typename InputCls::type& from) {
+                    typename BindCls::type result(from.size());
+                    std::copy(from.begin(), from.end(), result.begin());
+                    return result;
+                }),
+            py::arg("v"), py::call_guard<py::gil_scoped_release>());
+            return m_cls_to;
+        }
+
+    private:
+        BindCls& m_cls_to;
+    };
+
     #define CREATE_INIT_FUNCTOR(...)\
     class add_init_functor<__VA_ARGS__>\
     {\

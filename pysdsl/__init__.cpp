@@ -120,12 +120,35 @@ auto add_io(py::class_<T>& cls)
         py::arg("file_name"),
         py::call_guard<py::gil_scoped_release>()
     );
+    cls.def(
+        "write_structure_html",
+        [](const T& self, const std::string& file_name) {
+            std::ofstream fout;
+            fout.open(file_name, std::ios::out | std::ios::binary);
+            if (!fout.good()) throw std::runtime_error("Can't write to file");
+            sdsl::write_structure<sdsl::HTML_FORMAT>(self, fout);
+            if (!fout.good()) throw std::runtime_error("Error during write");
+            fout.close();
+        },
+        py::arg("file_name"),
+        py::call_guard<py::gil_scoped_release>()
+    );
 
     cls.def_property_readonly(
         "structure_json",
         [](const T& self) {
             std::stringstream fout;
             sdsl::write_structure<sdsl::JSON_FORMAT>(self, fout);
+            return fout.str();
+        },
+        py::call_guard<py::gil_scoped_release>()
+    );
+
+    cls.def_property_readonly(
+        "structure_html",
+        [](const T& self) {
+            std::stringstream fout;
+            sdsl::write_structure<sdsl::HTML_FORMAT>(self, fout);
             return fout.str();
         },
         py::call_guard<py::gil_scoped_release>()
@@ -635,15 +658,23 @@ PYBIND11_MODULE(pysdsl, m)
     auto bvil_classes = std::make_tuple(
         add_bitvector_class<sdsl::bit_vector_il<64>>(m, "BitVectorIL64",
                                                       doc_bit_vector_il),
+        add_bitvector_class<sdsl::bit_vector_il<128>>(m, "BitVectorIL128",
+                                                      doc_bit_vector_il),
+        add_bitvector_class<sdsl::bit_vector_il<256>>(m, "BitVectorIL256",
+                                                      doc_bit_vector_il),
         add_bitvector_class<sdsl::bit_vector_il<512>>(m, "BitVectorIL512",
                                                       doc_bit_vector_il)
     );
 
     auto rrr_classes = std::make_tuple(
+        add_bitvector_class<sdsl::rrr_vector<3>>(m, "RRRVector3",
+                                                  doc_rrr_vector),
         add_bitvector_class<sdsl::rrr_vector<15>>(m, "RRRVector15",
                                                   doc_rrr_vector),
         add_bitvector_class<sdsl::rrr_vector<63>>(m, "RRRVector63",
-                                                  doc_rrr_vector)
+                                                  doc_rrr_vector),
+        add_bitvector_class<sdsl::rrr_vector<256>>(m, "RRRVector256",
+                                                   doc_rrr_vector)
     );
 
     auto sd_classes = std::make_tuple(
@@ -714,6 +745,15 @@ PYBIND11_MODULE(pysdsl, m)
         m, bit_vector_cls, "BitVector", "Scan", false, "_10", "_01",
         doc_select_scan
     );
+
+    for_each_in_tuple(iv_classes, make_inits_many_functor(iv_classes));
+    for_each_in_tuple(iv_classes, make_inits_many_functor(enc_classes));
+    for_each_in_tuple(iv_classes, make_inits_many_functor(vlc_classes));
+    for_each_in_tuple(iv_classes, make_inits_many_functor(dac_classes));
+    for_each_in_tuple(iv_classes, make_inits_many_functor(bvil_classes));
+    for_each_in_tuple(iv_classes, make_inits_many_functor(rrr_classes));
+    for_each_in_tuple(iv_classes, make_inits_many_functor(sd_classes));
+    for_each_in_tuple(iv_classes, make_inits_many_functor(hyb_classes));
 
     for_each_in_tuple(enc_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(enc_classes, make_inits_many_functor(enc_classes));
