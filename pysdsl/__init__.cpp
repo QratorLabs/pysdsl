@@ -298,12 +298,14 @@ auto add_rank_support(py::module &m, py::class_<T>& cls,
 {
     add_support_class<R0>(m, base_name + "Rank" + suffix + s0,
                           "rank", doc_rank);
-    bind_support((R0*) nullptr, cls, std::string("init_rank") + suffix + s0);
+    bind_support((R0 *)nullptr, cls, std::string("init_rank") + suffix + s0);
 
     add_support_class<R1>(m, base_name + "Rank" + suffix + s1,
                           "rank", doc_rank);
-    bind_support((R1*) nullptr, cls, std::string("init_rank") + suffix + s1,
-                 defaults ? (std::string("init_rank") + suffix).c_str() : nullptr);
+    bind_support((R1 *)nullptr, cls, std::string("init_rank") + suffix + s1,
+                 defaults ?
+                    (std::string("init_rank") + suffix).c_str() :
+                    nullptr);
 
     return cls;
 }
@@ -324,12 +326,14 @@ auto add_select_support(py::module &m, py::class_<T>& cls,
 {
     add_support_class<S0>(m, base_name + "Select" + suffix + s0,
                           "select", doc_select);
-    bind_support((S0*) nullptr, cls, std::string("init_select") + suffix + s0);
+    bind_support((S0 *)nullptr, cls, std::string("init_select") + suffix + s0);
 
     add_support_class<S1>(m, base_name + "Select" + suffix + s1,
                           "select", doc_select);
-    bind_support((S1*) nullptr, cls, std::string("init_select") + suffix + s1,
-                 defaults ? (std::string("init_select") + suffix).c_str() : nullptr);
+    bind_support((S1 *)nullptr, cls, std::string("init_select") + suffix + s1,
+                 defaults ?
+                    std::string("init_select") + suffix).c_str() :
+                    nullptr);
 
     return cls;
 }
