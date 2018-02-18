@@ -695,6 +695,11 @@ PYBIND11_MODULE(pysdsl, m)
         m, bit_vector_cls, "BitVector", "", true, "_0", "_1", doc_rank_v5
     );
     add_rank_support<sdsl::bit_vector,
+                     sdsl::rank_support_v5<00, 2>,
+                     sdsl::rank_support_v5<01, 2>>(
+        m, bit_vector_cls, "BitVector", "", false, "_00", "_01", doc_rank_v5
+    );
+    add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_v5<10, 2>,
                      sdsl::rank_support_v5<11, 2>>(
         m, bit_vector_cls, "BitVector", "", false, "_10", "_11", doc_rank_v5
@@ -703,6 +708,11 @@ PYBIND11_MODULE(pysdsl, m)
                     sdsl::rank_support_v<0, 1>,
                     sdsl::rank_support_v<1, 1>>(
         m, bit_vector_cls, "BitVector", "V", false, "_0", "_1", doc_rank_v
+    );
+    add_rank_support<sdsl::bit_vector,
+                     sdsl::rank_support_v<00, 2>,
+                     sdsl::rank_support_v<01, 2>>(
+        m, bit_vector_cls, "BitVector", "V", false, "_00", "_01", doc_rank_v
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_v<10, 2>,
@@ -725,6 +735,12 @@ PYBIND11_MODULE(pysdsl, m)
                      sdsl::rank_support_scan<0, 1>,
                      sdsl::rank_support_scan<1, 1>>(
         m, bit_vector_cls, "BitVector", "Scan", false, "_0", "_1", doc_rank_scan
+    );
+    add_rank_support<sdsl::bit_vector,
+                     sdsl::rank_support_scan<00, 2>,
+                     sdsl::rank_support_scan<01, 2>>(
+        m, bit_vector_cls, "BitVector", "Scan", false, "_00", "_01",
+        doc_rank_scan
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_scan<10, 2>,
