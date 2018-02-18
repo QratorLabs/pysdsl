@@ -10,6 +10,8 @@ namespace py = pybind11;
 template <class Sequence>
 auto add_std_algo(py::class_<Sequence>& cls)
 {
+    typedef typename Sequence::value_type value_type;
+
     cls.def(
         "__iter__",
         [](const Sequence &s) { return py::make_iterator(s.begin(), s.end()); },
@@ -96,16 +98,27 @@ auto add_std_algo(py::class_<Sequence>& cls)
     cls.def(
         "all",
         [](const Sequence &self) {
-            return std::accumulate(self.begin(), self.end(),
-                                   true, std::logical_and<>());
+            return std::all_of(self.begin(), self.end(),
+                               [] (const value_type value) -> bool
+                               { return value; });
         },
         py::call_guard<py::gil_scoped_release>()
     );
     cls.def(
         "any",
         [](const Sequence &self) {
-            return std::accumulate(self.begin(), self.end(),
-                                   false, std::logical_or<>());
+            return std::any_of(self.begin(), self.end(),
+                               [] (const value_type value) -> bool
+                               { return value; });
+        },
+        py::call_guard<py::gil_scoped_release>()
+    );
+    cls.def(
+        "none",
+        [](const Sequence &self) {
+            return std::none_of(self.begin(), self.end(),
+                                [] (const value_type value) -> bool
+                                { return value; });
         },
         py::call_guard<py::gil_scoped_release>()
     );
