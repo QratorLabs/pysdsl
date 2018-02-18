@@ -58,14 +58,6 @@ auto add_sizes(py::class_<T>& cls)
     cls.def("__len__", &T::size, "The number of elements in the int_vector.");
     cls.def_property_readonly("size", &T::size,
                               "The number of elements in the int_vector.");
-    cls.def_property_readonly(
-        "size_in_mega_bytes",
-        [](const T &self) { return sdsl::size_in_mega_bytes(self); }
-    );
-    cls.def_property_readonly(
-        "size_in_bytes",
-        [](const T &self) { return sdsl::size_in_bytes(self); }
-    );
 
     return add_max_size(cls);
 }

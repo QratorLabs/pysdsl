@@ -4,13 +4,12 @@ cfg['compiler_args'] = ['-std=c++14', '-fvisibility=hidden']
 cfg['linker_args'] = ['-fvisibility=hidden']
 cfg['include_dirs'] = ['sdsl-lite/include']
 cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
-cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp',
+cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'io.hpp',
                        'sizes.hpp', 'calc.hpp', 'docstrings.hpp']
 %>
 */
 
 #include <cstdint>
-#include <fstream>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -21,6 +20,7 @@ cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp',
 #include <pybind11/pybind11.h>
 
 #include "calc.hpp"
+#include "io.hpp"
 #include "converters.hpp"
 #include "sizes.hpp"
 #include "docstrings.hpp"
@@ -30,142 +30,6 @@ namespace py = pybind11;
 
 
 using sdsl::int_vector;
-
-
-template <class T>
-auto add_io(py::class_<T>& cls)
-{
-    cls.def(
-        "__str__",
-        [](const T &self) {
-            const size_t max_output = 100;
-
-            std::stringstream fout;
-            fout << '[';
-            size_t count = 0;
-            for (auto i: self)
-            {
-                if (count) fout << ", ";
-
-                fout << i;
-
-                if (count >= max_output)
-                {
-                    fout << ", ...(" << self.size() - count - 1 << " more)";
-                    break;
-                }
-                count++;
-            }
-            fout << ']';
-            return fout.str();
-        }
-    );
-
-    cls.def(
-        "store_to_file",
-        [](const T &self, const std::string& file_name) {
-            return sdsl::store_to_file(self, file_name);
-        },
-        py::arg("file_name"),
-        py::call_guard<py::gil_scoped_release>()
-    );
-
-    cls.def_static(
-        "load_from_file",
-        [](const std::string& file_name) {
-            T self;
-            if (sdsl::load_from_file(self, file_name))
-            {
-                return self;
-            }
-            throw std::exception();
-        },
-        py::arg("file_name"),
-        py::call_guard<py::gil_scoped_release>()
-    );
-
-    cls.def(
-        "store_to_checked_file",
-        [](const T &self, const std::string& file_name) {
-            return sdsl::store_to_checked_file(self, file_name);
-        },
-        py::arg("file_name"),
-        py::call_guard<py::gil_scoped_release>()
-    );
-
-    cls.def_static(
-        "load_from_checkded_file",
-        [](const std::string& file_name) {
-            T self;
-            if (sdsl::load_from_checked_file(self, file_name))
-            {
-                return self;
-            }
-            throw std::exception();
-        },
-        py::arg("file_name"),
-        py::call_guard<py::gil_scoped_release>()
-    );
-
-    cls.def(
-        "write_structure_json",
-        [](const T& self, const std::string& file_name) {
-            std::ofstream fout;
-            fout.open(file_name, std::ios::out | std::ios::binary);
-            if (!fout.good()) throw std::runtime_error("Can't write to file");
-            sdsl::write_structure<sdsl::JSON_FORMAT>(self, fout);
-            if (!fout.good()) throw std::runtime_error("Error during write");
-            fout.close();
-        },
-        py::arg("file_name"),
-        py::call_guard<py::gil_scoped_release>()
-    );
-    cls.def(
-        "write_structure_html",
-        [](const T& self, const std::string& file_name) {
-            std::ofstream fout;
-            fout.open(file_name, std::ios::out | std::ios::binary);
-            if (!fout.good()) throw std::runtime_error("Can't write to file");
-            sdsl::write_structure<sdsl::HTML_FORMAT>(self, fout);
-            if (!fout.good()) throw std::runtime_error("Error during write");
-            fout.close();
-        },
-        py::arg("file_name"),
-        py::call_guard<py::gil_scoped_release>()
-    );
-
-    cls.def_property_readonly(
-        "structure_json",
-        [](const T& self) {
-            std::stringstream fout;
-            sdsl::write_structure<sdsl::JSON_FORMAT>(self, fout);
-            return fout.str();
-        },
-        py::call_guard<py::gil_scoped_release>()
-    );
-
-    cls.def_property_readonly(
-        "structure_html",
-        [](const T& self) {
-            std::stringstream fout;
-            sdsl::write_structure<sdsl::HTML_FORMAT>(self, fout);
-            return fout.str();
-        },
-        py::call_guard<py::gil_scoped_release>()
-    );
-
-    cls.def_property_readonly(
-        "structure",
-        [](const T& self) {
-            std::stringstream fout;
-            sdsl::write_structure<sdsl::JSON_FORMAT>(self, fout);
-            auto json = py::module::import("json");
-            return json.attr("loads")(fout.str());
-        }
-    );
-
-    return cls;
-}
 
 
 template <class T, typename S = uint64_t>
@@ -292,7 +156,9 @@ auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
     ;
 
     add_sizes(cls);
-    add_io(cls);
+    add_description(cls);
+    add_serialization(cls);
+    add_to_string(cls);
 
     add_std_algo(cls);
 
@@ -309,7 +175,9 @@ auto add_compressed_class(py::module &m, const std::string& name,
     auto cls = py::class_<T>(m, name.c_str()).def(py::init());
 
     add_sizes(cls);
-    add_io(cls);
+    add_description(cls);
+    add_serialization(cls);
+    add_to_string(cls);
 
     add_std_algo(cls);
 
@@ -334,6 +202,8 @@ public:
     {}
     auto size() const { return m_vec.size(); }
     auto operator()(size_t idx) const { return m_support(idx); }
+
+    operator const T() const { return m_support; }
 };
 
 
@@ -359,6 +229,8 @@ auto add_support_class(py::module &m,
         py::arg("idx")
     );
     cls.attr("__call__") = cls.attr(method_name.c_str());
+
+    add_description(cls);
 
     if (doc) cls.doc() = doc;
 
