@@ -55,9 +55,5 @@ auto add_max_size(py::class_<sdsl::hyb_vector<B>>& cls) { return cls; }
 template <class T>
 auto add_sizes(py::class_<T>& cls)
 {
-    cls.def("__len__", &T::size, "The number of elements in the int_vector.");
-    cls.def_property_readonly("size", &T::size,
-                              "The number of elements in the int_vector.");
-
     return add_max_size(cls);
 }

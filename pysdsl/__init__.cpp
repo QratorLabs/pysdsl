@@ -332,7 +332,7 @@ auto add_select_support(py::module &m, py::class_<T>& cls,
                           "select", doc_select);
     bind_support((S1 *)nullptr, cls, std::string("init_select") + suffix + s1,
                  defaults ?
-                    std::string("init_select") + suffix).c_str() :
+                    (std::string("init_select") + suffix).c_str() :
                     nullptr);
 
     return cls;

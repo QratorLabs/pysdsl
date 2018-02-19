@@ -12,6 +12,13 @@ auto add_std_algo(py::class_<Sequence>& cls)
 {
     typedef typename Sequence::value_type value_type;
 
+    auto size = [] (const Sequence& self) { return self.size(); };
+
+    cls.def("__len__", size,
+            "The number of elements in the int_vector.");
+    cls.def_property_readonly("size", size,
+                              "The number of elements in the int_vector.");
+
     cls.def(
         "__iter__",
         [](const Sequence &s) { return py::make_iterator(s.begin(), s.end()); },

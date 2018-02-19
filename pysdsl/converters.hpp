@@ -4,6 +4,7 @@
 #include <tuple>
 
 #include <pybind11/pybind11.h>
+
 #include <sdsl/vectors.hpp>
 
 #include "pysequence.hpp"
@@ -184,10 +185,9 @@ namespace detail
             cls.def(py::init([](const py::sequence& v) {
                 const auto vsize = v.size();
                 base_class result(vsize);
-                for (size_t i = 0; i < vsize; i++)
-                {
-                    result[i] = py::cast<value_type>(v[i]);
-                }
+                sequence_wrapper<value_type> helper(v);
+
+                std::copy(helper.begin(), helper.end(), result.begin());
                 return result;
             }), py::arg("v"));
             return cls;
