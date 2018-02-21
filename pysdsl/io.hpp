@@ -119,16 +119,17 @@ auto add_serialization(py::class_<T>& cls)
 }
 
 
-template <class P, class T = typename P::type>
-auto add_description(P& cls)
+template <class X, class T = typename X::type>
+auto add_description(X& cls)
 {
+    typedef typename X::type P;
     cls.def(
         "write_structure_json",
-        [](const T& self, const std::string& file_name) {
+        [](const P& self, const std::string& file_name) {
             std::ofstream fout;
             fout.open(file_name, std::ios::out | std::ios::binary);
             if (!fout.good()) throw std::runtime_error("Can't write to file");
-            sdsl::write_structure<sdsl::JSON_FORMAT>(self, fout);
+            sdsl::write_structure<sdsl::JSON_FORMAT, T>(self, fout);
             if (!fout.good()) throw std::runtime_error("Error during write");
             fout.close();
         },
@@ -137,11 +138,11 @@ auto add_description(P& cls)
     );
     cls.def(
         "write_structure_html",
-        [](const T& self, const std::string& file_name) {
+        [](const P& self, const std::string& file_name) {
             std::ofstream fout;
             fout.open(file_name, std::ios::out | std::ios::binary);
             if (!fout.good()) throw std::runtime_error("Can't write to file");
-            sdsl::write_structure<sdsl::HTML_FORMAT>(self, fout);
+            sdsl::write_structure<sdsl::HTML_FORMAT, T>(self, fout);
             if (!fout.good()) throw std::runtime_error("Error during write");
             fout.close();
         },
@@ -151,9 +152,9 @@ auto add_description(P& cls)
 
     cls.def_property_readonly(
         "structure_json",
-        [](const T& self) {
+        [](const P& self) {
             std::stringstream fout;
-            sdsl::write_structure<sdsl::JSON_FORMAT>(self, fout);
+            sdsl::write_structure<sdsl::JSON_FORMAT, T>(self, fout);
             return fout.str();
         },
         py::call_guard<py::gil_scoped_release>()
@@ -161,9 +162,9 @@ auto add_description(P& cls)
 
     cls.def_property_readonly(
         "structure_html",
-        [](const T& self) {
+        [](const P& self) {
             std::stringstream fout;
-            sdsl::write_structure<sdsl::HTML_FORMAT>(self, fout);
+            sdsl::write_structure<sdsl::HTML_FORMAT, T>(self, fout);
             return fout.str();
         },
         py::call_guard<py::gil_scoped_release>()
@@ -171,20 +172,20 @@ auto add_description(P& cls)
 
     cls.def_property_readonly(
         "structure",
-        [](const T& self) {
+        [](const P& self) {
             std::stringstream fout;
-            sdsl::write_structure<sdsl::JSON_FORMAT>(self, fout);
+            sdsl::write_structure<sdsl::JSON_FORMAT, T>(self, fout);
             auto json = py::module::import("json");
             return json.attr("loads")(fout.str());
         }
     );
     cls.def_property_readonly(
         "size_in_mega_bytes",
-        [](const T &self) { return sdsl::size_in_mega_bytes(self); }
+        [](const P &self) { return sdsl::size_in_mega_bytes<T>(self); }
     );
     cls.def_property_readonly(
         "size_in_bytes",
-        [](const T &self) { return sdsl::size_in_bytes(self); }
+        [](const P &self) { return sdsl::size_in_bytes<T>(self); }
     );
 
     return cls;
