@@ -192,18 +192,18 @@ class support_helper
 {
 private:
     const sdsl::bit_vector& m_vec;
-    const T& m_support;
+    const T m_support;
 public:
     typedef T type;
 
-    support_helper(const sdsl::bit_vector& vec, const T& support):
+    support_helper(const sdsl::bit_vector& vec, const T&& support):
         m_vec(vec),
-        m_support(support)
+        m_support(std::move(support))
     {}
     auto size() const { return m_vec.size(); }
     auto operator()(size_t idx) const { return m_support(idx); }
 
-    operator const T() const { return m_support; }
+    operator const T&() const { return m_support; }
 };
 
 
@@ -211,6 +211,7 @@ template <class Base>
 auto add_support_class(py::module &m,
                        const std::string&& name,
                        const std::string&& method_name,
+                       const std::string&& doc_call,
                        const char* doc = nullptr)
 {
     auto cls = py::class_<Base>(m, name.c_str());
@@ -226,7 +227,8 @@ auto add_support_class(py::module &m,
             return self(idx);
         },
         py::call_guard<py::gil_scoped_release>(),
-        py::arg("idx")
+        py::arg("idx"),
+        doc_call.c_str()
     );
     cls.attr("__call__") = cls.attr(method_name.c_str());
 
@@ -273,7 +275,7 @@ decltype(auto) bind_support(const support_helper<S>*,
             S support;
             sdsl::util::init_support(support, &self);
 
-            return support_helper<S>(self, support);
+            return support_helper<S>(self, std::move(support));
         },
         py::keep_alive<0, 1>()
     );
@@ -284,25 +286,26 @@ decltype(auto) bind_support(const support_helper<S>*,
 }
 
 
-template <
-    class T,
-    class R0=typename T::rank_0_type,
-    class R1=typename T::rank_1_type
->
+template <class T,
+          class R0=typename T::rank_0_type, class R1=typename T::rank_1_type>
 auto add_rank_support(py::module &m, py::class_<T>& cls,
                       const std::string& base_name,
                       const char* suffix = "",
                       bool defaults = true,
-                      const std::string s0 = "_0", const std::string s1 = "_1",
+                      const std::string s0 = "0", const std::string s1 = "1",
                       const char* doc_rank = nullptr)
 {
-    add_support_class<R0>(m, base_name + "Rank" + suffix + s0,
-                          "rank", doc_rank);
-    bind_support((R0 *)nullptr, cls, std::string("init_rank") + suffix + s0);
+    add_support_class<R0>(m, base_name + "Rank" + suffix + "_" + s0, "rank",
+                          "number of patterns `" + s0 + "` in the prefix "
+                          "[0..idx) in supported vector", doc_rank);
+    bind_support((R0 *)nullptr, cls,
+                 std::string("init_rank") + suffix + "_" + s0);
 
-    add_support_class<R1>(m, base_name + "Rank" + suffix + s1,
-                          "rank", doc_rank);
-    bind_support((R1 *)nullptr, cls, std::string("init_rank") + suffix + s1,
+    add_support_class<R1>(m, base_name + "Rank" + suffix + "_" + s1, "rank",
+                          "number of patterns `" + s1 + "` in the prefix "
+                          "[0..idx) in supported vector", doc_rank);
+    bind_support((R1 *)nullptr, cls,
+                 std::string("init_rank") + suffix + "_" + s1,
                  defaults ?
                     (std::string("init_rank") + suffix).c_str() :
                     nullptr);
@@ -311,26 +314,27 @@ auto add_rank_support(py::module &m, py::class_<T>& cls,
 }
 
 
-template <
-    class T,
-    class S0=typename T::select_0_type,
-    class S1=typename T::select_1_type
->
+template <class T,
+          class S0=typename T::select_0_type,
+          class S1=typename T::select_1_type>
 auto add_select_support(py::module &m, py::class_<T>& cls,
                         const std::string& base_name,
                         const char* suffix = "",
                         bool defaults = true,
-                        const std::string s0 = "_0",
-                        const std::string s1 = "_1",
+                        const std::string s0 = "0", const std::string s1 = "1",
                         const char* doc_select = nullptr)
 {
-    add_support_class<S0>(m, base_name + "Select" + suffix + s0,
-                          "select", doc_select);
-    bind_support((S0 *)nullptr, cls, std::string("init_select") + suffix + s0);
+    add_support_class<S0>(m, base_name + "Select" + suffix + "_" + s0, "select",
+                          "position of the idx-th pattern `" + s0 +
+                          "` in supported vector", doc_select);
+    bind_support((S0 *)nullptr,
+                 cls, std::string("init_select") + suffix + "_" + s0);
 
-    add_support_class<S1>(m, base_name + "Select" + suffix + s1,
-                          "select", doc_select);
-    bind_support((S1 *)nullptr, cls, std::string("init_select") + suffix + s1,
+    add_support_class<S1>(m, base_name + "Select" + suffix + "_" + s1, "select",
+                          "position of the idx-th pattern `" + s1 +
+                          "` in supported vector", doc_select);
+    bind_support((S1 *)nullptr, cls,
+                 std::string("init_select") + suffix + "_" + s1,
                  defaults ?
                     (std::string("init_select") + suffix).c_str() :
                     nullptr);
@@ -367,8 +371,8 @@ auto add_bitvector_class(py::module &m, const std::string&& name,
         py::call_guard<py::gil_scoped_release>()
     );
 
-    add_rank_support(m, cls, name, "", true, "_0", "_1", doc_rank);
-    add_select_support(m, cls, name, "", true, "_0", "_1", doc_select);
+    add_rank_support(m, cls, name, "", true, "0", "1", doc_rank);
+    add_select_support(m, cls, name, "", true, "0", "1", doc_select);
 
     return cls;
 }
@@ -533,7 +537,7 @@ PYBIND11_MODULE(pysdsl, m)
 
     auto bvil_classes = std::make_tuple(
         add_bitvector_class<sdsl::bit_vector_il<64>>(m, "BitVectorIL64",
-                                                      doc_bit_vector_il),
+                                                     doc_bit_vector_il),
         add_bitvector_class<sdsl::bit_vector_il<128>>(m, "BitVectorIL128",
                                                       doc_bit_vector_il),
         add_bitvector_class<sdsl::bit_vector_il<256>>(m, "BitVectorIL256",
@@ -560,7 +564,7 @@ PYBIND11_MODULE(pysdsl, m)
 
     auto hyb_classes = std::make_tuple(
         add_bitvector_class<sdsl::hyb_vector<8>>(m, std::string("HybVector8"),
-                                                  doc_hyb_vector),
+                                                 doc_hyb_vector),
         add_bitvector_class<sdsl::hyb_vector<16>>(m, std::string("HybVector16"),
                                                   doc_hyb_vector)
     );
@@ -568,73 +572,83 @@ PYBIND11_MODULE(pysdsl, m)
     add_rank_support<sdsl::bit_vector,
                     sdsl::rank_support_v5<0, 1>,
                     sdsl::rank_support_v5<1, 1>>(
-        m, bit_vector_cls, "BitVector", "", true, "_0", "_1", doc_rank_v5
+        m, bit_vector_cls, "BitVector", "V5", true, "0", "1", doc_rank_v5
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_v5<00, 2>,
                      sdsl::rank_support_v5<01, 2>>(
-        m, bit_vector_cls, "BitVector", "", false, "_00", "_01", doc_rank_v5
+        m, bit_vector_cls, "BitVector", "V5", false, "00", "01", doc_rank_v5
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_v5<10, 2>,
                      sdsl::rank_support_v5<11, 2>>(
-        m, bit_vector_cls, "BitVector", "", false, "_10", "_11", doc_rank_v5
+        m, bit_vector_cls, "BitVector", "V5", false, "10", "11", doc_rank_v5
     );
     add_rank_support<sdsl::bit_vector,
                     sdsl::rank_support_v<0, 1>,
                     sdsl::rank_support_v<1, 1>>(
-        m, bit_vector_cls, "BitVector", "V", false, "_0", "_1", doc_rank_v
+        m, bit_vector_cls, "BitVector", "V", false, "0", "1", doc_rank_v
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_v<00, 2>,
                      sdsl::rank_support_v<01, 2>>(
-        m, bit_vector_cls, "BitVector", "V", false, "_00", "_01", doc_rank_v
+        m, bit_vector_cls, "BitVector", "V", false, "00", "01", doc_rank_v
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_v<10, 2>,
                      sdsl::rank_support_v<11, 2>>(
-        m, bit_vector_cls, "BitVector", "V", false, "_10", "_11", doc_rank_v
+        m, bit_vector_cls, "BitVector", "V", false, "10", "11", doc_rank_v
     );
+    bit_vector_cls.attr("init_rank") = bit_vector_cls.attr("init_rankV5");
+    bit_vector_cls.attr("init_rank_0") = bit_vector_cls.attr("init_rankV5_0");
+    bit_vector_cls.attr("init_rank_1") = bit_vector_cls.attr("init_rankV5_1");
 
     add_select_support<sdsl::bit_vector,
                        support_helper<sdsl::select_support_mcl<0, 1>>,
                        support_helper<sdsl::select_support_mcl<1, 1>>>(
-        m, bit_vector_cls, "BitVector", "", true, "_0", "_1", doc_select_mcl
+        m, bit_vector_cls, "BitVector", "MCL", true, "0", "1", doc_select_mcl
     );
     add_select_support<sdsl::bit_vector,
                        support_helper<sdsl::select_support_mcl<10, 2>>,
                        support_helper<sdsl::select_support_mcl<11, 2>>>(
-        m, bit_vector_cls, "BitVector", "", false, "_10", "_11", doc_select_mcl
+        m, bit_vector_cls, "BitVector", "MCL", false, "10", "11", doc_select_mcl
+    );
+    bit_vector_cls.attr("init_select") = bit_vector_cls.attr("init_selectMCL");
+    bit_vector_cls.attr("init_select_0") = bit_vector_cls.attr(
+        "init_selectMCL_0"
+    );
+    bit_vector_cls.attr("init_select_1") = bit_vector_cls.attr(
+        "init_selectMCL_1"
     );
 
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_scan<0, 1>,
                      sdsl::rank_support_scan<1, 1>>(
-        m, bit_vector_cls, "BitVector", "Scan", false, "_0", "_1", doc_rank_scan
+        m, bit_vector_cls, "BitVector", "Scan", false, "0", "1", doc_rank_scan
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_scan<00, 2>,
                      sdsl::rank_support_scan<01, 2>>(
-        m, bit_vector_cls, "BitVector", "Scan", false, "_00", "_01",
+        m, bit_vector_cls, "BitVector", "Scan", false, "00", "01",
         doc_rank_scan
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_scan<10, 2>,
                      sdsl::rank_support_scan<11, 2>>(
-        m, bit_vector_cls, "BitVector", "Scan", false, "_10", "_11",
+        m, bit_vector_cls, "BitVector", "Scan", false, "10", "11",
         doc_rank_scan
     );
 
     add_select_support<sdsl::bit_vector,
                        support_helper<sdsl::select_support_scan<0, 1>>,
                        support_helper<sdsl::select_support_scan<1, 1>>>(
-        m, bit_vector_cls, "BitVector", "Scan", false, "_0", "_1",
+        m, bit_vector_cls, "BitVector", "Scan", false, "0", "1",
         doc_select_scan
     );
     add_select_support<sdsl::bit_vector,
                        support_helper<sdsl::select_support_scan<10, 2>>,
                        support_helper<sdsl::select_support_scan<01, 2>>>(
-        m, bit_vector_cls, "BitVector", "Scan", false, "_10", "_01",
+        m, bit_vector_cls, "BitVector", "Scan", false, "10", "01",
         doc_select_scan
     );
 

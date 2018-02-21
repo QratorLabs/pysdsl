@@ -82,15 +82,55 @@ Construction from python sequences is also supported.
 
 ## Immutable compressed bit (boolean) vectors
 
+ * `BitVectorIL64(BitVector)`
+ * `BitVectorIL128(BitVector)`
+ * `BitVectorIL256(BitVector)`
  * `BitVectorIL512(BitVector)` — A bit vector which interleaves the
                                  original `BitVector` with rank information.
  * `SDVector(BitVector)` — A bit vector which compresses very sparse populated
                            bit vectors by representing the positions of 1 by the
                            Elias-Fano representation for
                            non-decreasing sequences
- * `RRRVector63(BitVector)` — An H₀-compressed bitvector representation.
+ * `RRRVector3(BitVector)`
+ * `RRRVector15(BitVector)`
+ * `RRRVector63(BitVector)`
+ * `RRRVector256(BitVector)` — An H₀-compressed bitvector representation.
+ * `HybVector8(BitVector)`
  * `HybVector16(BitVector)` — A hybrid-encoded compressed bitvector
                               representation
+
+## Rank and select operations on bitvectors
+
+For bitvector `v` `rank(i)` for pattern `P` (by default `P` is a bitstring of
+len 1: `1`) is the number of patterns `P` in the prefix `[0..i)` in vector `v`.
+
+For bitvector `v` `select(i)` for pattern `P` (by default `P`=`1`) is the
+position of the `i`-th occurrence of pattern `P` in vector `v`.
+
+Create support instances for rank and/or select for different patterns via:
+
+ * `v.init_rank()` or `v.init_rank_1()` for ranks of pattern `1`
+    (e.g. the number of set bits in `v`)
+ * `v.init_rank_0()` for ranks of pattern `0`
+ * `v.init_rank_00()` (if supported by vector class) for ranks of pattern `00`
+ * `v.init_rank_01()` (if supported by vector class) for ranks of pattern `01`
+ * `v.init_rank_10()` (if supported by vector class) for ranks of pattern `10`
+ * `v.init_rank_11()` (if supported by vector class) for ranks of pattern `11`
+ * `v.init_support()` or `v.init_support_1()` for support of pattern `1`
+    (e.g. the positions of set bits)
+ * `v.init_support_0()` for ranks of pattern `0`
+ * `v.init_support_00()` (if supported by vector class) for ranks of pattern `00`
+ * `v.init_support_01()` (if supported by vector class) for ranks of pattern `01`
+ * `v.init_support_10()` (if supported by vector class) for ranks of pattern `10`
+ * `v.init_support_11()` (if supported by vector class) for ranks of pattern `11`
+
+Once support instance `s` is created call it (`s(idx)` or `s.__call__(idx)`)
+or use corresponding methods `s.rank(idx)` or `s.select(idx)` to get
+the results.
+
+`s.rank(idx)` and `s.select(idx)` are undefined if original bitvector is
+mutable and was modified.
+
 
 ## Objects memory structure
 
