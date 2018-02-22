@@ -7,7 +7,7 @@
 namespace py = pybind11;
 
 
-template <class Sequence>
+template <class Sequence, typename T = typename Sequence::value_type>
 auto add_std_algo(py::class_<Sequence>& cls)
 {
     typedef typename Sequence::value_type value_type;
