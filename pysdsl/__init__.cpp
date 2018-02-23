@@ -17,6 +17,7 @@ cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'io.hpp',
 
 #include <sdsl/vectors.hpp>
 #include <sdsl/bit_vectors.hpp>
+#include <sdsl/wavelet_trees.hpp>
 
 #include <pybind11/pybind11.h>
 
@@ -313,6 +314,97 @@ private:
 };
 
 
+template <class T>
+inline
+auto add_wavelet_class(py::module& m, const std::string&& name,
+                       const char* doc= nullptr)
+{
+    auto cls = py::class_<T>(m, name.c_str())
+        .def_property_readonly("sigma", [] (const T& self) {
+            return self.sigma;
+        }, "Effective alphabet size of the wavelet tree")
+        .def("get_sigma", [] (const T& self) {
+            return self.sigma;
+        }, "Effective alphabet size of the wavelet tree")
+        .def_property_readonly("tree", [] (const T& self) {
+            return self.tree;
+        }, "A concatenation of all bit vectors of the wavelet tree.")
+        .def("get_tree", [] (const T& self) {
+            return self.tree;
+        }, "A concatenation of all bit vectors of the wavelet tree.")
+        .def_property_readonly("max_level", [] (const T& self) {
+            return self.max_level;
+        }, "Maximal level of the wavelet tree.")
+        .def(
+            "rank",
+            [] (const T& self, typename T::size_type i,
+                typename T::value_type c)
+            {
+                if (i >= self.size())
+                {
+                    throw std::out_of_range(std::to_string(i));
+                }
+                return self.rank(i, c);
+            },
+            "Calculates how many values c are in the prefix [0..i-1] of the "
+            "supported vector (i in [0..size]).\nTime complexity: "
+            "Order(log(|Sigma|))",
+            py::arg("i"), py::arg("c")
+        )
+        .def(
+            "inverse_select",
+            [] (const T& self, typename T::size_type i)
+            {
+                if (i >= self.size())
+                {
+                    throw std::out_of_range(std::to_string(i));
+                }
+                return self.inverse_select(i);
+            },
+            py::arg("i"),
+            "Calculates how many occurrences of value wt[i] are in the prefix"
+            "[0..i-1] of the original sequence, returns pair "
+            "(rank(wt[i], i), wt[i])"
+        )
+        .def(
+            "select",
+            [] (const T& self, typename T::size_type i,
+                typename T::value_type c)
+            {
+                if (i < 1 || i >= self.size())
+                {
+                    throw std::out_of_range(std::to_string(i));
+                }
+                if (i > self.rank(self.size(), c))
+                {
+                    throw std::invalid_argument(
+                        std::to_string(i) + " is greater than rank(" +
+                        std::to_string(i) + ", " + std::to_string(c) + ")"
+                    );
+                }
+                return self.select(i, c);
+            },
+            py::arg("i"), py::arg("c"),
+            "Calculates the i-th occurrence of the value c in the supported "
+            "vector.\nTime complexity: Order(log(|Sigma|))"
+        )
+    ;
+
+    //add_sizes(cls);
+    add_description(cls);
+    add_serialization(cls);
+    add_to_string(cls);
+
+    add_std_algo(cls);
+
+
+    if (doc) cls.doc() = doc;
+
+     return cls;
+
+}
+
+
 PYBIND11_MODULE(pysdsl, m)
 {
     m.doc() = "sdsl-lite bindings for python";
@@ -460,6 +552,25 @@ PYBIND11_MODULE(pysdsl, m)
         doc_select_scan
     );
 
+    auto wavelet_classes = std::make_tuple(
+        add_wavelet_class<sdsl::wt_int<sdsl::bit_vector>>(m, "WtInt",
+        "A wavelet tree class for integer sequences.\nSpace complexity: "
+        "Order(n log(|Sigma|)) bits, where `n` is the size of he vector the "
+        "wavelet tree was build for."),
+        add_wavelet_class<sdsl::wt_int<sdsl::rrr_vector<>>>(m, "WtIntRRR",
+        "A wavelet tree class for integer sequences.\nSpace complexity: "
+        "Order(n log(|Sigma|)) bits, where `n` is the size of he vector the "
+        "wavelet tree was build for."),
+        add_wavelet_class<sdsl::wt_int<sdsl::sd_vector<>>>(m, "WtIntSD",
+        "A wavelet tree class for integer sequences.\nSpace complexity: "
+        "Order(n log(|Sigma|)) bits, where `n` is the size of he vector the "
+        "wavelet tree was build for."),
+        add_wavelet_class<sdsl::wt_int<sdsl::hyb_vector<>>>(m, "WtIntHyb",
+        "A wavelet tree class for integer sequences.\nSpace complexity: "
+        "Order(n log(|Sigma|)) bits, where `n` is the size of he vector the "
+        "wavelet tree was build for.")
+    );
+
     for_each_in_tuple(iv_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(iv_classes, make_inits_many_functor(enc_classes));
     for_each_in_tuple(iv_classes, make_inits_many_functor(vlc_classes));
@@ -468,6 +579,7 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(iv_classes, make_inits_many_functor(rrr_classes));
     for_each_in_tuple(iv_classes, make_inits_many_functor(sd_classes));
     for_each_in_tuple(iv_classes, make_inits_many_functor(hyb_classes));
+    for_each_in_tuple(iv_classes, make_inits_many_functor(wavelet_classes));
 
     for_each_in_tuple(enc_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(enc_classes, make_inits_many_functor(enc_classes));
@@ -509,10 +621,17 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(hyb_classes, make_inits_many_functor(sd_classes));
     for_each_in_tuple(hyb_classes, make_inits_many_functor(hyb_classes));
 
+    for_each_in_tuple(wavelet_classes,
+                      make_inits_many_functor(iv_classes));
+    for_each_in_tuple(wavelet_classes,
+                      make_inits_many_functor(wavelet_classes));
+
     for_each_in_tuple(iv_classes, make_pysequence_init_functor());
     for_each_in_tuple(enc_classes, make_pysequence_init_functor());
     for_each_in_tuple(vlc_classes, make_pysequence_init_functor());
     for_each_in_tuple(dac_classes, make_pysequence_init_functor());
 
     //for_each_in_tuple(sd_classes, make_pysequence_init_functor());
+
+    for_each_in_tuple(wavelet_classes, make_pysequence_init_functor());
 }
