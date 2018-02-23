@@ -4,7 +4,9 @@
 #include <tuple>
 
 #include <pybind11/pybind11.h>
+
 #include <sdsl/util.hpp>
+#include <sdsl/vectors.hpp>
 
 #include "calc.hpp"
 #include "io.hpp"
@@ -15,7 +17,8 @@
 namespace py = pybind11;
 
 
-template <class T, typename S = uint64_t>
+template <class T, typename S = typename T::value_type>
+inline
 auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
 {
     auto cls = py::class_<T>(m, name)
@@ -143,7 +146,7 @@ auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
     add_serialization(cls);
     add_to_string(cls);
 
-    add_std_algo(cls);
+    add_std_algo<T, S>(cls);
 
     if (doc) cls.doc() = doc;
 
