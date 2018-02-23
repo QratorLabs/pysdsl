@@ -31,10 +31,8 @@ cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'io.hpp',
 namespace py = pybind11;
 
 
-using sdsl::int_vector;
-
-
 template <class T>
+inline
 auto add_compressed_class(py::module &m, const std::string& name,
                           const char* doc = nullptr)
 {
@@ -74,6 +72,7 @@ public:
 
 
 template <class Base>
+inline
 auto add_support_class(py::module &m,
                        const std::string&& name,
                        const std::string&& method_name,
@@ -107,6 +106,7 @@ auto add_support_class(py::module &m,
 
 
 template <class S, class T>
+inline
 decltype(auto) bind_support(const S*,
                             py::class_<T>& cls, const std::string& call_name,
                             const char* alt_name=nullptr)
@@ -130,6 +130,7 @@ decltype(auto) bind_support(const S*,
 
 
 template <class S, class T>
+inline
 decltype(auto) bind_support(const support_helper<S>*,
                             py::class_<T>& cls, const std::string& call_name,
                             const char* alt_name=nullptr)
@@ -154,6 +155,7 @@ decltype(auto) bind_support(const support_helper<S>*,
 
 template <class T,
           class R0=typename T::rank_0_type, class R1=typename T::rank_1_type>
+inline
 auto add_rank_support(py::module &m, py::class_<T>& cls,
                       const std::string& base_name,
                       const char* suffix = "",
@@ -183,6 +185,7 @@ auto add_rank_support(py::module &m, py::class_<T>& cls,
 template <class T,
           class S0=typename T::select_0_type,
           class S1=typename T::select_1_type>
+inline
 auto add_select_support(py::module &m, py::class_<T>& cls,
                         const std::string& base_name,
                         const char* suffix = "",
@@ -210,6 +213,7 @@ auto add_select_support(py::module &m, py::class_<T>& cls,
 
 
 template <class T>
+inline
 auto add_bitvector_class(py::module &m, const std::string&& name,
                          const char* doc = nullptr,
                          const char* doc_rank = nullptr,
@@ -250,7 +254,7 @@ public:
     add_enc_coders_functor(py::module& m): m(m) {}
 
     template <typename Coder, uint32_t t_dens=128, uint8_t t_width=0>
-    decltype(auto) operator()(const std::pair<const char*, Coder> &t)
+    decltype(auto) operator()(const std::pair<const char*, Coder*> &t)
     {
         typedef sdsl::enc_vector<Coder, t_dens, t_width> enc;
         auto cls = add_compressed_class<enc>(
@@ -289,7 +293,7 @@ public:
     add_vlc_coders_functor(py::module& m): m(m) {}
 
     template <typename Coder, uint32_t t_dens = 128, uint8_t t_width = 0>
-    decltype(auto) operator()(const std::pair<const char*, Coder> &t)
+    decltype(auto) operator()(const std::pair<const char*, Coder*> &t)
     {
         typedef sdsl::vlc_vector<Coder, t_dens, t_width> vlc;
 
@@ -315,15 +319,15 @@ PYBIND11_MODULE(pysdsl, m)
 
     auto iv_classes = add_int_vectors(m);
 
-    py::class_<int_vector<1>>& bit_vector_cls = std::get<1>(iv_classes);
+    py::class_<sdsl::int_vector<1>>& bit_vector_cls = std::get<1>(iv_classes);
     auto bit_vector_classes = std::make_tuple(bit_vector_cls);
 
     auto const coders = std::make_tuple(
-        std::make_pair("EliasDelta", sdsl::coder::elias_delta()),
-        std::make_pair("EliasGamma", sdsl::coder::elias_gamma()),
-        std::make_pair("Fibonacci", sdsl::coder::fibonacci()),
-        std::make_pair("Comma2", sdsl::coder::comma<2>()),
-        std::make_pair("Comma4", sdsl::coder::comma<4>())
+        std::make_pair("EliasDelta", (sdsl::coder::elias_delta*) nullptr),
+        std::make_pair("EliasGamma", (sdsl::coder::elias_gamma*) nullptr),
+        std::make_pair("Fibonacci", (sdsl::coder::fibonacci*) nullptr),
+        std::make_pair("Comma2", (sdsl::coder::comma<2>*) nullptr),
+        std::make_pair("Comma4", (sdsl::coder::comma<4>*) nullptr)
     );
 
     auto enc_classes = for_each_in_tuple(coders, add_enc_coders_functor(m));

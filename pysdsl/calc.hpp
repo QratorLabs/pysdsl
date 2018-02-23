@@ -8,6 +8,7 @@ namespace py = pybind11;
 
 
 template <class Sequence, typename T = typename Sequence::value_type>
+inline
 auto add_std_algo(py::class_<Sequence>& cls)
 {
     typedef typename Sequence::value_type value_type;
@@ -33,17 +34,17 @@ auto add_std_algo(py::class_<Sequence>& cls)
     );
     cls.def(
         "__getitem__",
-        [](const Sequence &self, size_t position) {
+        [](const Sequence &self, size_t position) -> T {
             if (position >= self.size())
             {
-                throw py::index_error(std::to_string(position));
+                throw std::out_of_range(std::to_string(position));
             }
             return self[position];
         }
     );
     cls.def(
         "__getitem__",
-        [](const Sequence &self, int64_t position) {
+        [](const Sequence &self, int64_t position) -> T {
             auto abs_position = std::abs(position);
             if (position >= 0)
             {
@@ -51,14 +52,14 @@ auto add_std_algo(py::class_<Sequence>& cls)
             }
             if (abs_position > self.size())
             {
-                throw py::index_error(std::to_string(position));
+                throw std::out_of_range(std::to_string(position));
             }
             return self[self.size() - abs_position];
         }
     );
     cls.def(
         "max",
-        [](const Sequence &self) {
+        [](const Sequence &self) -> T {
             return *std::max_element(self.begin(), self.end());
         },
         py::call_guard<py::gil_scoped_release>()
@@ -73,7 +74,7 @@ auto add_std_algo(py::class_<Sequence>& cls)
     );
     cls.def(
         "min",
-        [](const Sequence &self) {
+        [](const Sequence &self) -> T {
             return *std::min_element(self.begin(), self.end());
         },
         py::call_guard<py::gil_scoped_release>()

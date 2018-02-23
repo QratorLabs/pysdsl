@@ -13,6 +13,7 @@ template <class T> class support_helper;
 
 
 template <class T>
+inline
 decltype(auto) to_string(const T &self, const size_t max_elements=100,
                          const char* sep=", ", const char* start="[",
                                                const char* end="]")
@@ -38,6 +39,7 @@ decltype(auto) to_string(const T &self, const size_t max_elements=100,
 }
 
 template <class T>
+inline
 auto add_to_string(py::class_<T>& cls)
 {
     cls.def("__str__", [](const T& self) { return to_string(self); });
@@ -53,6 +55,7 @@ auto add_to_string(py::class_<T>& cls)
 
 
 template <class T>
+inline
 auto add_serialization(py::class_<T>& cls)
 {
     cls.def(py::pickle(
@@ -120,6 +123,7 @@ auto add_serialization(py::class_<T>& cls)
 
 
 template <class X, class T = typename X::type>
+inline
 auto add_description(X& cls)
 {
     typedef typename X::type P;
@@ -193,6 +197,7 @@ auto add_description(X& cls)
 
 
 template <class T>
+inline
 auto add_description(py::class_<support_helper<T>>& cls)
 {
     return add_description<py::class_<support_helper<T>>, T>(cls);
