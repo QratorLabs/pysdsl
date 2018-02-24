@@ -181,7 +181,7 @@ namespace detail
         }
 
         template <uint8_t width>
-        decltype(auto) operator()(py::class_<sdsl::int_vector<width>> &)
+        decltype(auto) operator()(const py::class_<sdsl::int_vector<width>> &)
         {
             m_cls_to.def(
                 py::init([](const sdsl::int_vector<width>& from) {
