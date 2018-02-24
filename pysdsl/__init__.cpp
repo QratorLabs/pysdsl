@@ -33,19 +33,19 @@ cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'io.hpp',
 namespace py = pybind11;
 
 
-template <class T>
+template <class Sequence, typename T = typename Sequence::value_type>
 inline
 auto add_compressed_class(py::module &m, const std::string& name,
                           const char* doc = nullptr)
 {
-    auto cls = py::class_<T>(m, name.c_str()).def(py::init());
+    auto cls = py::class_<Sequence>(m, name.c_str()).def(py::init());
 
     add_sizes(cls);
     add_description(cls);
     add_serialization(cls);
     add_to_string(cls);
 
-    add_std_algo(cls);
+    add_std_algo<Sequence, T>(cls);
 
     if (doc) cls.doc() = doc;
 
@@ -60,7 +60,7 @@ auto add_bitvector_class(py::module &m, const std::string&& name,
                          const char* doc_rank = nullptr,
                          const char* doc_select = nullptr)
 {
-    auto cls = add_compressed_class<T>(m, name, doc);
+    auto cls = add_compressed_class<T, bool>(m, name, doc);
 
     cls.def(
         "get_int",
