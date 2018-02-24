@@ -338,16 +338,19 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(enc_classes, make_inits_many_functor(enc_classes));
     for_each_in_tuple(enc_classes, make_inits_many_functor(vlc_classes));
     for_each_in_tuple(enc_classes, make_inits_many_functor(dac_classes));
+    for_each_in_tuple(enc_classes, make_inits_many_functor(wavelet_classes));
 
     for_each_in_tuple(vlc_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(vlc_classes, make_inits_many_functor(enc_classes));
     for_each_in_tuple(vlc_classes, make_inits_many_functor(vlc_classes));
     for_each_in_tuple(vlc_classes, make_inits_many_functor(dac_classes));
+    for_each_in_tuple(vlc_classes, make_inits_many_functor(wavelet_classes));
 
     for_each_in_tuple(dac_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(dac_classes, make_inits_many_functor(enc_classes));
     for_each_in_tuple(dac_classes, make_inits_many_functor(vlc_classes));
     for_each_in_tuple(dac_classes, make_inits_many_functor(dac_classes));
+    for_each_in_tuple(dac_classes, make_inits_many_functor(wavelet_classes));
 
     for_each_in_tuple(bvil_classes,
                       make_inits_many_functor(bit_vector_classes));
@@ -374,8 +377,11 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(hyb_classes, make_inits_many_functor(sd_classes));
     for_each_in_tuple(hyb_classes, make_inits_many_functor(hyb_classes));
 
-    for_each_in_tuple(wavelet_classes,
-                      make_inits_many_functor(iv_classes));
+    for_each_in_tuple(wavelet_classes, make_inits_many_functor(iv_classes));
+    for_each_in_tuple(wavelet_classes, make_inits_many_functor(enc_classes));
+    for_each_in_tuple(wavelet_classes, make_inits_many_functor(vlc_classes));
+    for_each_in_tuple(wavelet_classes, make_inits_many_functor(dac_classes));
+    for_each_in_tuple(wavelet_classes, make_inits_many_functor(bvil_classes));
     for_each_in_tuple(wavelet_classes,
                       make_inits_many_functor(wavelet_classes));
 
