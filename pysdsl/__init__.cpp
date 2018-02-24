@@ -554,21 +554,15 @@ PYBIND11_MODULE(pysdsl, m)
 
     auto wavelet_classes = std::make_tuple(
         add_wavelet_class<sdsl::wt_int<sdsl::bit_vector>>(m, "WtInt",
-        "A wavelet tree class for integer sequences.\nSpace complexity: "
-        "Order(n log(|Sigma|)) bits, where `n` is the size of he vector the "
-        "wavelet tree was build for."),
+                                                          doc_wtint),
+        add_wavelet_class<sdsl::wt_int<sdsl::bit_vector_il<>>>(m, "WtIntIL",
+                                                               doc_wtint),
         add_wavelet_class<sdsl::wt_int<sdsl::rrr_vector<>>>(m, "WtIntRRR",
-        "A wavelet tree class for integer sequences.\nSpace complexity: "
-        "Order(n log(|Sigma|)) bits, where `n` is the size of he vector the "
-        "wavelet tree was build for."),
+                                                            doc_wtint),
         add_wavelet_class<sdsl::wt_int<sdsl::sd_vector<>>>(m, "WtIntSD",
-        "A wavelet tree class for integer sequences.\nSpace complexity: "
-        "Order(n log(|Sigma|)) bits, where `n` is the size of he vector the "
-        "wavelet tree was build for."),
+                                                           doc_wtint),
         add_wavelet_class<sdsl::wt_int<sdsl::hyb_vector<>>>(m, "WtIntHyb",
-        "A wavelet tree class for integer sequences.\nSpace complexity: "
-        "Order(n log(|Sigma|)) bits, where `n` is the size of he vector the "
-        "wavelet tree was build for.")
+                                                            doc_wtint)
     );
 
     for_each_in_tuple(iv_classes, make_inits_many_functor(iv_classes));

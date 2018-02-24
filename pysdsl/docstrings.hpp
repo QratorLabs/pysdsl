@@ -161,3 +161,9 @@ const char* doc_select_scan(
     "Space complexity: Constant\n"
     "Time complexity: Linear in the size of the supported vector."
 );
+
+const char* doc_wtint(
+    "A wavelet tree class for integer sequences.\nSpace complexity: "
+    "Order(n log(|Sigma|)) bits, where `n` is the size of he vector the "
+    "wavelet tree was build for."
+);
