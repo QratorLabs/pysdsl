@@ -256,7 +256,7 @@ PYBIND11_MODULE(pysdsl, m)
 
     auto bit_vector_classes = std::make_tuple(bit_vector_cls);
 
-    auto const coders = std::make_tuple(
+    auto constexpr coders = std::make_tuple(
         std::make_pair("EliasDelta", (sdsl::coder::elias_delta*) nullptr),
         std::make_pair("EliasGamma", (sdsl::coder::elias_gamma*) nullptr),
         std::make_pair("Fibonacci", (sdsl::coder::fibonacci*) nullptr),
