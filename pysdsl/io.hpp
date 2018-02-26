@@ -16,12 +16,12 @@ template <class T>
 inline
 decltype(auto) to_string(const T &self, const size_t max_elements=100,
                          const char* sep=", ", const char* start="[",
-                                               const char* end="]")
+                                               const char* ends="]")
 {
     std::stringstream fout;
     fout << start;
     size_t count = 0;
-    for (auto i: self)
+    for (const auto i: self)
     {
         if (count) fout << sep;
 
@@ -34,7 +34,7 @@ decltype(auto) to_string(const T &self, const size_t max_elements=100,
         }   
         count++;
     }
-    fout << end;
+    fout << ends;
     return fout.str();
 }
 

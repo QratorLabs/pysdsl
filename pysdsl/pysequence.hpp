@@ -7,6 +7,10 @@ namespace py = pybind11;
 
 namespace detail
 {
+    // dummy functor to help with py::sequence::const_iterator
+    struct _begin{
+        auto operator()(const py::sequence& s) { return std::cbegin(s); }
+    };
 
     template <class T, class Base>
     class sequence_iterator_wrapper
@@ -72,9 +76,14 @@ class sequence_wrapper
 private:
     // dummy function to help with decltype(m_seq)::const_iterator
     //decltype(auto) _begin() const { return m_seq.begin(); }
+    //decltype(auto) _begin() const { return std::cbegin(m_seq); }
     //typedef decltype(&py::sequence::begin) raw_;
+
     //typedef std::result_of_t<raw_> raw_iterator;
     typedef py::detail::sequence_iterator raw_iterator;
+    //typedef std::result_of<detail::_begin(const py::sequence&)> raw_iterator;
+
+    //typedef std::result_of_t<decltype(std::cbegin<py::sequence>)> raw_iterator;
 
 public:
     typedef detail::sequence_iterator_wrapper<T, raw_iterator> const_iterator;
@@ -84,8 +93,8 @@ public:
 
     bool empty() const { return m_seq.size() == 0; }
 
-    const_iterator begin() const { return m_seq.begin(); }
-    const_iterator end() const { return m_seq.end(); }
+    const_iterator begin() const { return std::cbegin(m_seq); }
+    const_iterator end() const { return std::cend(m_seq); }
 
     size_t size() const { return m_seq.size(); }
 
