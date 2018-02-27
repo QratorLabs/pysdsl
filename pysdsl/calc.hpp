@@ -1,6 +1,7 @@
 #pragma once
 
 #include <algorithm>
+#include <tuple>
 
 #include <pybind11/pybind11.h>
 
@@ -95,7 +96,7 @@ auto add_std_algo(py::class_<Sequence>& cls)
     );
     cls.def(
         "minmax",
-        [](const Sequence &self) {
+        [](const Sequence &self) -> std::pair<T, T> {
             auto result = std::minmax_element(cbegin(self),
                                               cend(self));
             return std::make_pair(*std::get<0>(result), *std::get<1>(result));

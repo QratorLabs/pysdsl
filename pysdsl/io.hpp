@@ -21,11 +21,11 @@ decltype(auto) to_string(const T &self, const size_t max_elements=100,
     std::stringstream fout;
     fout << start;
     size_t count = 0;
-    for (const auto i: self)
+    for (auto i = cbegin(self); i != cend(self); i++)
     {
         if (count) fout << sep;
 
-        fout << i;
+        fout << *i;
 
         if (max_elements > 0 && count >= max_elements)
         {
@@ -37,6 +37,7 @@ decltype(auto) to_string(const T &self, const size_t max_elements=100,
     fout << ends;
     return fout.str();
 }
+
 
 template <class T>
 inline
