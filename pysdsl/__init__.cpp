@@ -6,7 +6,7 @@ cfg['include_dirs'] = ['sdsl-lite/include']
 cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
 cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'io.hpp',
                        'sizes.hpp', 'calc.hpp', 'docstrings.hpp',
-                       'intvector.hpp', 'supports.hpp']
+                       'intvector.hpp', 'supports.hpp', 'indexiterator.hpp']
 %>
 */
 

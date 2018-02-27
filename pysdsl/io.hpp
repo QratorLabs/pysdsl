@@ -6,6 +6,9 @@
 
 #include <pybind11/pybind11.h>
 
+#include "indexiterator.hpp"
+
+
 namespace py = pybind11;
 
 

@@ -5,11 +5,16 @@
 
 #include <pybind11/pybind11.h>
 
+#include "indexiterator.hpp"
+
+
 namespace py = pybind11;
 
 
 using std::cbegin;
 using std::cend;
+
+
 template <class Sequence, typename T = typename Sequence::value_type>
 inline
 auto add_std_algo(py::class_<Sequence>& cls)

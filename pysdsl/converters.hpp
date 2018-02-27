@@ -9,9 +9,14 @@
 #include <sdsl/wavelet_trees.hpp>
 
 #include "pysequence.hpp"
+#include "indexiterator.hpp"
 
 
 namespace py = pybind11;
+
+
+using std::cbegin;
+using std::cend;
 
 
 namespace detail
