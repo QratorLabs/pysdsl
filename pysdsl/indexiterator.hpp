@@ -17,10 +17,12 @@ namespace detail
     {
     public:
         typedef S                                     difference_type;
+        typedef S                                           size_type;
         typedef T                                          value_type;
         typedef T*                                            pointer;
         typedef T&                                          reference;
-        typedef std::bidirectional_iterator_tag     iterator_category;
+        typedef const T&                              const_reference;
+        typedef std::random_access_iterator_tag     iterator_category;
 
         count_index_iterator(): m_parent(nullptr), m_index(0) {}
 
@@ -74,14 +76,49 @@ namespace detail
         decltype(auto) operator--(int)
         { return *count_index_iterator<Container, T, S>(m_parent, m_index--); }
 
-        decltype(auto) operator-(const difference_type step) const
-        { return count_index_iterator<Container, T, S>(m_index - step); }
-
-        decltype(auto) operator+(const difference_type step) const
-        { return count_index_iterator<Container, T, S>(m_index + step); }
-
         difference_type operator-(const count_index_iterator& other) const
         { return m_index - other.m_index; }
+
+        decltype(auto) operator-(const difference_type step) const
+        {
+            return count_index_iterator<Container, T, S>(m_parent,
+                                                         m_index - step);
+        }
+
+        decltype(auto) operator+(const difference_type step) const
+        {
+            return count_index_iterator<Container, T, S>(m_parent,
+                                                         m_index + step);
+        }
+
+        friend decltype(auto) operator+(const difference_type step,
+                                        const count_index_iterator &self)
+        {
+            return count_index_iterator<Container, T, S>(self.m_parent,
+                                                         self.m_index + step);
+        }
+
+        friend decltype(auto) operator-(const difference_type step,
+                                        const count_index_iterator &self)
+        {
+            return count_index_iterator<Container, T, S>(self.m_parent,
+                                                         self.m_index - step);
+        }
+
+        count_index_iterator& operator+=(const difference_type i)
+        {
+            m_index += i;
+            return *this;
+        }
+
+        count_index_iterator& operator-=(difference_type i)
+        {
+            m_index -= i;
+            return *this;
+        }
+
+        const_reference operator[](difference_type i) const
+        { return (*m_parent)[m_index + i]; }
 
         void swap(count_index_iterator& other)
         {
@@ -128,4 +165,15 @@ auto cend(const sdsl::wt_gmr_rs<T...>& container) {
     return detail::count_index_iterator<sdsl::wt_gmr_rs<T...>>(
         &container, container.size()
     );
+}
+
+template <class...T>
+auto cbegin(const sdsl::wt_ap<T...>& container) {
+    return detail::count_index_iterator<sdsl::wt_ap<T...>>(&container, 0);
+}
+
+template <class...T>
+auto cend(const sdsl::wt_ap<T...>& container) {
+    return detail::count_index_iterator<sdsl::wt_ap<T...>>(&container,
+                                                           container.size());
 }
