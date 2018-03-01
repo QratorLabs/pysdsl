@@ -167,3 +167,73 @@ const char* doc_wtint(
     "Order(n log(|Sigma|)) bits, where `n` is the size of he vector the "
     "wavelet tree was build for."
 );
+
+const char* doc_wt_gmr_rs(
+    "A wavelet tree class for integer sequences.\n"
+    "This is an implementation of the first proposal in the SODA paper "
+    "of Golynski et. al. which support fast rank and select, but not fast "
+    "access.\nReferences:\n[1] A. Golynski, J. Munro and S. Rao:"
+    "\"Rank/select operations on large alphabets: a tool for text "
+    "indexing\", Proceedings of SODA 2006."
+);
+
+const char* doc_wt_gmr(
+    "A wavelet tree class for integer sequences.\n"
+    "This is an implementation of the second proposal in the SODA paper "
+    "of Golynski et. al. which supports fast access, inverse select, rank, "
+    "and select.\nReferences:\n[1] A. Golynski, J. Munro and S. Rao:"
+    "\"Rank/select operations on large alphabets: a tool for text "
+    "indexing\", Proceedings of SODA 2006."
+);
+
+const char* doc_wt_ap(
+    "A wavelet tree class for integer sequences.\nSpace complexity:\n"
+    "Order(n) (H_0 + 1) bits, where n is the size of the vector the wavelet "
+    "tree was build for.1\nReferences"
+    "[1] J. Barbay, F. Claude, T. Gagie, G. Navarro and Y. Nekrich:"
+    "''Efficient Fully-Compressed Sequence Representations''"
+);
+
+const char* doc_wt_huff(
+    "A Huffman-shaped wavelet tree.\n"
+    "Space complexity: `n * H_0 + 2 * |Sigma| * log n` bits, where n is the "
+    "size of the vector the wavelet tree was build for.\n"
+    "A wavelet tree is build for a vector of characters over the byte alphabet "
+    "Sigma. If you need a wavelet tree for a integer alphabet you should use "
+    "`WtInt`.\nThe wavelet tree `wt` consists of a tree of bitvectors and "
+    "provides three efficient methods:\n"
+    "- The []-operator: wt[i] returns the i-th symbol of vector for which the "
+    "wavelet tree was build for.\n"
+    "- The rank method: wt.rank(i, c) returns the number of occurrences "
+    "of symbol `c` in the prefix [0..i-1] in the vector for which the "
+    "wavelet tree was build for.\n"
+    "- The select method: wt.select(j, c) returns the index i from "
+    "[0..size()-1] of the j-th occurrence of symbol c.\n\n"
+    "The idea of using a Huffman shaped wavelet was first mentioned on page 17 "
+    "of the following technical report:\n\tVeli Mäkinen and Gonzalo Navarro: "
+    "''Succinct Suffix Arrays based on Run-Length Encoding.''\n"
+    "Available under: http://swp.dcc.uchile.cl/TR/2005/TR_DCC-2005-004.pdf"
+);
+
+const char* doc_wm_int(
+    "A wavelet tree class for integer sequences.\n"
+    "This wavelet tree variant does not store the two children of a node v "
+    "aligned with v; it is also known as wavelet matrix.\n"
+    "References:\n[1] F. Claude, G. Navarro: ''The Wavelet Matrix'', "
+    "Proceedings of SPIRE 2012."
+);
+
+const char* doc_wt_blcd(
+    "A balanced wavelet tree.\n"
+    "Space complexity: Order(n * log(|Sigma|) + 2 * |Sigma| * log(n))\ bits, "
+    "where n is the size of the vector the wavelet tree was build for.\n"
+    "Reference: Roberto Grossi, Ankur Gupta, Jeffrey Scott Vitter: "
+    "\"High-order entropy-compressed text indexes\". Proceedings of the 14th "
+    "Annual ACM-SIAM Symposium on Discrete Algorithms (SODA 2003)."
+);
+
+const char* doc_wt_hutu(
+    "A Hu-Tucker-shaped wavelet tree.\n"
+    "Space complexity: Almost n * H_0 + 2 * |Sigma| * log(n) bits, where "
+    "n is the size of the vector the wavelet tree was build for."
+);
