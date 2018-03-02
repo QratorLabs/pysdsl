@@ -1,12 +1,13 @@
 /*cppimport
 <%
-cfg['compiler_args'] = ['-std=c++14', '-fvisibility=hidden']
+cfg['compiler_args'] = ['-v', '-std=c++14', '-fvisibility=hidden']
 cfg['linker_args'] = ['-fvisibility=hidden']
 cfg['include_dirs'] = ['sdsl-lite/include']
 cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
 cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'io.hpp',
                        'sizes.hpp', 'calc.hpp', 'docstrings.hpp',
-                       'intvector.hpp', 'supports.hpp', 'indexiterator.hpp']
+                       'intvector.hpp', 'supports.hpp', 'indexiterator.hpp',
+                       'wavelet.hpp']
 %>
 */
 
@@ -28,6 +29,7 @@ cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'io.hpp',
 #include "docstrings.hpp"
 #include "intvector.hpp"
 #include "supports.hpp"
+#include "wavelet.hpp"
 
 
 namespace py = pybind11;
@@ -154,97 +156,6 @@ private:
 };
 
 
-template <class T>
-inline
-auto add_wavelet_class(py::module& m, const std::string&& name,
-                       const char* doc= nullptr)
-{
-    auto cls = py::class_<T>(m, name.c_str())
-        .def_property_readonly("sigma", [] (const T& self) {
-            return self.sigma;
-        }, "Effective alphabet size of the wavelet tree")
-        .def("get_sigma", [] (const T& self) {
-            return self.sigma;
-        }, "Effective alphabet size of the wavelet tree")
-        .def_property_readonly("tree", [] (const T& self) {
-            return self.tree;
-        }, "A concatenation of all bit vectors of the wavelet tree.")
-        .def("get_tree", [] (const T& self) {
-            return self.tree;
-        }, "A concatenation of all bit vectors of the wavelet tree.")
-        .def_property_readonly("max_level", [] (const T& self) {
-            return self.max_level;
-        }, "Maximal level of the wavelet tree.")
-        .def(
-            "rank",
-            [] (const T& self, typename T::size_type i,
-                typename T::value_type c)
-            {
-                if (i >= self.size())
-                {
-                    throw std::out_of_range(std::to_string(i));
-                }
-                return self.rank(i, c);
-            },
-            "Calculates how many values c are in the prefix [0..i-1] of the "
-            "supported vector (i in [0..size]).\nTime complexity: "
-            "Order(log(|Sigma|))",
-            py::arg("i"), py::arg("c")
-        )
-        .def(
-            "inverse_select",
-            [] (const T& self, typename T::size_type i)
-            {
-                if (i >= self.size())
-                {
-                    throw std::out_of_range(std::to_string(i));
-                }
-                return self.inverse_select(i);
-            },
-            py::arg("i"),
-            "Calculates how many occurrences of value wt[i] are in the prefix"
-            "[0..i-1] of the original sequence, returns pair "
-            "(rank(wt[i], i), wt[i])"
-        )
-        .def(
-            "select",
-            [] (const T& self, typename T::size_type i,
-                typename T::value_type c)
-            {
-                if (i < 1 || i >= self.size())
-                {
-                    throw std::out_of_range(std::to_string(i));
-                }
-                if (i > self.rank(self.size(), c))
-                {
-                    throw std::invalid_argument(
-                        std::to_string(i) + " is greater than rank(" +
-                        std::to_string(i) + ", " + std::to_string(c) + ")"
-                    );
-                }
-                return self.select(i, c);
-            },
-            py::arg("i"), py::arg("c"),
-            "Calculates the i-th occurrence of the value c in the supported "
-            "vector.\nTime complexity: Order(log(|Sigma|))"
-        )
-    ;
-
-    //add_sizes(cls);
-    add_description(cls);
-    add_serialization(cls);
-    add_to_string(cls);
-
-    add_std_algo(cls);
-
-
-    if (doc) cls.doc() = doc;
-
-     return cls;
-
-}
-
-
 PYBIND11_MODULE(pysdsl, m)
 {
     m.doc() = "sdsl-lite bindings for python";
@@ -345,7 +256,7 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(enc_classes, make_inits_many_functor(enc_classes));
     for_each_in_tuple(enc_classes, make_inits_many_functor(vlc_classes));
     for_each_in_tuple(enc_classes, make_inits_many_functor(dac_classes));
-    for_each_in_tuple(enc_classes, make_inits_many_functor(wavelet_classes));
+    //for_each_in_tuple(enc_classes, make_inits_many_functor(wavelet_classes));
 
     for_each_in_tuple(vlc_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(vlc_classes, make_inits_many_functor(enc_classes));
