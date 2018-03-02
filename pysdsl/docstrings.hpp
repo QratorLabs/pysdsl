@@ -9,7 +9,7 @@ const char* doc_int_vector(
 const char* doc_capacity(
     "Returns the size of the occupied bits of the int_vector. The capacity of "
     "a int_vector is greater or equal to the bit_size of the "
-    "vector: capacity >= bit_size)."
+    "vector: capacity ≥ bit_size)."
 );
 
 const char* doc_bit_compress(
@@ -33,7 +33,7 @@ const char* doc_dac_vector(
     "are marked with by a 1 in the most significant bit. Escaping with "
     "`b=8` is also known as vbyte-coding (see [2]). A experimental study "
     "of using escaping for the LCP array is given in [3].\n"
-    "Time complexity: Order{log n/b} worst case, where b is the number "
+    "Time complexity: Order(log n/b) worst case, where b is the number "
     "of bits in a block\nReferences:\n"
     "[1] F. Transier and P. Sanders: `Engineering Basic Search Algorithms "
     "of an In-Memory Text Search Engine`, ACM Transactions on "
@@ -137,7 +137,7 @@ const char* doc_select_mcl(
     "Space usage: The space usage of the data structure depends on the "
     "number `m` of ones in the original bitvector `b`. We store the "
     "position of every 4096th set bit (called L1-sampled bits) of `b`. "
-    "This takes in the worst case (m/4096) log(n) <= (n/64) bits.\n"
+    "This takes in the worst case (m/4096) log(n) ≤ (n/64) bits.\n"
     "Next,\n(1) if the distance of two adjacent L1-sampled bits "
     "b[i] and b[j] is greater or equal than log^4 (n), then we store "
     "each of the 4096 positions of the set `b` in [i..j-1] with "
@@ -147,9 +147,9 @@ const char* doc_select_mcl(
     "If the j-i+1 < log^4(n) then\n(2) we store the relative position of "
     "every 64th set bit (called L2-sampled bits) in b[i..j-1] in at most "
     "4 log log (n) bits per L2-sampled bits.\nAn pessimistic upper bound "
-    "for the space would be `4 log log (n) / 64 <= 24/64 = 0.375` bit per "
-    "bit (since `log log (n) <= 6`. It is very pessimistic, since we store "
-    "the relative position in `log log (j-i+1) <= log log (n)` bits.\n\n"
+    "for the space would be `4 log log (n) / 64 ≤ 24/64 = 0.375` bit per "
+    "bit (since `log log (n) ≤ 6`. It is very pessimistic, since we store "
+    "the relative position in `log log (j-i+1) ≤ log log (n)` bits.\n\n"
     "The implementation is a practical variant of the following reference:"
     "\nDavid Clark: PhD Thesis: Compact Pat Trees, University of Waterloo, "
     "1996 (Section 2.2.2). "
@@ -188,7 +188,7 @@ const char* doc_wt_gmr(
 
 const char* doc_wt_ap(
     "A wavelet tree class for integer sequences.\nSpace complexity:\n"
-    "Order(n) (H_0 + 1) bits, where n is the size of the vector the wavelet "
+    "Order(n) (H₀ + 1) bits, where n is the size of the vector the wavelet "
     "tree was build for.1\nReferences"
     "[1] J. Barbay, F. Claude, T. Gagie, G. Navarro and Y. Nekrich:"
     "''Efficient Fully-Compressed Sequence Representations''"
@@ -196,7 +196,7 @@ const char* doc_wt_ap(
 
 const char* doc_wt_huff(
     "A Huffman-shaped wavelet tree.\n"
-    "Space complexity: `n * H_0 + 2 * |Sigma| * log n` bits, where n is the "
+    "Space complexity: `n * H₀ + 2 * |Sigma| * log n` bits, where n is the "
     "size of the vector the wavelet tree was build for.\n"
     "A wavelet tree is build for a vector of characters over the byte alphabet "
     "Sigma. If you need a wavelet tree for a integer alphabet you should use "
@@ -234,6 +234,6 @@ const char* doc_wt_blcd(
 
 const char* doc_wt_hutu(
     "A Hu-Tucker-shaped wavelet tree.\n"
-    "Space complexity: Almost n * H_0 + 2 * |Sigma| * log(n) bits, where "
+    "Space complexity: Almost n * H₀ + 2 * |Sigma| * log(n) bits, where "
     "n is the size of the vector the wavelet tree was build for."
 );
