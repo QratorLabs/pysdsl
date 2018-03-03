@@ -148,9 +148,46 @@ public:
     {
         typedef typename T::node_type t_node;
 
-        auto node_cls = py::class_<t_node>(m, name.c_str())
-//            .def_property_readonly("sym", &t_node::sym )
-        ;
+        try
+        {
+            py::class_<t_node> node_cls(m, name.c_str())
+    //            .def_property_readonly("sym", &t_node::sym )
+            ;
+        }
+        catch(std::runtime_error&) {}
+
+
+        cls.def("root_node", &T::root);
+        cls.def("node_is_leaf", &T::is_leaf);
+        cls.def(
+            "node_empty",
+            [] (const T& self, const t_node& node)
+            { return self.empty(node); }
+        );
+        cls.def(
+            "node_size",
+            [] (const T& self, const t_node& node)
+            { return self.size(node); }
+        );
+        cls.def(
+            "node_sym",
+            [] (const T& self, const t_node& node)
+            { return self.sym(node); }
+        );
+        cls.def(
+            "node_expand",
+            [] (const T& self, const t_node& node)
+            { return self.expand(node); }
+        );
+        cls.def(
+            "node_expand_ranges",
+            [] (const T& self, const t_node& node,
+                const sdsl::range_vec_type& ranges)
+            {
+                return self.expand(node, ranges);
+            },
+            py::arg("node"), py::arg("ranges")
+        );
 
         cls.def(
             "intersect",
