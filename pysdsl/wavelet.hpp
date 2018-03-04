@@ -169,11 +169,7 @@ public:
             [] (const T& self, const t_node& node)
             { return self.size(node); }
         );
-        cls.def(
-            "node_sym",
-            [] (const T& self, const t_node& node)
-            { return self.sym(node); }
-        );
+        cls.def("node_sym", &T::sym);
         cls.def(
             "node_expand",
             [] (const T& self, const t_node& node)
@@ -188,6 +184,8 @@ public:
             },
             py::arg("node"), py::arg("ranges")
         );
+        cls.def("node_bit_vec", &T::bit_vec);
+        cls.def("node_seq", &T::seq);
 
         cls.def(
             "intersect",
