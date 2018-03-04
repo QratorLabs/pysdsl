@@ -201,9 +201,9 @@ public:
             [] (const T& self, const t_node& node)
             {
                 auto seq = self.seq(node);
-                return std::make_pair(
-                    seq.size(), py::make_iterator(seq.begin(), seq.end())
-                );
+                sdsl::int_vector<> s(seq.size());
+                std::copy(seq.begin(), seq.end(), s.begin());
+                return s;
             }
         );
 
