@@ -180,32 +180,32 @@ void add_bitvector_supports(py::module& m, py::class_<sdsl::bit_vector>& cls)
     add_rank_support<sdsl::bit_vector,
                     sdsl::rank_support_v<0, 1>,
                     sdsl::rank_support_v<1, 1>>(
-        m, cls, "BitVector", "V", true, "0", "1", doc_rank_v
+        m, cls, "_BitVector", "V", true, "0", "1", doc_rank_v
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_v<00, 2>,
                      sdsl::rank_support_v<01, 2>>(
-        m, cls, "BitVector", "V", false, "00", "01", doc_rank_v
+        m, cls, "_BitVector", "V", false, "00", "01", doc_rank_v
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_v<10, 2>,
                      sdsl::rank_support_v<11, 2>>(
-        m, cls, "BitVector", "V", false, "10", "11", doc_rank_v
+        m, cls, "_BitVector", "V", false, "10", "11", doc_rank_v
     );
     add_rank_support<sdsl::bit_vector,
                     sdsl::rank_support_v5<0, 1>,
                     sdsl::rank_support_v5<1, 1>>(
-        m, cls, "BitVector", "V5", false, "0", "1", doc_rank_v5
+        m, cls, "_BitVector", "V5", false, "0", "1", doc_rank_v5
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_v5<00, 2>,
                      sdsl::rank_support_v5<01, 2>>(
-        m, cls, "BitVector", "V5", false, "00", "01", doc_rank_v5
+        m, cls, "_BitVector", "V5", false, "00", "01", doc_rank_v5
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_v5<10, 2>,
                      sdsl::rank_support_v5<11, 2>>(
-        m, cls, "BitVector", "V5", false, "10", "11", doc_rank_v5
+        m, cls, "_BitVector", "V5", false, "10", "11", doc_rank_v5
     );
     cls.attr("init_rank") = cls.attr("init_rankV");
     cls.attr("init_rank_0") = cls.attr("init_rankV_0");
@@ -214,12 +214,12 @@ void add_bitvector_supports(py::module& m, py::class_<sdsl::bit_vector>& cls)
     add_select_support<sdsl::bit_vector,
                        support_helper<sdsl::select_support_mcl<0, 1>>,
                        support_helper<sdsl::select_support_mcl<1, 1>>>(
-        m, cls, "BitVector", "MCL", true, "0", "1", doc_select_mcl
+        m, cls, "_BitVector", "MCL", true, "0", "1", doc_select_mcl
     );
     add_select_support<sdsl::bit_vector,
                        support_helper<sdsl::select_support_mcl<10, 2>>,
                        support_helper<sdsl::select_support_mcl<11, 2>>>(
-        m, cls, "BitVector", "MCL", false, "10", "11", doc_select_mcl
+        m, cls, "_BitVector", "MCL", false, "10", "11", doc_select_mcl
     );
     cls.attr("init_select") = cls.attr("init_selectMCL");
     cls.attr("init_select_0") = cls.attr("init_selectMCL_0");
@@ -228,27 +228,27 @@ void add_bitvector_supports(py::module& m, py::class_<sdsl::bit_vector>& cls)
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_scan<0, 1>,
                      sdsl::rank_support_scan<1, 1>>(
-        m, cls, "BitVector", "Scan", false, "0", "1", doc_rank_scan
+        m, cls, "_BitVector", "Scan", false, "0", "1", doc_rank_scan
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_scan<00, 2>,
                      sdsl::rank_support_scan<01, 2>>(
-        m, cls, "BitVector", "Scan", false, "00", "01", doc_rank_scan
+        m, cls, "_BitVector", "Scan", false, "00", "01", doc_rank_scan
     );
     add_rank_support<sdsl::bit_vector,
                      sdsl::rank_support_scan<10, 2>,
                      sdsl::rank_support_scan<11, 2>>(
-        m, cls, "BitVector", "Scan", false, "10", "11", doc_rank_scan
+        m, cls, "_BitVector", "Scan", false, "10", "11", doc_rank_scan
     );
 
     add_select_support<sdsl::bit_vector,
                        support_helper<sdsl::select_support_scan<0, 1>>,
                        support_helper<sdsl::select_support_scan<1, 1>>>(
-        m, cls, "BitVector", "Scan", false, "0", "1", doc_select_scan
+        m, cls, "_BitVector", "Scan", false, "0", "1", doc_select_scan
     );
     add_select_support<sdsl::bit_vector,
                        support_helper<sdsl::select_support_scan<10, 2>>,
                        support_helper<sdsl::select_support_scan<01, 2>>>(
-        m, cls, "BitVector", "Scan", false, "10", "01", doc_select_scan
+        m, cls, "_BitVector", "Scan", false, "10", "01", doc_select_scan
     );
 }

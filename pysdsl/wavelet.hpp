@@ -355,7 +355,7 @@ auto add_wavelet_class(py::module& m, const std::string&& name,
     ;
 
     add_lex_functor<T>()(cls);
-    add_traversable_functor<T>()(m, cls, name + "Node");
+    add_traversable_functor<T>()(m, cls, "_" + name + "Node");
 
     //add_sizes(cls);
     add_description(cls);

@@ -84,8 +84,8 @@ auto add_bitvector_class(py::module &m, const std::string&& name,
         py::call_guard<py::gil_scoped_release>()
     );
 
-    add_rank_support(m, cls, name, "", true, "0", "1", doc_rank);
-    add_select_support(m, cls, name, "", true, "0", "1", doc_select);
+    add_rank_support(m, cls, "_" + name, "", true, "0", "1", doc_rank);
+    add_select_support(m, cls, "_" + name, "", true, "0", "1", doc_select);
 
     return cls;
 }
