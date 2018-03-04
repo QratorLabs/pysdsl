@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <utility>
 
 #include <sdsl/wavelet_trees.hpp>
 
@@ -184,8 +185,27 @@ public:
             },
             py::arg("node"), py::arg("ranges")
         );
-        cls.def("node_bit_vec", &T::bit_vec);
-        cls.def("node_seq", &T::seq);
+        cls.def(
+            "node_bit_vec",
+            [] (const T& self, const t_node& node)
+            {
+                auto bit_vec = self.bit_vec(node);
+                return std::make_pair(
+                    bit_vec.size(),
+                    py::make_iterator(bit_vec.begin(), bit_vec.end())
+                );
+            }
+        );
+        cls.def(
+            "node_seq",
+            [] (const T& self, const t_node& node)
+            {
+                auto seq = self.seq(node);
+                return std::make_pair(
+                    seq.size(), py::make_iterator(seq.begin(), seq.end())
+                );
+            }
+        );
 
         cls.def(
             "intersect",
