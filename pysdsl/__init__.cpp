@@ -1,6 +1,7 @@
 /*cppimport
 <%
-cfg['compiler_args'] = ['-v', '-std=c++14', '-fvisibility=hidden']
+cfg['compiler_args'] = ['-v', '-DNOCROSSCONSTRUCTORS', '-std=c++14',
+                        '-fvisibility=hidden']
 cfg['linker_args'] = ['-fvisibility=hidden']
 cfg['include_dirs'] = ['sdsl-lite/include']
 cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
@@ -231,8 +232,8 @@ PYBIND11_MODULE(pysdsl, m)
                                                             doc_wtint),
         add_wavelet_class<sdsl::wt_int<sdsl::sd_vector<>>>(m, "WtIntSD",
                                                            doc_wtint),
-        add_wavelet_class<sdsl::wt_int<sdsl::hyb_vector<>>>(m, "WtIntHyb",
-                                                            doc_wtint),
+        //add_wavelet_class<sdsl::wt_int<sdsl::hyb_vector<>>>(m, "WtIntHyb",
+        //                                                    doc_wtint),
         add_wavelet_class<sdsl::wt_gmr_rs<>>(m, "WtGMRrs", doc_wt_gmr_rs),
         add_wavelet_class<sdsl::wt_gmr<>>(m, "WtGMR", doc_wt_gmr),
         add_wavelet_class<sdsl::wt_ap<>>(m, "WtAP", doc_wt_ap),
@@ -253,55 +254,71 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(iv_classes, make_inits_many_functor(wavelet_classes));
 
     for_each_in_tuple(enc_classes, make_inits_many_functor(iv_classes));
+#ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(enc_classes, make_inits_many_functor(enc_classes));
     for_each_in_tuple(enc_classes, make_inits_many_functor(vlc_classes));
     for_each_in_tuple(enc_classes, make_inits_many_functor(dac_classes));
     //for_each_in_tuple(enc_classes, make_inits_many_functor(wavelet_classes));
+#endif
 
     for_each_in_tuple(vlc_classes, make_inits_many_functor(iv_classes));
+#ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(vlc_classes, make_inits_many_functor(enc_classes));
     for_each_in_tuple(vlc_classes, make_inits_many_functor(vlc_classes));
     for_each_in_tuple(vlc_classes, make_inits_many_functor(dac_classes));
     for_each_in_tuple(vlc_classes, make_inits_many_functor(wavelet_classes));
+#endif
 
     for_each_in_tuple(dac_classes, make_inits_many_functor(iv_classes));
+#ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(dac_classes, make_inits_many_functor(enc_classes));
     for_each_in_tuple(dac_classes, make_inits_many_functor(vlc_classes));
     for_each_in_tuple(dac_classes, make_inits_many_functor(dac_classes));
     for_each_in_tuple(dac_classes, make_inits_many_functor(wavelet_classes));
+#endif
 
     for_each_in_tuple(bvil_classes,
                       make_inits_many_functor(bit_vector_classes));
+#ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(bvil_classes, make_inits_many_functor(bvil_classes));
     for_each_in_tuple(bvil_classes, make_inits_many_functor(rrr_classes));
     for_each_in_tuple(bvil_classes, make_inits_many_functor(sd_classes));
     for_each_in_tuple(bvil_classes, make_inits_many_functor(hyb_classes));
+#endif
 
     for_each_in_tuple(rrr_classes, make_inits_many_functor(bit_vector_classes));
+#ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(rrr_classes, make_inits_many_functor(bvil_classes));
     for_each_in_tuple(rrr_classes, make_inits_many_functor(rrr_classes));
     for_each_in_tuple(rrr_classes, make_inits_many_functor(sd_classes));
     for_each_in_tuple(rrr_classes, make_inits_many_functor(hyb_classes));
+#endif
 
     for_each_in_tuple(sd_classes, make_inits_many_functor(bit_vector_classes));
+#ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(sd_classes, make_inits_many_functor(bvil_classes));
     for_each_in_tuple(sd_classes, make_inits_many_functor(rrr_classes));
     for_each_in_tuple(sd_classes, make_inits_many_functor(sd_classes));
     for_each_in_tuple(sd_classes, make_inits_many_functor(hyb_classes));
+#endif
 
     for_each_in_tuple(hyb_classes, make_inits_many_functor(bit_vector_classes));
+#ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(hyb_classes, make_inits_many_functor(bvil_classes));
     for_each_in_tuple(hyb_classes, make_inits_many_functor(rrr_classes));
     for_each_in_tuple(hyb_classes, make_inits_many_functor(sd_classes));
     for_each_in_tuple(hyb_classes, make_inits_many_functor(hyb_classes));
+#endif
 
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(iv_classes));
+#ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(enc_classes));
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(vlc_classes));
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(dac_classes));
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(bvil_classes));
     for_each_in_tuple(wavelet_classes,
                       make_inits_many_functor(wavelet_classes));
+#endif
 
     for_each_in_tuple(iv_classes, make_pysequence_init_functor());
     for_each_in_tuple(enc_classes, make_pysequence_init_functor());
