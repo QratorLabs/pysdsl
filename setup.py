@@ -51,7 +51,7 @@ class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
     c_opts = {
         'msvc': ['/EHsc'],
-        'unix': [],
+        'unix': ['-O3'],
     }
 
     if sys.platform == 'darwin':
@@ -61,7 +61,9 @@ class BuildExt(build_ext):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
         if ct == 'unix':
-            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
+            opts.append(
+                '-DVERSION_INFO="%s"' % self.distribution.get_version()
+            )
             opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
@@ -83,7 +85,8 @@ ext_modules = [
             get_pybind_include(),
             get_pybind_include(user=True)
         ],
-        language='c++'
+        language='c++',
+        libraries=['sdsl', 'divsufsort', 'divsufsort64'],
     ),
 ]
 
