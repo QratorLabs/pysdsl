@@ -2,7 +2,9 @@
 
 The Succinct Data Structure Library ([SDSL][SDSL]) is a powerful and flexible C++11 library implementing succinct data structures. In total, the library contains the highlights of 40 [research publications][SDSLLIT]. Succinct data structures can represent an object (such as a bitvector or a tree) in space close to the information-theoretic lower bound of the object while supporting operations of the original object efficiently. The theoretical time complexity of an operation performed on the classical data structure and the equivalent succinct data structure are (most of the time) identical.
 
-## Bindings
+Most of examples from [SDSL cheat sheet][SDSL-CHEAT-SHEET] and [SDSL tutorial][SDSL-TUTORIAL] are implemented.
+
+## Mutable bit-compressed vectors
 
 Core classes:
 
@@ -149,7 +151,19 @@ object into a file.
 All classes provide `.load_from_checkded_file()` static method allowing one to
 load object stored  with `.store_to_checked_file()`
 
+## Building
+
+Requirements: static libraries for sdsl and divsufsort.
+
+Call `pip` with binaries disabled to fetch sources and build the package:
+
+```bash
+pip install --no-binaries :all: pysdsl
+```
+
 
 [SDSL]: https://github.com/simongog/sdsl-lite
 [SDSLLIT]: https://github.com/simongog/sdsl-lite/wiki/Literature
 "Succinct Data Structure Literature"
+[SDSL-CHEAT-SHEET]: https://simongog.github.io/assets/data/sdsl-cheatsheet.pdf
+[SDSL-TUTORIAL]: https://simongog.github.io/assets/data/sdsl-slides/tutorial
