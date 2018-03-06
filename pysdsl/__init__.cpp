@@ -161,6 +161,30 @@ PYBIND11_MODULE(pysdsl, m)
 {
     m.doc() = "sdsl-lite bindings for python";
 
+    m.def(
+        "_memory_monitor_start",
+        [] ()
+        {
+            return sdsl::memory_monitor::start();
+        }
+    );
+    m.def(
+        "_memory_monitor_stop",
+        [] ()
+        {
+            return sdsl::memory_monitor::stop();
+        }
+    );
+    m.def(
+        "_memory_monitor_report",
+        [] ()
+        {
+            std::stringstream s;
+            sdsl::memory_monitor::write_memory_log<sdsl::HTML_FORMAT>(s);
+            return s.str();
+        }
+    );
+
     auto iv_classes = add_int_vectors(m);
 
     py::class_<sdsl::int_vector<1>>& bit_vector_cls = std::get<1>(iv_classes);
