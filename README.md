@@ -151,6 +151,14 @@ object into a file.
 All classes provide `.load_from_checkded_file()` static method allowing one to
 load object stored  with `.store_to_checked_file()`
 
+## Wavelet trees
+
+The wavelet tree is a data structure that provides three efficient methods:
+
+* The `[]`-operator: `wt[i]` returns the `i`-th symbol of vector for which the wavelet tree was build for.
+* The rank method: `wt.rank(i, c)` returns the number of occurrences of symbol `c` in the prefix `[0..i-1]` in the vector for which the wavelet tree was build for.
+* The select method: `wt.select(j, c)` returns the index `i` from `[0..size()-1]` of the `j`-th occurrence of symbol `c`.
+
 ## Building
 
 Requirements: static libraries for sdsl and divsufsort.
