@@ -254,6 +254,33 @@ public:
 };
 
 
+template <class T>
+auto add_wavelet_specific(py::class_<T>& cls)
+{ return cls; }
+
+
+template <class... T>
+auto add_wavelet_specific(py::class_<sdsl::wt_int<T...>>& cls)
+{
+    typedef sdsl::wt_int<T...> base_cls;
+
+    cls.def_property_readonly("tree", [] (const base_cls& self) {
+        return self.tree;
+    }, "A concatenation of all bit vectors of the wavelet tree.");
+    cls.def("get_tree", [] (const base_cls& self) {
+        return self.tree;
+    }, "A concatenation of all bit vectors of the wavelet tree.");
+
+    cls.def_property_readonly("max_level", [] (const base_cls& self) {
+        return self.max_level;
+    }, "Maximal level of the wavelet tree.");
+    cls.def("get_max_level", [] (const base_cls& self) {
+        return self.max_level;
+    }, "Maximal level of the wavelet tree.");
+
+    return cls;
+}
+
 
 template <class T>
 inline
@@ -267,13 +294,6 @@ auto add_wavelet_class(py::module& m, const std::string&& name,
         .def("get_sigma", [] (const T& self) {
             return self.sigma;
         }, "Effective alphabet size of the wavelet tree")
-        // .def_property_readonly("tree", [] (const T& self) {
-        //     return self.tree;
-        // }, "A concatenation of all bit vectors of the wavelet tree.")
-
-        // .def_property_readonly("max_level", [] (const T& self) {
-        //     return self.max_level;
-        // }, "Maximal level of the wavelet tree.")
         .def_static(
             "from_bytes",
             [] (const py::bytes& bytes)
@@ -353,6 +373,8 @@ auto add_wavelet_class(py::module& m, const std::string&& name,
             py::call_guard<py::gil_scoped_release>()
         )
     ;
+
+    add_wavelet_specific(cls);
 
     add_lex_functor<T>()(cls);
     add_traversable_functor<T>()(m, cls, "_" + name + "Node");
