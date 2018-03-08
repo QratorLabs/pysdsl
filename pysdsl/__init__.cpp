@@ -309,9 +309,12 @@ PYBIND11_MODULE(pysdsl, m)
         add_wavelet_class<sdsl::wt_gmr<>>(m, "WtGMR", doc_wt_gmr),
         add_wavelet_class<sdsl::wt_ap<>>(m, "WtAP", doc_wt_ap),
         add_wavelet_class<sdsl::wt_huff<>>(m, "WtHuff", doc_wt_huff),
+        add_wavelet_class<sdsl::wt_huff_int<>>(m, "WtHuffInt", doc_wt_huff),
         add_wavelet_class<sdsl::wm_int<>>(m, "WmInt", doc_wm_int),
         add_wavelet_class<sdsl::wt_blcd<>>(m, "WtBlcd", doc_wt_blcd),
-        add_wavelet_class<sdsl::wt_hutu<>>(m, "WtHutu", doc_wt_hutu)
+        add_wavelet_class<sdsl::wt_blcd_int<>>(m, "WtBlcdInt", doc_wt_blcd),
+        add_wavelet_class<sdsl::wt_hutu<>>(m, "WtHutu", doc_wt_hutu),
+        add_wavelet_class<sdsl::wt_hutu_int<>>(m, "WtHutuInt", doc_wt_hutu)
     );
 
     for_each_in_tuple(iv_classes, make_inits_many_functor(iv_classes));
