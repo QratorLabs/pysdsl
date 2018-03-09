@@ -41,6 +41,9 @@ class add_lex_functor<T, true>
 public:
     py::class_<T>& operator() (py::class_<T>& cls)
     {
+        typedef typename T::size_type size_type;
+        typedef typename T::value_type value_type;
+
         cls.def(
             "quantile_freq",
             [] (const T& self, typename T::size_type lb,
@@ -123,6 +126,21 @@ public:
             },
             py::arg("c"),
             "Returns for a symbol c the next larger or equal symbol in the WT"
+        );
+        cls.def(
+            "restricted_unique_range_values",
+            [] (const T& self, size_type x_i, size_type x_j,
+                value_type y_i, value_type y_j)
+            {
+                return sdsl::restricted_unique_range_values(
+                    self, x_i, x_j, y_i, y_j
+                );
+            },
+            py::arg("x_i"), py::arg("x_j"), py::arg("y_i"), py::arg("y_j"),
+            "For an x range [x_i, x_j] and a value range [y_i, y_j] "
+            "return all unique y values occuring in [x_i, x_j] "
+            "in ascending order.",
+            py::call_guard<py::gil_scoped_release>()
         );
         return cls;
     }
@@ -263,6 +281,8 @@ template <class... T>
 auto add_wavelet_specific(py::class_<sdsl::wt_int<T...>>& cls)
 {
     typedef sdsl::wt_int<T...> base_cls;
+    typedef typename base_cls::size_type size_type;
+    typedef typename base_cls::value_type value_type;
 
     cls.def_property_readonly("tree", [] (const base_cls& self) {
         return self.tree;
@@ -277,6 +297,29 @@ auto add_wavelet_specific(py::class_<sdsl::wt_int<T...>>& cls)
     cls.def("get_max_level", [] (const base_cls& self) {
         return self.max_level;
     }, "Maximal level of the wavelet tree.");
+
+    cls.def(
+        "range_search_2d",
+        [] (const base_cls& self,
+            size_type lb, size_type rb,
+            value_type vlb, value_type vrb,
+             bool report=true)
+        {
+            return self.range_search_2d(lb, rb, vlb, vrb, report);
+        },
+        py::arg("lb"), py::arg("rb"), py::arg("vlb"), py::arg("vrb"),
+        py::arg("report"),
+        "searches points in the index interval [lb..rb] and "
+        "value interval [vlb..vrb].\n"
+        "\tlb: Left bound of index interval (inclusive)\n"
+        "\trb: Right bound of index interval (inclusive)\n"
+        "\tvlb: Left bound of value interval (inclusive)\n"
+        "\tvrb: Right bound of value interval (inclusive)\n"
+        "\treport: Should the matching points be returned?\n"
+        "returns pair (number of found points, vector of points), "
+        "the vector is empty when report = false.",
+        py::call_guard<py::gil_scoped_release>()
+    );
 
     return cls;
 }
