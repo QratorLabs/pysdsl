@@ -237,3 +237,24 @@ const char* doc_wt_hutu(
     "Space complexity: Almost n * H₀ + 2 * |Sigma| * log(n) bits, where "
     "n is the size of the vector the wavelet tree was build for."
 );
+
+const char* doc_csa(
+    "A class for the uncompressed suffix array (SA).\n"
+    "This class stores the information of the suffix array and the inverse "
+    "suffix array in uncompressed form.\nIn contrast to this class, classes "
+    "like csa_sada, and csa_wt store the suffix array and inverse suffix array "
+    "data in compressed form.\n\nThe interface of this class is exactly the "
+    "same as for the compressed indexes. This is the reason why it is in the "
+    "group of compressed suffix arrays.\n\nSpace complexity:"
+    "2n log n bits, where n equals the size of the suffix array."
+);
+
+const char* doc_sada(
+    "A class for the Compressed Suffix Array (CSA) proposed by Sadakane for "
+    "practical implementation."
+);
+
+const char* doc_csa_wt(
+    "A class for the Compressed Suffix Array (CSA) based on a Wavelet Tree "
+    "(WT) of the Burrow Wheeler Transform of the original text."
+);

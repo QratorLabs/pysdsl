@@ -19,6 +19,7 @@ cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'io.hpp',
 
 #include <sdsl/vectors.hpp>
 #include <sdsl/bit_vectors.hpp>
+#include <sdsl/suffix_arrays.hpp>
 #include <sdsl/wavelet_trees.hpp>
 
 #include <pybind11/pybind11.h>
@@ -155,6 +156,24 @@ public:
 private:
     py::module& m;
 };
+
+
+template <class T>
+auto add_csa(py::module& m, const char* name, const char* doc = nullptr)
+{
+    auto cls = py::class_<T>(m, name);
+
+    add_sizes(cls);
+    add_description(cls);
+    add_serialization(cls);
+    add_to_string(cls);
+
+    add_std_algo<T>(cls);
+
+    if (doc) cls.doc() = doc;
+
+    return cls;
+}
 
 
 PYBIND11_MODULE(pysdsl, m)
@@ -315,6 +334,16 @@ PYBIND11_MODULE(pysdsl, m)
         add_wavelet_class<sdsl::wt_blcd_int<>>(m, "WtBlcdInt", doc_wt_blcd),
         add_wavelet_class<sdsl::wt_hutu<>>(m, "WtHutu", doc_wt_hutu),
         add_wavelet_class<sdsl::wt_hutu_int<>>(m, "WtHutuInt", doc_wt_hutu)
+    );
+
+    auto csa_classes = std::make_tuple(
+        add_csa<sdsl::csa_bitcompressed<>>(
+            m, "SuffixArrayBitcompressed", doc_csa
+        ),
+        add_csa<sdsl::csa_sada<>>(m, "SuffixArraySADA", doc_sada),
+        add_csa<sdsl::csa_sada_int<>>(m, "SuffixArraySADAint", doc_sada),
+        add_csa<sdsl::csa_wt<>>(m, "SuffixArrayWT", doc_csa_wt),
+        add_csa<sdsl::csa_wt_int<>>(m, "SuffixArrayWTint", doc_csa_wt)
     );
 
     for_each_in_tuple(iv_classes, make_inits_many_functor(iv_classes));
