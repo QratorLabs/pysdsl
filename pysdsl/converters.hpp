@@ -296,6 +296,32 @@ namespace detail
         }
     };
 
+    template <class T>
+    class pysequence_init_functor<T, sdsl::csa_tag>
+    {
+        typedef py::class_<T> BindCls;
+        typedef typename T::value_type value_type;
+    public:
+        decltype(auto) operator()(BindCls &cls)
+        {
+            cls.def(py::init([](const py::sequence &v) {
+                    sequence_wrapper<value_type> helper(v);
+
+                    T result;
+                    sdsl::int_vector<> temp(v.size());
+                    std::copy(helper.begin(), helper.end(), temp.begin());
+
+                    sdsl::construct_im(result, temp);
+
+                    return result;
+
+                }),
+                py::arg("v"), "\tInvolves intermediate IntVector creation"
+            );
+            return cls;
+        }
+    };
+
     class add_pysequence_init_functor
     {
     public:

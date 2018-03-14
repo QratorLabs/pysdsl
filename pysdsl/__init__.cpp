@@ -431,4 +431,6 @@ PYBIND11_MODULE(pysdsl, m)
     //for_each_in_tuple(sd_classes, make_pysequence_init_functor());
 
     for_each_in_tuple(wavelet_classes, make_pysequence_init_functor());
+
+    for_each_in_tuple(csa_classes, make_pysequence_init_functor());
 }
