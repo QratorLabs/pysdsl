@@ -163,6 +163,9 @@ auto add_csa(py::module& m, const char* name, const char* doc = nullptr)
 {
     auto cls = py::class_<T>(m, name);
 
+    cls.def_property_readonly("char2comp", [] (const T& self ) { return self.char2comp; });
+    cls.def_property_readonly("comp2char", [] (const T& self ) { return self.comp2char; });
+    cls.def_property_readonly("sigma", [] (const T& self ) { return self.sigma; });
     add_sizes(cls);
     add_description(cls);
     add_serialization(cls);
