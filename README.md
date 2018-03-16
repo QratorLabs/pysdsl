@@ -159,6 +159,15 @@ The wavelet tree is a data structure that provides three efficient methods:
 * The rank method: `wt.rank(i, c)` returns the number of occurrences of symbol `c` in the prefix `[0..i-1]` in the vector for which the wavelet tree was build for.
 * The select method: `wt.select(j, c)` returns the index `i` from `[0..size()-1]` of the `j`-th occurrence of symbol `c`.
 
+## Comressed suffix arrays
+
+Suffix array is a sorted array of all suffixes of a string.
+
+SDSL supports bitcompressed and compressed suffix arrays.
+
+Byte representaion of original IntVector should have no zero symbols in order to construct SuffixArray.
+
+
 ## Building
 
 Requirements: static libraries for sdsl and divsufsort.
