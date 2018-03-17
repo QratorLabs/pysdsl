@@ -1,5 +1,4 @@
-from pysdsl import _memory_monitor_start, _memory_monitor_stop, \
-                   _memory_monitor_report_json, _memory_monitor_report_html
+from pysdsl import _memory_monitor
 
 
 class MemoryMonitor(object):
@@ -9,13 +8,13 @@ class MemoryMonitor(object):
         self.out_json = out_json
 
     def __enter__(self):
-        _memory_monitor_start()
+        _memory_monitor.start()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        _memory_monitor_stop()
+        _memory_monitor.stop()
 
         if self.out_html is not None:
-            _memory_monitor_report_html(self.out_html)
+            _memory_monitor.report_html(self.out_html)
 
         if self.out_json is not None:
-            _memory_monitor_report_json(self.out_json)
+            _memory_monitor.report_json(self.out_json)

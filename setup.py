@@ -88,6 +88,17 @@ ext_modules = [
         language='c++',
         libraries=['sdsl', 'divsufsort', 'divsufsort64'],
     ),
+    Extension(
+        'pysdsl/_memory_monitor',
+        ['pysdsl/_memory_monitor.cpp'],
+        include_dirs=[
+            # Path to pybind11 headers
+            get_pybind_include(),
+            get_pybind_include(user=True)
+        ],
+        language='c++',
+        libraries=['sdsl'],
+    ),
 ]
 
 
