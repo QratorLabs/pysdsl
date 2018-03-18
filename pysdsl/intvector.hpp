@@ -17,9 +17,10 @@
 namespace py = pybind11;
 
 
-template <class T, typename S = typename T::value_type>
+template <class T, class KEY, typename S = typename T::value_type>
 inline
-auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
+auto add_int_class(py::module& m, py::dict& dict, KEY key,
+                   const char *name, const char *doc = nullptr)
 {
     auto cls = py::class_<T>(m, name)
         .def_property_readonly("width", (uint8_t(T::*)(void) const) & T::width)
@@ -150,6 +151,8 @@ auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
 
     if (doc) cls.doc() = doc;
 
+    dict.attr("__setitem__")(key, cls);
+
     return cls;
 }
 
@@ -157,8 +160,14 @@ auto add_int_class(py::module &m, const char *name, const char *doc = nullptr)
 inline
 auto add_int_vectors(py::module& m)
 {
+    py::dict int_vectors_dict;
+
+    m.attr("int_vector") = int_vectors_dict;
+
     return std::make_tuple(
-        add_int_class<sdsl::int_vector<0>>(m, "IntVector", doc_int_vector)
+        add_int_class<sdsl::int_vector<0>>(
+            m, int_vectors_dict, "dynamic", "IntVector", doc_int_vector
+        )
             .def(
                 py::init([](size_t size,
                             uint64_t default_value,
@@ -184,7 +193,9 @@ auto add_int_vectors(py::module& m)
                 doc_bit_compress,
                 py::call_guard<py::gil_scoped_release>()),
 
-        add_int_class<sdsl::int_vector<1>, bool>(m, "BitVector")
+        add_int_class<sdsl::int_vector<1>, bool>(
+            m, int_vectors_dict, 1ul , "BitVector"
+        )
             .def(py::init([](size_t size, bool default_value) {
                     return sdsl::int_vector<1>(size, default_value, 1);
                 }), py::arg("size") = 0, py::arg("default_value") = false)
@@ -192,32 +203,44 @@ auto add_int_vectors(py::module& m)
                  "Flip all bits of bit_vector",
                  py::call_guard<py::gil_scoped_release>()),
 
-        add_int_class<sdsl::int_vector<4>, uint8_t>(m, "Int4Vector")
+        add_int_class<sdsl::int_vector<4>, uint8_t>(
+            m, int_vectors_dict, 4, "Int4Vector"
+        )
             .def(py::init([](size_t size, uint8_t default_value) {
                     return sdsl::int_vector<4>(size, default_value, 4);
                 }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-        add_int_class<sdsl::int_vector<8>, uint8_t>(m, "Int8Vector")
+        add_int_class<sdsl::int_vector<8>, uint8_t>(
+            m, int_vectors_dict, 8, "Int8Vector"
+        )
             .def(py::init([](size_t size, uint8_t default_value) {
                     return sdsl::int_vector<8>(size, default_value, 8);
                 }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-        add_int_class<sdsl::int_vector<16>, uint16_t>(m, "Int16Vector")
+        add_int_class<sdsl::int_vector<16>, uint16_t>(
+            m, int_vectors_dict, 16, "Int16Vector"
+        )
             .def(py::init([](size_t size, uint16_t default_value) {
                      return sdsl::int_vector<16>(size, default_value, 16);
                  }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-        add_int_class<sdsl::int_vector<24>, uint32_t>(m, "Int24Vector")
+        add_int_class<sdsl::int_vector<24>, uint32_t>(
+            m, int_vectors_dict, 24, "Int24Vector"
+        )
             .def(py::init([](size_t size, uint32_t default_value) {
                      return sdsl::int_vector<24>(size, default_value, 24);
                  }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-        add_int_class<sdsl::int_vector<32>, uint32_t>(m, "Int32Vector")
+        add_int_class<sdsl::int_vector<32>, uint32_t>(
+            m, int_vectors_dict, 32, "Int32Vector"
+        )
             .def(py::init([](size_t size, uint32_t default_value) {
                     return sdsl::int_vector<32>(size, default_value, 32);
                 }), py::arg("size") = 0, py::arg("default_value") = 0),
 
-        add_int_class<sdsl::int_vector<64>, uint64_t>(m, "Int64Vector")
+        add_int_class<sdsl::int_vector<64>, uint64_t>(
+            m, int_vectors_dict, 64, "Int64Vector"
+        )
             .def(py::init([](size_t size, uint64_t default_value) {
                     return sdsl::int_vector<64>(size, default_value, 64);
                 }), py::arg("size") = 0, py::arg("default_value") = 0)
