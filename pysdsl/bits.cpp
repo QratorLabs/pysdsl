@@ -1,11 +1,3 @@
-/*cppimport
-<%
-cfg['compiler_args'] = ['-std=c++14', '-ftemplate-depth=3600']
-cfg['include_dirs'] = ['sdsl-lite/include']
-cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
-%>
-*/
-
 #include <string>
 #include <tuple>
 
@@ -16,22 +8,12 @@ cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
 namespace py = pybind11;
 
 
-namespace detail
-{
-    // Convert array into a tuple
-    template<typename Array, std::size_t... I>
-    decltype(auto) a2t_impl(const Array& a, std::index_sequence<I...>)
-    {
-        return std::make_tuple(a[I]...);
-    }
-}
-
-
-template<typename T, std::size_t N,
-         typename Indices = std::make_index_sequence<N>>
+template<typename T, std::size_t N>
 decltype(auto) as_tuple(const T (&a) [N])
 {
-    return detail::a2t_impl(a, Indices{});
+    py::tuple result{N};
+    for (std::size_t i; i < N; i++) result[i] = a[i];
+    return result;
 }
 
 

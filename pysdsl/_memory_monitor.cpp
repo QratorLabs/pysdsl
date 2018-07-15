@@ -1,12 +1,3 @@
-/*cppimport
-<%
-cfg['compiler_args'] = ['-v', '-std=c++14', '-fvisibility=hidden']
-cfg['linker_args'] = ['-fvisibility=hidden']
-cfg['include_dirs'] = ['sdsl-lite/include']
-cfg['libraries'] = ['sdsl']
-%>
-*/
-
 #include <string>
 #include <sstream>
 

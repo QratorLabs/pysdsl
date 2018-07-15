@@ -58,16 +58,16 @@ class BuildExt(build_ext):
         c_opts['unix'] += ['-stdlib=libc++', '-mmacosx-version-min=10.7']
 
     def build_extensions(self):
-        ct = self.compiler.compiler_type
-        opts = self.c_opts.get(ct, [])
-        if ct == 'unix':
+        compiler_type = self.compiler.compiler_type
+        opts = self.c_opts.get(compiler_type, [])
+        if compiler_type == 'unix':
             opts.append(
                 '-DVERSION_INFO="%s"' % self.distribution.get_version()
             )
             opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
-        elif ct == 'msvc':
+        elif compiler_type == 'msvc':
             opts.append(
                 '/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version()
             )
@@ -76,7 +76,18 @@ class BuildExt(build_ext):
         build_ext.build_extensions(self)
 
 
-ext_modules = [
+EXT_MODULES = [
+    Extension(
+        'pysdsl/bits',
+        ['pysdsl/bits.cpp'],
+        include_dirs=[
+            # Path to pybind11 headers
+            get_pybind_include(),
+            get_pybind_include(user=True)
+        ],
+        language='c++',
+        libraries=['sdsl'],
+    ),
     Extension(
         'pysdsl/__init__',
         ['pysdsl/__init__.cpp'],
