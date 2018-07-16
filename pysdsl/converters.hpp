@@ -10,45 +10,19 @@
 
 #include "pysequence.hpp"
 #include "operations/iteration.hpp"
+#include "util/tupletricks.hpp"
 
 
 namespace py = pybind11;
 
-
-using detail::cbegin;
-using detail::cend;
+namespace {
+    using detail::cbegin;
+    using detail::cend;
+} // namespace
 
 
 namespace detail
 {
-    template<typename P, typename Function, std::size_t... Is>
-    inline
-    decltype(auto) for_each_impl(P&& t, Function&& f, std::index_sequence<Is...>)
-    {
-        return std::make_tuple(f(std::get<Is>(t))...);
-    }
-
-    template<typename P, typename Function, std::size_t... Is>
-    inline
-    decltype(auto) for_each_impl(P& t, Function&& f, std::index_sequence<Is...>)
-    {
-        return std::make_tuple(f(std::get<Is>(t))...);
-    }
-
-    template<typename... T, typename Function>
-    inline
-    decltype(auto) for_each(const std::tuple<T...>& t, Function&& f)
-    {
-        return for_each_impl(t, f, std::index_sequence_for<T...>{});
-    }
-
-    template<typename... T, typename Function>
-    inline
-    decltype(auto) for_each(std::tuple<T...>& t, Function&& f)
-    {
-        return for_each_impl(t, f, std::index_sequence_for<T...>{});
-    }
-
     template <class BindCls,
               typename Tag = typename BindCls::type::index_category,
               typename py_class = py::class_<typename BindCls::type>>
@@ -168,8 +142,7 @@ namespace detail
                     sdsl::int_vector<> temp(from.size());
                     std::copy(cbegin(from), cend(from), std::begin(temp));
                     sdsl::construct_im(result, temp);
-                    return result;
-                }),
+                    return result; }),
                 "\tInvolves intermediate IntVector creation",
                 py::arg("v"), py::call_guard<py::gil_scoped_release>());
             return m_cls_to;
@@ -182,8 +155,7 @@ namespace detail
                 py::init([](const sdsl::int_vector<width>& from) {
                     typename BindCls::type result;
                     sdsl::construct_im(result, from);
-                    return result;
-                }),
+                    return result; }),
                 py::arg("v"),
                 py::call_guard<py::gil_scoped_release>());
             return m_cls_to;
@@ -200,18 +172,14 @@ namespace detail
                                m_from_each(from_each) {}
 
         template <typename BindCls>
-        decltype(auto) operator()(BindCls& cls)
-        {
-            return for_each(m_from_each, add_init_functor<BindCls>(cls));
-        }
+        decltype(auto) operator()(BindCls& cls) {
+            return for_each(m_from_each, add_init_functor<BindCls>(cls)); }
 
         template <uint8_t B>
-        decltype(auto) operator()(py::class_<sdsl::int_vector<B>>& cls)
-        {
+        decltype(auto) operator()(py::class_<sdsl::int_vector<B>>& cls) {
             return for_each(m_from_each,
                             add_init_functor<py::class_<sdsl::int_vector<B>>,
-                                             void>(cls));
-        }
+                                             void>(cls)); }
 
         template <class BV, int ML>
         decltype(auto) operator()(py::class_<sdsl::dac_vector_dp<BV, ML>>& cls)
@@ -223,12 +191,10 @@ namespace detail
         }
 
         template <uint32_t K>
-        decltype(auto) operator()(py::class_<sdsl::hyb_vector<K>>& cls)
-        {
+        decltype(auto) operator()(py::class_<sdsl::hyb_vector<K>>& cls) {
             return for_each(m_from_each,
                             add_init_functor<py::class_<sdsl::hyb_vector<K>>,
-                                             sdsl::bv_tag>(cls));
-        }
+                                             sdsl::bv_tag>(cls)); }
 
     private:
         const std::tuple<From...>& m_from_each;
@@ -240,13 +206,9 @@ namespace detail
     {
         typedef typename T::value_type value_type;
     public:
-        decltype(auto) operator()(py::class_<T>& cls)
-        {
-            cls.def(py::init([](const py::sequence& v) {
-                return T(sequence_wrapper<value_type>(v));
-            }), py::arg("v"));
-            return cls;
-        }
+        decltype(auto) operator()(py::class_<T>& cls) {
+            return cls.def(py::init([](const py::sequence& v) {
+                return T(sequence_wrapper<value_type>(v)); }), py::arg("v")); }
     };
 
     template <uint8_t width>
@@ -259,15 +221,15 @@ namespace detail
     public:
         decltype(auto) operator()(BindCls& cls)
         {
-            cls.def(py::init([](const py::sequence& v) {
-                const auto vsize = v.size();
-                base_class result(vsize);
-                sequence_wrapper<value_type> helper(v);
+            return cls.def(py::init(
+                [](const py::sequence& v) {
+                    const auto vsize = v.size();
+                    base_class result(vsize);
+                    sequence_wrapper<value_type> helper(v);
 
-                std::copy(helper.begin(), helper.end(), result.begin());
-                return result;
-            }), py::arg("v"));
-            return cls;
+                    std::copy(helper.begin(), helper.end(), result.begin());
+                    return result; }),
+                py::arg("v"));
         }
     };
 
@@ -279,7 +241,8 @@ namespace detail
     public:
         decltype(auto) operator()(BindCls &cls)
         {
-            cls.def(py::init([](const py::sequence &v) {
+            return cls.def(py::init(
+                [](const py::sequence &v) {
                     sequence_wrapper<value_type> helper(v);
 
                     T result;
@@ -288,11 +251,8 @@ namespace detail
 
                     sdsl::construct_im(result, temp);
 
-                    return result;
-
-                }),
+                    return result; }),
                 py::arg("v"), "\tInvolves intermediate IntVector creation");
-            return cls;
         }
     };
 
@@ -304,7 +264,8 @@ namespace detail
     public:
         decltype(auto) operator()(BindCls &cls)
         {
-            cls.def(py::init([](const py::sequence &v) {
+            cls.def(py::init(
+                [](const py::sequence &v) {
                     sequence_wrapper<value_type> helper(v);
 
                     T result;
@@ -313,11 +274,15 @@ namespace detail
 
                     sdsl::construct_im(result, temp);
 
-                    return result;
-
-                }),
-                py::arg("v"), "\tInvolves intermediate IntVector creation"
-            );
+                    return result; }),
+                py::arg("v"), "\tInvolves intermediate IntVector creation");
+            cls.def_static(
+                "construct_from_file",
+                [] (const std::string& file_name) {
+                    T result;
+                    sdsl::construct(result, file_name);
+                    return result; },
+                py::arg("file_name"));
             return cls;
         }
     };
@@ -329,16 +294,12 @@ namespace detail
 
         template <class BindCls,
                   class py_class = py::class_<typename BindCls::type>>
-        decltype(auto) operator()(BindCls& cls)
-        {
-            return pysequence_init_functor<typename BindCls::type>()(cls);
-        }
+        decltype(auto) operator()(BindCls& cls) {
+            return pysequence_init_functor<typename BindCls::type>()(cls); }
 
         template <uint8_t B>
-        decltype(auto) operator()(py::class_<sdsl::int_vector<B>>& cls)
-        {
-            return pysequence_init_functor<sdsl::int_vector<B>, void>()(cls);
-        }
+        decltype(auto) operator()(py::class_<sdsl::int_vector<B>>& cls) {
+            return pysequence_init_functor<sdsl::int_vector<B>, void>()(cls); }
 
         template <class BV, int ML>
         decltype(auto) operator()(py::class_<sdsl::dac_vector_dp<BV, ML>>& cls)
@@ -348,11 +309,9 @@ namespace detail
         }
 
         template <uint32_t K>
-        decltype(auto) operator()(py::class_<sdsl::hyb_vector<K>>& cls)
-        {
+        decltype(auto) operator()(py::class_<sdsl::hyb_vector<K>>& cls) {
             return pysequence_init_functor<sdsl::hyb_vector<K>,
-                                           sdsl::bv_tag>()(cls);
-        }
+                                           sdsl::bv_tag>()(cls); }
 
         // template <class Th, class Ts1, class Ts0>
         // decltype(auto) operator()(
@@ -375,32 +334,12 @@ namespace detail
 }
 
 
-template <typename... Ts, typename F>
 inline
-decltype(auto) for_each_in_tuple(const std::tuple<Ts...> &t, F f)
-{
-    return detail::for_each(t, f);
-}
-
-
-template <typename... Ts, typename F>
-inline
-decltype(auto) for_each_in_tuple(std::tuple<Ts...> &t, F f)
-{
-    return detail::for_each(t, f);
-}
-
-
-inline
-auto make_pysequence_init_functor()
-{
-    return detail::add_pysequence_init_functor();
-}
+auto make_pysequence_init_functor() {
+    return detail::add_pysequence_init_functor(); }
 
 
 template <class... From>
 inline
-auto make_inits_many_functor(const std::tuple<From...>& from_each)
-{
-    return detail::add_many_inits_to_each<From...>(from_each);
-}
+auto make_inits_many_functor(const std::tuple<From...>& from_each) {
+    return detail::add_many_inits_to_each<From...>(from_each); }
