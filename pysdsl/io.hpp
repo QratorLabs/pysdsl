@@ -6,7 +6,7 @@
 
 #include <pybind11/pybind11.h>
 
-#include "indexiterator.hpp"
+#include "operations/iteration.hpp"
 
 
 namespace py = pybind11;
@@ -24,7 +24,7 @@ decltype(auto) to_string(const T &self, const size_t max_elements=100,
     std::stringstream fout;
     fout << start;
     size_t count = 0;
-    for (auto i = cbegin(self); i != cend(self); i++)
+    for (auto i = detail::cbegin(self); i != detail::cend(self); i++)
     {
         if (count) fout << sep;
 

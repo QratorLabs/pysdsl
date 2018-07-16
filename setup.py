@@ -94,7 +94,8 @@ EXT_MODULES = [
         include_dirs=[
             # Path to pybind11 headers
             get_pybind_include(),
-            get_pybind_include(user=True)
+            get_pybind_include(user=True),
+            "pysdsl/",
         ],
         language='c++',
         libraries=['sdsl', 'divsufsort', 'divsufsort64'],

@@ -2,7 +2,6 @@
 
 #include <pybind11/pybind11.h>
 #include <sdsl/bit_vectors.hpp>
-#include <sdsl/io.hpp>
 
 
 namespace py = pybind11;
@@ -12,7 +11,6 @@ namespace detail
 {
     struct no_max_size {};
     struct has_max_size: no_max_size {};
-    template<typename> struct int_ { typedef int type; };
 
     template <class T, typename /* unused */ = decltype(T::max_size)>
     inline
@@ -59,7 +57,7 @@ inline auto add_sizes(py::class_<Sequence>& cls)
     add_max_size(cls);
 
     auto size = [] (const Sequence& self) {
-        return self.size(); };
+        return detail::size(self); };
 
     cls.def("__len__", size,
             "The number of elements in the container.");

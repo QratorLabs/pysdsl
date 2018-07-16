@@ -35,6 +35,7 @@ auto add_compressed_class(py::module &m, const std::string& name,
     add_serialization(cls);
     add_to_string(cls);
 
+    add_iteration(cls);
     add_std_algo<Sequence, T>(cls);
 
     if (doc) cls.doc() = doc;
@@ -157,6 +158,7 @@ auto add_csa(py::module& m, const char* name, const char* doc = nullptr)
     add_serialization(cls);
     add_to_string(cls);
 
+    add_iteration(cls);
     add_std_algo<T>(cls);
 
     if (doc) cls.doc() = doc;
@@ -181,8 +183,7 @@ PYBIND11_MODULE(pysdsl, m)
         std::make_pair("EliasGamma", (sdsl::coder::elias_gamma*) nullptr),
         std::make_pair("Fibonacci", (sdsl::coder::fibonacci*) nullptr),
         std::make_pair("Comma2", (sdsl::coder::comma<2>*) nullptr),
-        std::make_pair("Comma4", (sdsl::coder::comma<4>*) nullptr)
-    );
+        std::make_pair("Comma4", (sdsl::coder::comma<4>*) nullptr));
 
     auto enc_classes = for_each_in_tuple(coders, add_enc_coders_functor(m));
     auto vlc_classes = for_each_in_tuple(coders, add_vlc_coders_functor(m));
@@ -194,8 +195,7 @@ PYBIND11_MODULE(pysdsl, m)
                                                     doc_dac_vector_dp)
             .def("cost", &sdsl::dac_vector_dp<>::cost, py::arg("n"),
                  py::arg("m"))
-            .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels)
-    );
+            .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels));
 
     auto bvil_classes = std::make_tuple(
         add_bitvector_class<sdsl::bit_vector_il<64>>(m, "BitVectorIL64",
@@ -205,8 +205,7 @@ PYBIND11_MODULE(pysdsl, m)
         add_bitvector_class<sdsl::bit_vector_il<256>>(m, "BitVectorIL256",
                                                       doc_bit_vector_il),
         add_bitvector_class<sdsl::bit_vector_il<512>>(m, "BitVectorIL512",
-                                                      doc_bit_vector_il)
-    );
+                                                      doc_bit_vector_il));
 
     auto rrr_classes = std::make_tuple(
         add_bitvector_class<sdsl::rrr_vector<3>>(m, "RRRVector3",
@@ -216,13 +215,13 @@ PYBIND11_MODULE(pysdsl, m)
         add_bitvector_class<sdsl::rrr_vector<63>>(m, "RRRVector63",
                                                   doc_rrr_vector),
         add_bitvector_class<sdsl::rrr_vector<256>>(m, "RRRVector256",
-                                                   doc_rrr_vector)
-    );
+                                                   doc_rrr_vector));
 
     auto sd_classes = std::make_tuple(
         add_bitvector_class<sdsl::sd_vector<>>(m, std::string("SDVector"),
-                                               doc_sd_vector)
-    );
+                                               doc_sd_vector),
+        add_bitvector_class<sdsl::sd_vector<sdsl::sd_vector<>>>(m, std::string("SDVectorR"),
+                                               doc_sd_vector));
 
     auto hyb_classes = std::make_tuple(
         add_bitvector_class<sdsl::hyb_vector<8>>(m, std::string("HybVector8"),

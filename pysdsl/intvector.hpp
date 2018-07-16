@@ -147,6 +147,7 @@ auto add_int_class(py::module& m, py::dict& dict, KEY key,
     add_serialization(cls);
     add_to_string(cls);
 
+    add_iteration(cls);
     add_std_algo<T, S>(cls);
 
     if (doc) cls.doc() = doc;
