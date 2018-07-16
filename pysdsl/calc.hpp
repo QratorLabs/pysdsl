@@ -6,6 +6,7 @@
 #include <pybind11/pybind11.h>
 
 #include "indexiterator.hpp"
+#include "operations/sizes.hpp"
 
 
 namespace py = pybind11;
@@ -20,13 +21,6 @@ inline
 auto add_std_algo(py::class_<Sequence>& cls)
 {
     typedef typename Sequence::value_type value_type;
-
-    auto size = [] (const Sequence& self) { return self.size(); };
-
-    cls.def("__len__", size,
-            "The number of elements in the int_vector.");
-    cls.def_property_readonly("size", size,
-                              "The number of elements in the int_vector.");
 
     cls.def(
         "__iter__",
@@ -45,7 +39,7 @@ auto add_std_algo(py::class_<Sequence>& cls)
     cls.def(
         "__getitem__",
         [](const Sequence &self, size_t position) -> T {
-            if (position >= self.size())
+            if (position >= detail::size(self))
             {
                 throw std::out_of_range(std::to_string(position));
             }
@@ -60,11 +54,11 @@ auto add_std_algo(py::class_<Sequence>& cls)
             {
                 throw std::exception();
             }
-            if (abs_position > self.size())
+            if (abs_position > detail::size(self))
             {
                 throw std::out_of_range(std::to_string(position));
             }
-            return self[self.size() - abs_position];
+            return self[detail::size(self) - abs_position];
         }
     );
     cls.def(

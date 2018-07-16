@@ -1,17 +1,3 @@
-/*cppimport
-<%
-cfg['compiler_args'] = ['-v', '-DNOCROSSCONSTRUCTORS', '-std=c++14',
-                        '-fvisibility=hidden']
-cfg['linker_args'] = ['-fvisibility=hidden']
-cfg['include_dirs'] = ['sdsl-lite/include']
-cfg['libraries'] = ['sdsl', 'divsufsort', 'divsufsort64']
-cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'io.hpp',
-                       'sizes.hpp', 'calc.hpp', 'docstrings.hpp',
-                       'intvector.hpp', 'supports.hpp', 'indexiterator.hpp',
-                       'wavelet.hpp']
-%>
-*/
-
 #include <cstdint>
 #include <string>
 #include <tuple>
@@ -27,7 +13,7 @@ cfg['dependencies'] = ['converters.hpp', 'pysequence.hpp', 'io.hpp',
 #include "calc.hpp"
 #include "io.hpp"
 #include "converters.hpp"
-#include "sizes.hpp"
+#include "operations/sizes.hpp"
 #include "docstrings.hpp"
 #include "intvector.hpp"
 #include "supports.hpp"

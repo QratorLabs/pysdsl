@@ -120,7 +120,7 @@ setup(
     author_email='kv@qrator.net',
     url='https://git.qrator.net/podshumok/pysdsl',
     description='Python bindings to Succinct Data Structure Library 2.0',
-    ext_modules=ext_modules,
+    ext_modules=EXT_MODULES,
     install_requires=['pybind11>=2.2'],
     cmdclass={'build_ext': BuildExt},
     zip_safe=False,

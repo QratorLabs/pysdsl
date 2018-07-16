@@ -10,7 +10,7 @@
 
 #include "calc.hpp"
 #include "io.hpp"
-#include "sizes.hpp"
+#include "operations/sizes.hpp"
 #include "docstrings.hpp"
 
 
