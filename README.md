@@ -77,7 +77,7 @@ Encoding values with variable length codes:
 Encoding values with "escaping" technique:
 
  * `DacVector(IntVector)`
- * `DacVectorDP(IntVector)` — number of layers is choosen
+ * `DacVectorDP(IntVector)` — number of layers is chosen
                               with dynamic programming
 
 Construction from python sequences is also supported.

@@ -15,7 +15,7 @@
 #include "converters.hpp"
 #include "operations/sizes.hpp"
 #include "docstrings.hpp"
-#include "intvector.hpp"
+#include "types/intvector.hpp"
 #include "supports.hpp"
 #include "wavelet.hpp"
 
@@ -227,8 +227,7 @@ PYBIND11_MODULE(pysdsl, m)
         add_bitvector_class<sdsl::hyb_vector<8>>(m, std::string("HybVector8"),
                                                  doc_hyb_vector),
         add_bitvector_class<sdsl::hyb_vector<16>>(m, std::string("HybVector16"),
-                                                  doc_hyb_vector)
-    );
+                                                  doc_hyb_vector));
 
     auto wavelet_classes = std::make_tuple(
         add_wavelet_class<sdsl::wt_int<sdsl::bit_vector>>(m, "WtInt",
@@ -250,18 +249,15 @@ PYBIND11_MODULE(pysdsl, m)
         add_wavelet_class<sdsl::wt_blcd<>>(m, "WtBlcd", doc_wt_blcd),
         add_wavelet_class<sdsl::wt_blcd_int<>>(m, "WtBlcdInt", doc_wt_blcd),
         add_wavelet_class<sdsl::wt_hutu<>>(m, "WtHutu", doc_wt_hutu),
-        add_wavelet_class<sdsl::wt_hutu_int<>>(m, "WtHutuInt", doc_wt_hutu)
-    );
+        add_wavelet_class<sdsl::wt_hutu_int<>>(m, "WtHutuInt", doc_wt_hutu));
 
     auto csa_classes = std::make_tuple(
         add_csa<sdsl::csa_bitcompressed<>>(
-            m, "SuffixArrayBitcompressed", doc_csa
-        ),
+            m, "SuffixArrayBitcompressed", doc_csa),
         add_csa<sdsl::csa_sada<>>(m, "SuffixArraySADA", doc_sada),
         add_csa<sdsl::csa_sada_int<>>(m, "SuffixArraySADAint", doc_sada),
         add_csa<sdsl::csa_wt<>>(m, "SuffixArrayWT", doc_csa_wt),
-        add_csa<sdsl::csa_wt_int<>>(m, "SuffixArrayWTint", doc_csa_wt)
-    );
+        add_csa<sdsl::csa_wt_int<>>(m, "SuffixArrayWTint", doc_csa_wt));
 
     for_each_in_tuple(iv_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(iv_classes, make_inits_many_functor(enc_classes));

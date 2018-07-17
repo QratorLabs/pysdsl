@@ -66,6 +66,7 @@ private:
 public:
     using const_iterator = detail::sequence_iterator_wrapper<T, raw_iterator>;
     using value_type = T;
+    using size_type = std::size_t;
 
     sequence_wrapper(const py::sequence& seq): m_seq(seq) {};
 
