@@ -1,7 +1,6 @@
 #include <cstdint>
 #include <string>
 #include <tuple>
-#include <vector>
 
 #include <sdsl/vectors.hpp>
 #include <sdsl/bit_vectors.hpp>
@@ -12,7 +11,7 @@
 
 #include "calc.hpp"
 #include "io.hpp"
-#include "converters.hpp"
+#include "operations/creation.hpp"
 #include "operations/sizes.hpp"
 #include "docstrings.hpp"
 #include "types/intvector.hpp"
@@ -56,22 +55,16 @@ auto add_bitvector_class(py::module &m, const std::string&& name,
     cls.def(
         "get_int",
         [](const T &self, size_t idx, uint8_t len) {
-            if (idx + len - 1 >= self.size())
-            {
-                throw std::out_of_range(std::to_string(idx));
-            }
-            if (len > 64)
-            {
-                throw std::invalid_argument("len should be <= 64");
-            }
-            return self.get_int(idx, len);
-        },
+            if (idx + len - 1 >= self.size()) {
+                throw std::out_of_range(std::to_string(idx)); }
+            if (len > 64) {
+                throw std::invalid_argument("len should be <= 64"); }
+            return self.get_int(idx, len); },
         py::arg("idx"),
         py::arg("len") = 64,
         "Get the integer value of the binary string of length `len` "
         "starting at position `idx`.",
-        py::call_guard<py::gil_scoped_release>()
-    );
+        py::call_guard<py::gil_scoped_release>());
 
     add_rank_support(m, cls, "_" + name, "", true, "0", "1", doc_rank);
     add_select_support(m, cls, "_" + name, "", true, "0", "1", doc_select);

@@ -29,7 +29,8 @@ namespace detail
 
         value_type operator*() { return py::cast<T>(*m_it); }
 
-        decltype(auto) operator++() {
+        decltype(auto) operator++()
+        {
             ++m_it;
             return *this;
         }
