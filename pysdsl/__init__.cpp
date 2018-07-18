@@ -14,6 +14,7 @@
 #include "operations/creation.hpp"
 #include "operations/sizes.hpp"
 #include "docstrings.hpp"
+#include "types/encodedvector.hpp"
 #include "types/intvector.hpp"
 #include "supports.hpp"
 #include "wavelet.hpp"
@@ -73,71 +74,6 @@ auto add_bitvector_class(py::module &m, const std::string&& name,
 }
 
 
-class add_enc_coders_functor
-{
-public:
-    add_enc_coders_functor(py::module& m): m(m) {}
-
-    template <typename Coder, uint32_t t_dens=128, uint8_t t_width=0>
-    decltype(auto) operator()(const std::pair<const char*, Coder*> &t)
-    {
-        typedef sdsl::enc_vector<Coder, t_dens, t_width> enc;
-        auto cls = add_compressed_class<enc>(
-            m,
-            std::string("EncVector") + std::get<0>(t),
-            "A vector `v` is stored more space-efficiently by "
-            "self-delimiting coding the deltas v[i+1]-v[i] (v[-1]:=0)."
-        )
-        .def_property_readonly("sample_dens", &enc::get_sample_dens)
-        .def(
-            "sample",
-            [](const enc &self, typename enc::size_type i) {
-                if (i >= self.size() / self.get_sample_dens())
-                {
-                    throw std::out_of_range(std::to_string(i));
-                }
-                return self.sample(i);
-            },
-            "Returns the i-th sample of the compressed vector"
-            "i: The index of the sample. 0 <= i < size()/get_sample_dens()",
-            py::call_guard<py::gil_scoped_release>()
-        )
-        ;
-
-        return cls;
-    }
-
-private:
-    py::module& m;
-};
-
-
-class add_vlc_coders_functor
-{
-public:
-    add_vlc_coders_functor(py::module& m): m(m) {}
-
-    template <typename Coder, uint32_t t_dens = 128, uint8_t t_width = 0>
-    decltype(auto) operator()(const std::pair<const char*, Coder*> &t)
-    {
-        typedef sdsl::vlc_vector<Coder, t_dens, t_width> vlc;
-
-        auto cls = add_compressed_class<vlc>(
-            m,
-            std::string("VlcVector") + std::get<0>(t),
-            "A vector which stores the values with variable length codes."
-        )
-        .def_property_readonly("sample_dens", &vlc::get_sample_dens)
-        ;
-
-        return cls;
-    }
-
-private:
-    py::module& m;
-};
-
-
 template <class T>
 auto add_csa(py::module& m, const char* name, const char* doc = nullptr)
 {
@@ -146,6 +82,7 @@ auto add_csa(py::module& m, const char* name, const char* doc = nullptr)
     cls.def_property_readonly("char2comp", [] (const T& self ) { return self.char2comp; });
     cls.def_property_readonly("comp2char", [] (const T& self ) { return self.comp2char; });
     cls.def_property_readonly("sigma", [] (const T& self ) { return self.sigma; });
+
     add_sizes(cls);
     add_description(cls);
     add_serialization(cls);
@@ -171,24 +108,7 @@ PYBIND11_MODULE(pysdsl, m)
 
     auto bit_vector_classes = std::make_tuple(bit_vector_cls);
 
-    auto constexpr coders = std::make_tuple(
-        std::make_pair("EliasDelta", (sdsl::coder::elias_delta*) nullptr),
-        std::make_pair("EliasGamma", (sdsl::coder::elias_gamma*) nullptr),
-        std::make_pair("Fibonacci", (sdsl::coder::fibonacci*) nullptr),
-        std::make_pair("Comma2", (sdsl::coder::comma<2>*) nullptr),
-        std::make_pair("Comma4", (sdsl::coder::comma<4>*) nullptr));
-
-    auto enc_classes = for_each_in_tuple(coders, add_enc_coders_functor(m));
-    auto vlc_classes = for_each_in_tuple(coders, add_vlc_coders_functor(m));
-    auto dac_classes = std::make_tuple(
-        add_compressed_class<sdsl::dac_vector<>>(m, "DacVector",
-                                                 doc_dac_vector)
-            .def_property_readonly("levels", &sdsl::dac_vector<>::levels),
-        add_compressed_class<sdsl::dac_vector_dp<>>(m, "DacVectorDP",
-                                                    doc_dac_vector_dp)
-            .def("cost", &sdsl::dac_vector_dp<>::cost, py::arg("n"),
-                 py::arg("m"))
-            .def_property_readonly("levels", &sdsl::dac_vector_dp<>::levels));
+    auto enc_classes = add_encoded_vectors(m);
 
     auto bvil_classes = std::make_tuple(
         add_bitvector_class<sdsl::bit_vector_il<64>>(m, "BitVectorIL64",
@@ -254,8 +174,6 @@ PYBIND11_MODULE(pysdsl, m)
 
     for_each_in_tuple(iv_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(iv_classes, make_inits_many_functor(enc_classes));
-    for_each_in_tuple(iv_classes, make_inits_many_functor(vlc_classes));
-    for_each_in_tuple(iv_classes, make_inits_many_functor(dac_classes));
     for_each_in_tuple(iv_classes, make_inits_many_functor(bvil_classes));
     for_each_in_tuple(iv_classes, make_inits_many_functor(rrr_classes));
     for_each_in_tuple(iv_classes, make_inits_many_functor(sd_classes));
@@ -265,25 +183,7 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(enc_classes, make_inits_many_functor(iv_classes));
 #ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(enc_classes, make_inits_many_functor(enc_classes));
-    for_each_in_tuple(enc_classes, make_inits_many_functor(vlc_classes));
-    for_each_in_tuple(enc_classes, make_inits_many_functor(dac_classes));
     //for_each_in_tuple(enc_classes, make_inits_many_functor(wavelet_classes));
-#endif
-
-    for_each_in_tuple(vlc_classes, make_inits_many_functor(iv_classes));
-#ifndef NOCROSSCONSTRUCTORS
-    for_each_in_tuple(vlc_classes, make_inits_many_functor(enc_classes));
-    for_each_in_tuple(vlc_classes, make_inits_many_functor(vlc_classes));
-    for_each_in_tuple(vlc_classes, make_inits_many_functor(dac_classes));
-    for_each_in_tuple(vlc_classes, make_inits_many_functor(wavelet_classes));
-#endif
-
-    for_each_in_tuple(dac_classes, make_inits_many_functor(iv_classes));
-#ifndef NOCROSSCONSTRUCTORS
-    for_each_in_tuple(dac_classes, make_inits_many_functor(enc_classes));
-    for_each_in_tuple(dac_classes, make_inits_many_functor(vlc_classes));
-    for_each_in_tuple(dac_classes, make_inits_many_functor(dac_classes));
-    for_each_in_tuple(dac_classes, make_inits_many_functor(wavelet_classes));
 #endif
 
     for_each_in_tuple(bvil_classes,
@@ -322,8 +222,6 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(iv_classes));
 #ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(enc_classes));
-    for_each_in_tuple(wavelet_classes, make_inits_many_functor(vlc_classes));
-    for_each_in_tuple(wavelet_classes, make_inits_many_functor(dac_classes));
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(bvil_classes));
     for_each_in_tuple(wavelet_classes,
                       make_inits_many_functor(wavelet_classes));
@@ -331,8 +229,6 @@ PYBIND11_MODULE(pysdsl, m)
 
     for_each_in_tuple(iv_classes, make_pysequence_init_functor());
     for_each_in_tuple(enc_classes, make_pysequence_init_functor());
-    for_each_in_tuple(vlc_classes, make_pysequence_init_functor());
-    for_each_in_tuple(dac_classes, make_pysequence_init_functor());
 
     //for_each_in_tuple(sd_classes, make_pysequence_init_functor());
 
