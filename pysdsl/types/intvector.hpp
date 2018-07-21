@@ -18,7 +18,7 @@
 namespace py = pybind11;
 
 
-template <class T, class KEY, typename S = typename T::value_type>
+template <class T, typename S = typename T::value_type, typename KEY>
 inline
 auto add_int_class(py::module& m, py::dict& dict, KEY key,
                    const char *name, const char *doc = nullptr)

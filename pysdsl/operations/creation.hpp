@@ -6,6 +6,7 @@
 #include <type_traits>
 
 #include <sdsl/vectors.hpp>
+#include <sdsl/construct.hpp>
 
 #include <pybind11/pybind11.h>
 

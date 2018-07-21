@@ -3,11 +3,11 @@
 #include <tuple>
 
 #include <sdsl/vectors.hpp>
-#include <sdsl/wavelet_trees.hpp>
 
 #include <pybind11/pybind11.h>
 
 #include "docstrings.hpp"
+#include "operations/creation.hpp"
 #include "types/bitvector.hpp"
 #include "types/encodedvector.hpp"
 #include "types/intvector.hpp"
@@ -31,27 +31,7 @@ PYBIND11_MODULE(pysdsl, m)
 
     auto enc_classes = add_encoded_vectors(m);
 
-    auto wavelet_classes = std::make_tuple(
-        add_wavelet_class<sdsl::wt_int<sdsl::bit_vector>>(m, "WtInt",
-                                                          doc_wtint),
-        add_wavelet_class<sdsl::wt_int<sdsl::bit_vector_il<>>>(m, "WtIntIL",
-                                                               doc_wtint),
-        add_wavelet_class<sdsl::wt_int<sdsl::rrr_vector<>>>(m, "WtIntRRR",
-                                                            doc_wtint),
-        add_wavelet_class<sdsl::wt_int<sdsl::sd_vector<>>>(m, "WtIntSD",
-                                                           doc_wtint),
-        //add_wavelet_class<sdsl::wt_int<sdsl::hyb_vector<>>>(m, "WtIntHyb",
-        //                                                    doc_wtint),
-        add_wavelet_class<sdsl::wt_gmr_rs<>>(m, "WtGMRrs", doc_wt_gmr_rs),
-        add_wavelet_class<sdsl::wt_gmr<>>(m, "WtGMR", doc_wt_gmr),
-        add_wavelet_class<sdsl::wt_ap<>>(m, "WtAP", doc_wt_ap),
-        add_wavelet_class<sdsl::wt_huff<>>(m, "WtHuff", doc_wt_huff),
-        add_wavelet_class<sdsl::wt_huff_int<>>(m, "WtHuffInt", doc_wt_huff),
-        add_wavelet_class<sdsl::wm_int<>>(m, "WmInt", doc_wm_int),
-        add_wavelet_class<sdsl::wt_blcd<>>(m, "WtBlcd", doc_wt_blcd),
-        add_wavelet_class<sdsl::wt_blcd_int<>>(m, "WtBlcdInt", doc_wt_blcd),
-        add_wavelet_class<sdsl::wt_hutu<>>(m, "WtHutu", doc_wt_hutu),
-        add_wavelet_class<sdsl::wt_hutu_int<>>(m, "WtHutuInt", doc_wt_hutu));
+    auto wavelet_classes = add_wavelet(m);
 
     auto csa_classes = add_csa(m);
 

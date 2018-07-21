@@ -2,8 +2,9 @@
 
 #include <stdexcept>
 #include <string>
-#include <vector>
+#include <tuple>
 #include <utility>
+#include <vector>
 
 #include <sdsl/wavelet_trees.hpp>
 
@@ -11,6 +12,7 @@
 #include <pybind11/stl.h>
 
 #include "calc.hpp"
+#include "docstrings.hpp"
 #include "io.hpp"
 
 
@@ -45,17 +47,14 @@ public:
         cls.def(
             "quantile_freq",
             [] (const T& self, typename T::size_type lb,
-                typename T::size_type rb, typename T::size_type q)
-            {
-                return sdsl::quantile_freq(self, lb, rb, q);
-            },
+                typename T::size_type rb, typename T::size_type q) {
+                return sdsl::quantile_freq(self, lb, rb, q); },
             py::arg("lb"), py::arg("rb"), py::arg("q"),
             "Returns the q-th smallest element and its frequency in wt[lb..rb]."
             "\n\tlb: Left array bound in T"
             "\n\trb: Right array bound in T"
             "\n\tq: q-th largest element ('quantile'), 0-based indexed.",
-            py::call_guard<py::gil_scoped_release>()
-        );
+            py::call_guard<py::gil_scoped_release>());
         cls.def(
             "lex_count",
             [] (const T& self, size_t i, size_t j, typename T::value_type c) {
@@ -71,69 +70,49 @@ public:
             "\n\tc: Value c.\nreturn A triple containing:\n\trank(i, c)"
             "\n\tnumber of values smaller than c in [i..j-1]"
             "\n\tnumber of values greater than c in [i..j-1]",
-            py::call_guard<py::gil_scoped_release>()
-        );
+            py::call_guard<py::gil_scoped_release>());
         cls.def(
             "lex_smaller_count",
-            [] (const T& self, size_t i, typename T::value_type c)
-            {
-                if (i >= self.size())
-                {
-                    throw std::invalid_argument("i should be less than size");
-                }
-                return self.lex_smaller_count(i, c);
-            },
+            [] (const T& self, size_t i, typename T::value_type c) {
+                if (i >= self.size()) {
+                    throw std::invalid_argument("i should be less than size"); }
+                return self.lex_smaller_count(i, c); },
             py::arg("i"), py::arg("c"),
             "How many values are lexicographic smaller than c in [0..i-1]."
             "\n\ti: Exclusive right bound of the range."
             "\nreturn: A tuple containing:\n\trank(i, c)\n\tnumber of values "
             "smaller than c in [0..i-1]",
-            py::call_guard<py::gil_scoped_release>()
-        );
+            py::call_guard<py::gil_scoped_release>());
         cls.def(
             "symbol_lte",
-            [] (const T& self, typename T::value_type c)
-            {
+            [] (const T& self, typename T::value_type c) {
                 auto result = sdsl::symbol_lte(self, c);
-                if (!std::get<0>(result))
-                {
-                    throw std::runtime_error("Symbol not found");
-                }
-                return std::get<1>(result);
-            },
+                if (!std::get<0>(result)) {
+                    throw std::runtime_error("Symbol not found"); }
+                return std::get<1>(result); },
             py::arg("c"),
             "Returns for a symbol c the previous smaller or equal symbol in "
-            "the WT"
-        );
+            "the WT");
         cls.def(
             "symbol_gte",
-            [] (const T& self, typename T::value_type c)
-            {
+            [] (const T& self, typename T::value_type c) {
                 auto result = sdsl::symbol_gte(self, c);
-                if (!std::get<0>(result))
-                {
-                    throw std::runtime_error("Symbol not found");
-                }
-                return std::get<1>(result);
-            },
+                if (!std::get<0>(result)) {
+                    throw std::runtime_error("Symbol not found"); }
+                return std::get<1>(result); },
             py::arg("c"),
-            "Returns for a symbol c the next larger or equal symbol in the WT"
-        );
+            "Returns for a symbol c the next larger or equal symbol in the WT");
         cls.def(
             "restricted_unique_range_values",
-            [] (const T& self, size_type x_i, size_type x_j,
-                value_type y_i, value_type y_j)
-            {
-                return sdsl::restricted_unique_range_values(
-                    self, x_i, x_j, y_i, y_j
-                );
-            },
+            [] (const T& self, size_type x_i, size_type x_j, value_type y_i,
+                value_type y_j
+            ) { return sdsl::restricted_unique_range_values(self, x_i, x_j,
+                                                            y_i, y_j); },
             py::arg("x_i"), py::arg("x_j"), py::arg("y_i"), py::arg("y_j"),
             "For an x range [x_i, x_j] and a value range [y_i, y_j] "
             "return all unique y values occuring in [x_i, x_j] "
             "in ascending order.",
-            py::call_guard<py::gil_scoped_release>()
-        );
+            py::call_guard<py::gil_scoped_release>());
         return cls;
     }
 };
@@ -233,18 +212,13 @@ public:
         );
         cls.def(
             "interval_symbols",
-            [] (const T& self, size_t i, size_t j)
-            {
-                if (j > self.size())
-                {
+            [] (const T& self, size_t i, size_t j) {
+                if (j > self.size()) {
                     throw std::invalid_argument("j should be less or equal "
-                                                "than size");
-                }
-                if (i > j)
-                {
+                                                "than size"); }
+                if (i > j) {
                     throw std::invalid_argument("i should be less or equal "
-                                                "than j");
-                }
+                                                "than j"); }
                 size_t k;
                 std::vector<typename T::value_type> cs(self.sigma);
                 std::vector<size_t> rank_c_i(self.sigma);
@@ -252,8 +226,7 @@ public:
 
                 sdsl::interval_symbols(self, i, j, k, cs, rank_c_i, rank_c_j);
 
-                return std::make_tuple(k, cs, rank_c_i, rank_c_j);
-            },
+                return std::make_tuple(k, cs, rank_c_i, rank_c_j); },
             py::arg("i"), py::arg("j"),
             "For each symbol c in wt[i..j - 1] get rank(i, c) and rank(j, c)."
         );
@@ -273,26 +246,26 @@ auto add_wavelet_specific(py::class_<sdsl::wt_int<T...>>& cls)
     typedef typename base_cls::size_type size_type;
     typedef typename base_cls::value_type value_type;
 
-    cls.def_property_readonly("tree", [] (const base_cls& self) {
-        return self.tree;
-    }, "A concatenation of all bit vectors of the wavelet tree.");
-    cls.def("get_tree", [] (const base_cls& self) {
-        return self.tree;
-    }, "A concatenation of all bit vectors of the wavelet tree.");
-
-    cls.def_property_readonly("max_level", [] (const base_cls& self) {
-        return self.max_level;
-    }, "Maximal level of the wavelet tree.");
-    cls.def("get_max_level", [] (const base_cls& self) {
-        return self.max_level;
-    }, "Maximal level of the wavelet tree.");
-
+    cls.def_property_readonly(
+        "tree",
+        [] (const base_cls& self) { return self.tree; },
+        "A concatenation of all bit vectors of the wavelet tree.");
+    cls.def(
+        "get_tree",
+        [] (const base_cls& self) { return self.tree; },
+        "A concatenation of all bit vectors of the wavelet tree.");
+    cls.def_property_readonly(
+        "max_level",
+        [] (const base_cls& self) { return self.max_level; },
+        "Maximal level of the wavelet tree.");
+    cls.def(
+        "get_max_level",
+        [] (const base_cls& self) { return self.max_level; },
+        "Maximal level of the wavelet tree.");
     cls.def(
         "range_search_2d",
-        [] (const base_cls& self,
-            size_type lb, size_type rb,
-            value_type vlb, value_type vrb,
-             bool report=true)
+        [] (const base_cls& self, size_type lb, size_type rb,
+            value_type vlb, value_type vrb, bool report=true)
         {
             return self.range_search_2d(lb, rb, vlb, vrb, report);
         },
@@ -307,25 +280,25 @@ auto add_wavelet_specific(py::class_<sdsl::wt_int<T...>>& cls)
         "\treport: Should the matching points be returned?\n"
         "returns pair (number of found points, vector of points), "
         "the vector is empty when report = false.",
-        py::call_guard<py::gil_scoped_release>()
-    );
+        py::call_guard<py::gil_scoped_release>());
 
     return cls;
 }
 
 
 template <class T>
-inline
-auto add_wavelet_class(py::module& m, const std::string&& name,
-                       const char* doc= nullptr)
+inline auto add_wavelet_class(py::module& m, const std::string&& name,
+                              const char* doc= nullptr)
 {
     auto cls = py::class_<T>(m, name.c_str())
-        .def_property_readonly("sigma", [] (const T& self) {
-            return self.sigma;
-        }, "Effective alphabet size of the wavelet tree")
-        .def("get_sigma", [] (const T& self) {
-            return self.sigma;
-        }, "Effective alphabet size of the wavelet tree")
+        .def_property_readonly(
+            "sigma",
+            [] (const T& self) { return self.sigma; },
+            "Effective alphabet size of the wavelet tree")
+        .def(
+            "get_sigma",
+            [] (const T& self) { return self.sigma; },
+            "Effective alphabet size of the wavelet tree")
         .def_static(
             "from_bytes",
             [] (const py::bytes& bytes)
@@ -335,8 +308,7 @@ auto add_wavelet_class(py::module& m, const std::string&& name,
                 return wt;
             },
             py::arg("s"),
-            "Construct from a build sequence"
-        )
+            "Construct from a build sequence")
         .def_static(
             "parse_string",
             [] (const std::string& s)
@@ -353,10 +325,8 @@ auto add_wavelet_class(py::module& m, const std::string&& name,
             [] (const T& self, typename T::size_type i,
                 typename T::value_type c)
             {
-                if (i >= self.size())
-                {
-                    throw std::out_of_range(std::to_string(i));
-                }
+                if (i >= self.size()) {
+                    throw std::out_of_range(std::to_string(i)); }
                 return self.rank(i, c);
             },
             "Calculates how many values c are in the prefix [0..i-1] of the "
@@ -367,14 +337,10 @@ auto add_wavelet_class(py::module& m, const std::string&& name,
         )
         .def(
             "inverse_select",
-            [] (const T& self, typename T::size_type i)
-            {
-                if (i >= self.size())
-                {
-                    throw std::out_of_range(std::to_string(i));
-                }
-                return self.inverse_select(i);
-            },
+            [] (const T& self, typename T::size_type i) {
+                if (i >= self.size()) {
+                    throw std::out_of_range(std::to_string(i)); }
+                return self.inverse_select(i); },
             py::arg("i"),
             "Calculates how many occurrences of value wt[i] are in the prefix"
             "[0..i-1] of the original sequence, returns pair "
@@ -386,32 +352,25 @@ auto add_wavelet_class(py::module& m, const std::string&& name,
             [] (const T& self, typename T::size_type i,
                 typename T::value_type c)
             {
-                if (i < 1 || i >= self.size())
-                {
-                    throw std::out_of_range(std::to_string(i));
-                }
-                if (i > self.rank(self.size(), c))
-                {
+                if (i < 1 || i >= self.size()) {
+                    throw std::out_of_range(std::to_string(i)); }
+                if (i > self.rank(self.size(), c)) {
                     throw std::invalid_argument(
                         std::to_string(i) + " is greater than rank(" +
-                        std::to_string(i) + ", " + std::to_string(c) + ")"
-                    );
-                }
+                        std::to_string(i) + ", " + std::to_string(c) + ")"); }
                 return self.select(i, c);
             },
             py::arg("i"), py::arg("c"),
             "Calculates the i-th occurrence of the value c in the supported "
             "vector.\nTime complexity: Order(log(|Sigma|))",
-            py::call_guard<py::gil_scoped_release>()
-        )
-    ;
+            py::call_guard<py::gil_scoped_release>());
 
     add_wavelet_specific(cls);
 
     add_lex_functor<T>()(cls);
     add_traversable_functor<T>()(m, cls, "_" + name + "Node");
 
-    //add_sizes(cls);
+    add_sizes(cls);
     add_description(cls);
     add_serialization(cls);
     add_to_string(cls);
@@ -422,5 +381,30 @@ auto add_wavelet_class(py::module& m, const std::string&& name,
     if (doc) cls.doc() = doc;
 
      return cls;
+}
 
+
+inline auto add_wavelet(py::module& m)
+{
+    return std::make_tuple(
+        add_wavelet_class<sdsl::wt_int<sdsl::bit_vector>>(m, "WtInt",
+                                                          doc_wtint),
+        add_wavelet_class<sdsl::wt_int<sdsl::bit_vector_il<>>>(m, "WtIntIL",
+                                                               doc_wtint),
+        add_wavelet_class<sdsl::wt_int<sdsl::rrr_vector<>>>(m, "WtIntRRR",
+                                                            doc_wtint),
+        add_wavelet_class<sdsl::wt_int<sdsl::sd_vector<>>>(m, "WtIntSD",
+                                                           doc_wtint),
+        //add_wavelet_class<sdsl::wt_int<sdsl::hyb_vector<>>>(m, "WtIntHyb",
+        //                                                    doc_wtint),
+        add_wavelet_class<sdsl::wt_gmr_rs<>>(m, "WtGMRrs", doc_wt_gmr_rs),
+        add_wavelet_class<sdsl::wt_gmr<>>(m, "WtGMR", doc_wt_gmr),
+        add_wavelet_class<sdsl::wt_ap<>>(m, "WtAP", doc_wt_ap),
+        add_wavelet_class<sdsl::wt_huff<>>(m, "WtHuff", doc_wt_huff),
+        add_wavelet_class<sdsl::wt_huff_int<>>(m, "WtHuffInt", doc_wt_huff),
+        add_wavelet_class<sdsl::wm_int<>>(m, "WmInt", doc_wm_int),
+        add_wavelet_class<sdsl::wt_blcd<>>(m, "WtBlcd", doc_wt_blcd),
+        add_wavelet_class<sdsl::wt_blcd_int<>>(m, "WtBlcdInt", doc_wt_blcd),
+        add_wavelet_class<sdsl::wt_hutu<>>(m, "WtHutu", doc_wt_hutu),
+        add_wavelet_class<sdsl::wt_hutu_int<>>(m, "WtHutuInt", doc_wt_hutu));
 }

@@ -207,7 +207,6 @@ auto add_bitvectors(py::module& m, py::class_<B>& bit_vector_cls)
     auto sd_classes = std::make_tuple(
         add_sd_vector<>(m),
         add_sd_vector<sdsl::sd_vector<>>(m, "SDVectorSD"),
-        //add_sd_vector<sdsl::rrr_vector<>>(m, "SDVectorRRR")
         add_sd_vector(m, std::get<1>(rrr_classes)));
 
     return std::tuple_cat(bvil_classes, rrr_classes, sd_classes, hyb_classes);
