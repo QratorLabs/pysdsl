@@ -1,8 +1,9 @@
 # based on https://github.com/pybind/python_example/blob/master/setup.py
 
+import sys
+
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-import sys
 import setuptools
 
 __version__ = '1.0.0a'
@@ -130,7 +131,8 @@ setup(
         "Intended Audience :: Customer Service",
         "Intended Audience :: Education",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: BSD License",
+        ("License :: OSI Approved :: "
+         "GNU Lesser General Public License v3 or later (LGPLv3+)"),
         "Operating System :: OS Independent",
         "Programming Language :: C++",
         "Programming Language :: Python",

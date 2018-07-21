@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <utility>
@@ -17,10 +18,10 @@ namespace py = pybind11;
 
 
 
-template <class T, bool enable = T::lex_ordered>
+template <class T, bool /* enable */ = T::lex_ordered>
 class add_lex_functor;
 
-template <class T, bool enbale = sdsl::has_node_type<T>::value>
+template <class T, bool /* enable */ = sdsl::has_node_type<T>::value>
 class add_traversable_functor;
 
 
@@ -28,10 +29,7 @@ template <class T>
 class add_lex_functor<T, false>
 {
 public:
-    py::class_<T>& operator() (py::class_<T>& cls)
-    {
-        return cls;
-    }
+    py::class_<T>& operator() (py::class_<T>& cls) { return cls; }
 };
 
 
@@ -60,18 +58,12 @@ public:
         );
         cls.def(
             "lex_count",
-            [] (const T& self, size_t i, size_t j, typename T::value_type c)
-            {
-                if (j >= self.size())
-                {
-                    throw std::invalid_argument("j should be less than size");
-                }
-                if (i >= j)
-                {
-                    throw std::invalid_argument("i should be less than j");
-                }
-                return self.lex_count(i, j, c);
-            },
+            [] (const T& self, size_t i, size_t j, typename T::value_type c) {
+                if (j >= self.size()) {
+                    throw std::invalid_argument("j should be less than size"); }
+                if (i >= j) {
+                    throw std::invalid_argument("i should be less than j"); }
+                return self.lex_count(i, j, c); },
             py::arg("i"), py::arg("j"), py::arg("c"),
             "How many values are lexicographic smaller/greater than c in "
             "[i..j-1].\n\ti: Start index (inclusive) of the interval."
@@ -151,10 +143,8 @@ template <class T>
 class add_traversable_functor<T, false>
 {
 public:
-    py::class_<T>& operator() (py::module&, py::class_<T>& cls, std::string&&)
-    {
-        return cls;
-    }
+    py::class_<T>& operator() (py::module&, py::class_<T>& cls, std::string&&) {
+        return cls; }
 };
 
 
@@ -273,8 +263,7 @@ public:
 
 
 template <class T>
-auto add_wavelet_specific(py::class_<T>& cls)
-{ return cls; }
+auto add_wavelet_specific(py::class_<T>& cls) { return cls; }
 
 
 template <class... T>

@@ -123,8 +123,7 @@ auto add_int_class(py::module& m, py::dict& dict, KEY key,
                 return sdsl::util::prev_bit(self, idx); },
             py::arg("idx"),
             "Get the largest position `i` <= `idx` where a bit is set",
-            py::call_guard<py::gil_scoped_release>())
-    ;
+            py::call_guard<py::gil_scoped_release>());
 
     add_sizes(cls);
     add_description(cls);

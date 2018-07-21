@@ -90,6 +90,7 @@ public:
             py::call_guard<py::gil_scoped_release>());
 
         m.attr("enc_vector").attr("__setitem__")(std::get<0>(t), cls);
+        m.attr("all_compressed_integer_vectors").attr("append")(cls);
 
         return cls;
     }
@@ -130,6 +131,7 @@ public:
         cls.def_property_readonly("sample_dens", &vlc::get_sample_dens);
 
         m.attr("vlc_vector").attr("__setitem__")(std::get<0>(t), cls);
+        m.attr("all_compressed_integer_vectors").attr("append")(cls);
 
         return cls;
     }
@@ -160,6 +162,7 @@ auto add_dac_vector(py::module& m, const std::string& name, KEY_T key,
     cls.def_property_readonly("levels", &Sequence::levels);
 
     m.attr("dac_vector").attr("__setitem__")(key, cls);
+    m.attr("all_compressed_integer_vectors").attr("append")(cls);
 
     return cls;
 }
@@ -170,6 +173,7 @@ auto add_encoded_vectors(py::module& m)
     m.attr("enc_vector") = py::dict();
     m.attr("vlc_vector") = py::dict();
     m.attr("dac_vector") = py::dict();
+    m.attr("all_compressed_integer_vectors") = py::list();
 
     auto enc_classes = for_each_in_tuple(coders, add_enc_coders_functor(m));
     auto vlc_classes = for_each_in_tuple(coders, add_vlc_coders_functor(m));
@@ -177,6 +181,8 @@ auto add_encoded_vectors(py::module& m)
         add_dac_vector<sdsl::dac_vector<4>>(m, "DacVector4", 4, doc_dac_vector),
         add_dac_vector<sdsl::dac_vector<8>>(m, "DacVector8", 8, doc_dac_vector),
         add_dac_vector<sdsl::dac_vector<16>>(m, "DacVector16", 16,
+                                             doc_dac_vector),
+        add_dac_vector<sdsl::dac_vector<63>>(m, "DacVector63", 63,
                                              doc_dac_vector),
         add_dac_vector<sdsl::dac_vector_dp<>>(m, "DacVectorDP", "dp",
                                               doc_dac_vector_dp)
