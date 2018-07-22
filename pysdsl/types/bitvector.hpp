@@ -34,7 +34,7 @@ auto add_bitvector_class(py::module &m, const std::string&& name,
     add_serialization(cls);
     add_to_string(cls);
 
-    add_iteration(cls);
+    add_read_access<T, bool>(cls);
     add_std_algo<T, bool>(cls);
 
     if (doc) cls.doc() = doc;

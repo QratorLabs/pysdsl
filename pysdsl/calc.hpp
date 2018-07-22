@@ -20,17 +20,12 @@ namespace {
 
 
 template <class Sequence, typename T = typename Sequence::value_type>
-inline
-auto add_std_algo(py::class_<Sequence>& cls)
+inline auto add_read_access(py::class_<Sequence>& cls)
 {
     typedef typename Sequence::value_type value_type;
 
-    cls.def(
-        "__contains__",
-        [](const Sequence &self, typename Sequence::value_type element) {
-            return std::find(cbegin(self),
-                             cend(self), element) != cend(self); },
-        py::call_guard<py::gil_scoped_release>());
+    add_iteration(cls);
+
     cls.def(
         "__getitem__",
         [](const Sequence &self, size_t position) -> T {
@@ -50,8 +45,8 @@ auto add_std_algo(py::class_<Sequence>& cls)
         "__getitem__",
         [](const Sequence& self, py::slice slice) {
             size_t start, stop, step, slicelength;
-            if (!slice.compute(detail::size(self), &start, &stop,
-                            &step, &slicelength)) {
+            if (!slice.compute(detail::size(self), &start, &stop, &step,
+                               &slicelength)) {
                 throw py::error_already_set{}; }
 
             typename
@@ -60,7 +55,24 @@ auto add_std_algo(py::class_<Sequence>& cls)
             for (size_t i = 0; i < slicelength; i++) {
                 result[i] = self[start];
                 start += step; }
-            return construct_from<Sequence>(result); });
+            return result; });
+            //return construct_from<Sequence>(result); });
+    return cls;
+}
+
+
+template <class Sequence, typename T = typename Sequence::value_type>
+inline
+auto add_std_algo(py::class_<Sequence>& cls)
+{
+    typedef typename Sequence::value_type value_type;
+
+    cls.def(
+        "__contains__",
+        [](const Sequence &self, typename Sequence::value_type element) {
+            return std::find(cbegin(self),
+                             cend(self), element) != cend(self); },
+        py::call_guard<py::gil_scoped_release>());
     cls.def(
         "max",
         [](const Sequence &self) -> T {

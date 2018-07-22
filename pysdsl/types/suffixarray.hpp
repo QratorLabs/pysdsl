@@ -38,7 +38,7 @@ auto add_csa_class(py::module& m, std::string&& name, const char* doc = nullptr)
     add_serialization(cls);
     add_to_string(cls);
 
-    add_iteration(cls);
+    add_read_access<T>(cls);
     add_std_algo<T>(cls);
 
     if (doc) cls.doc() = doc;

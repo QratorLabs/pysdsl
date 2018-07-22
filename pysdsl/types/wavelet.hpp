@@ -375,7 +375,7 @@ inline auto add_wavelet_class(py::module& m, const std::string&& name,
     add_serialization(cls);
     add_to_string(cls);
 
-    add_iteration(cls);
+    add_read_access(cls);
     add_std_algo(cls);
 
     if (doc) cls.doc() = doc;

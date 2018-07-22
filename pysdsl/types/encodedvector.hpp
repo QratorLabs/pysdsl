@@ -6,6 +6,7 @@
 
 #include <pybind11/pybind11.h>
 
+#include <sdsl/bit_vectors.hpp>
 #include <sdsl/vectors.hpp>
 
 #include "calc.hpp"
@@ -61,7 +62,7 @@ public:
         add_serialization(cls);
         add_to_string(cls);
 
-        add_iteration(cls);
+        add_read_access<enc>(cls);
         add_std_algo<enc>(cls);
 
         cls.doc() = "A vector `v` is stored more space-efficiently by "
@@ -112,17 +113,16 @@ public:
     {
         using vlc = sdsl::vlc_vector<Coder, t_dens, t_width>;
 
-        auto cls = py::class_<vlc>(
-                m,
-                (std::string("VlcVector") + std::get<0>(t)).c_str()
-            ).def(py::init());
+        auto cls = py::class_<vlc>(m, (
+                std::string("VariableLengthCodesVector") + std::get<0>(t)
+        ).c_str()).def(py::init());
 
         add_sizes(cls);
         add_description(cls);
         add_serialization(cls);
         add_to_string(cls);
 
-        add_iteration(cls);
+        add_read_access<vlc>(cls);
         add_std_algo<vlc>(cls);
 
         cls.doc() = "A vector which stores the values with "
@@ -130,7 +130,8 @@ public:
 
         cls.def_property_readonly("sample_dens", &vlc::get_sample_dens);
 
-        m.attr("vlc_vector").attr("__setitem__")(std::get<0>(t), cls);
+        m.attr("variable_length_codes_vector").attr(
+                "__setitem__")(std::get<0>(t), cls);
         m.attr("all_compressed_integer_vectors").attr("append")(cls);
 
         return cls;
@@ -141,11 +142,19 @@ private:
 };
 
 
+inline std::string key_to_string(const char* key) { return std::string(key); }
+
+template <class KEY_T>
+inline std::string key_to_string(KEY_T key) { return std::to_string(key); }
+
+
 template <class Sequence, typename KEY_T>
 inline
-auto add_dac_vector(py::module& m, const std::string& name, KEY_T key,
+auto add_dac_vector(py::module& m, KEY_T key,
                     const char* doc = nullptr)
 {
+    auto name = "DirectAccessibleCodesVector" + key_to_string(key);
+
     auto cls = py::class_<Sequence>(m, name.c_str()).def(py::init());
 
     add_sizes(cls);
@@ -153,7 +162,7 @@ auto add_dac_vector(py::module& m, const std::string& name, KEY_T key,
     add_serialization(cls);
     add_to_string(cls);
 
-    add_iteration(cls);
+    add_read_access<Sequence>(cls);
     add_std_algo<Sequence>(cls);
 
     if (doc) {
@@ -161,7 +170,7 @@ auto add_dac_vector(py::module& m, const std::string& name, KEY_T key,
 
     cls.def_property_readonly("levels", &Sequence::levels);
 
-    m.attr("dac_vector").attr("__setitem__")(key, cls);
+    m.attr("direct_accessible_codes_vector").attr("__setitem__")(key, cls);
     m.attr("all_compressed_integer_vectors").attr("append")(cls);
 
     return cls;
@@ -171,26 +180,30 @@ auto add_dac_vector(py::module& m, const std::string& name, KEY_T key,
 auto add_encoded_vectors(py::module& m)
 {
     m.attr("enc_vector") = py::dict();
-    m.attr("vlc_vector") = py::dict();
-    m.attr("dac_vector") = py::dict();
+    m.attr("variable_length_codes_vector") = py::dict();
+    m.attr("direct_accessible_codes_vector") = py::dict();
     m.attr("all_compressed_integer_vectors") = py::list();
 
     auto enc_classes = for_each_in_tuple(coders, add_enc_coders_functor(m));
     auto vlc_classes = for_each_in_tuple(coders, add_vlc_coders_functor(m));
     auto dac_classes = std::make_tuple(
-        add_dac_vector<sdsl::dac_vector<4>>(m, "DacVector4", 4, doc_dac_vector),
-        add_dac_vector<sdsl::dac_vector<8>>(m, "DacVector8", 8, doc_dac_vector),
-        add_dac_vector<sdsl::dac_vector<16>>(m, "DacVector16", 16,
-                                             doc_dac_vector),
-        add_dac_vector<sdsl::dac_vector<63>>(m, "DacVector63", 63,
-                                             doc_dac_vector),
-        add_dac_vector<sdsl::dac_vector_dp<>>(m, "DacVectorDP", "dp",
-                                              doc_dac_vector_dp)
+        add_dac_vector<sdsl::dac_vector<4>>(m, 4, doc_dac_vector),
+        add_dac_vector<sdsl::dac_vector<8>>(m, 8, doc_dac_vector),
+        add_dac_vector<sdsl::dac_vector<16>>(m, 16, doc_dac_vector),
+        add_dac_vector<sdsl::dac_vector<63>>(m, 63, doc_dac_vector),
+        add_dac_vector<sdsl::dac_vector_dp<>>(m, "DP", doc_dac_vector_dp)
             .def("cost", &sdsl::dac_vector_dp<>::cost,
+                 py::arg("n"), py::arg("m")),
+        add_dac_vector<
+            sdsl::dac_vector_dp<
+                sdsl::rrr_vector<>>>(m, "DPRRR", doc_dac_vector_dp)
+            .def("cost", &sdsl::dac_vector_dp<sdsl::rrr_vector<>>::cost,
                  py::arg("n"), py::arg("m"))
     );
 
-    m.attr("DacVector") = m.attr("DacVector4");
+    m.attr("DACVector") = m.attr("DirectAccessibleCodesVector4");
+    m.attr("DirectAccessibleCodesVector") = m.attr(
+        "DirectAccessibleCodesVector4");
 
     return std::tuple_cat(enc_classes, vlc_classes, dac_classes);
 }

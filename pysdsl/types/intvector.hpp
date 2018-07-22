@@ -128,9 +128,9 @@ auto add_int_class(py::module& m, py::dict& dict, KEY key,
     add_sizes(cls);
     add_description(cls);
     add_serialization(cls);
-    add_to_string(cls);
+    add_to_string<T, S>(cls);
 
-    add_iteration(cls);
+    add_read_access<T, S>(cls);
     add_std_algo<T, S>(cls);
 
     if (doc) cls.doc() = doc;
@@ -225,4 +225,5 @@ auto add_int_vectors(py::module& m)
                     return sdsl::int_vector<64>(size, default_value, 64); }),
                 py::arg("size") = 0, py::arg("default_value") = 0)
     );
+
 }
