@@ -6,10 +6,10 @@ Most of examples from [SDSL cheat sheet][SDSL-CHEAT-SHEET] and [SDSL tutorial][S
 
 ## Mutable bit-compressed vectors
 
-Core classes:
+Core classes (see `pysdsl.int_vector` for dict of all of them):
 
  * `pysdsl.IntVector(size, default_value, bit_width=64)` — dynamic bit width
- * `pysdsl.BitVector(size, default_value)` — static bit width (1)
+ * `pysdsl.BitVector(size, default_value)` — static (fixed) bit width (1)
  * `pysdsl.Int4Vector(size, default_value)` — static bit width (4)
  * `pysdsl.Int8Vector(size, default_value)` — static bit width (8)
  * `pysdsl.Int16Vector(size, default_value)` — static bit width (16)
@@ -49,7 +49,20 @@ Out[8]: 896.0000085830688
 
 ```
 
+Buffer interface:
+
+```python
+In [9]: import array
+
+In [10]: v = pysdsl.Int64Vector([1, 2, 3])
+
+In [11]: array.array('Q', v)
+Out[11]: array('Q', [1, 2, 3])
+```
+
 ## Immutable compressed integer vectors
+
+(See `pysdsl.enc_vector`):
 
  * `EncVectorEliasDelta(IntVector)`
  * `EncVectorEliasGamma(IntVector)`
@@ -66,40 +79,50 @@ In [10]: ev.size_in_mega_bytes
 Out[10]: 45.75003242492676
 ```
 
-Encoding values with variable length codes:
+Encoding values with variable length codes (see `pysdsl.variable_length_codes_vector`):
 
- * `VlcVectorEliasDelta(IntVector)`
- * `VlcVectorEliasGamma(IntVector)`
- * `VlcVectorFibonacci(IntVector)`
- * `VlcVectorComma2(IntVector)`
- * `VlcVectorComma4(IntVector)`
+ * `VariableLengthCodesVectorEliasDelta(IntVector)`
+ * `VariableLengthCodesVectorEliasGamma(IntVector)`
+ * `VariableLengthCodesVectorFibonacci(IntVector)`
+ * `VariableLengthCodesVectorComma2(IntVector)`
+ * `VariableLengthCodesVectorComma4(IntVector)`
 
-Encoding values with "escaping" technique:
+Encoding values with "escaping" technique (see `pysdsl.direct_accessible_codes_vector`):
 
- * `DacVector(IntVector)`
- * `DacVectorDP(IntVector)` — number of layers is chosen
-                              with dynamic programming
+ * `DirectAccessibleCodesVector(IntVector)`
+ * `DirectAccessibleCodesVector8(IntVector)`,
+ * `DirectAccessibleCodesVector16(IntVector)`,
+ * `DirectAccessibleCodesVector63(IntVector)`,
+ * `DirectAccessibleCodesVectorDP(IntVector)` — number of layers is chosen
+                                                with dynamic programming
+ * `DirectAccessibleCodesVectorDPRRR(IntVector)` — same but built on top of
+                                                   RamanRamanRaoVector (see later)
 
 Construction from python sequences is also supported.
 
 ## Immutable compressed bit (boolean) vectors
 
- * `BitVectorIL64(BitVector)`
- * `BitVectorIL128(BitVector)`
- * `BitVectorIL256(BitVector)`
- * `BitVectorIL512(BitVector)` — A bit vector which interleaves the
-                                 original `BitVector` with rank information.
+(See pysdsl.`all_immutable_bitvectors`)
+
+ * `BitVectorInterLeaved64(BitVector)`
+ * `BitVectorInterLeaved128(BitVector)`
+ * `BitVectorInterLeaved256(BitVector)`
+ * `BitVectorInterLeaved512(BitVector)` — A bit vector which interleaves the
+                                          original `BitVector` with rank information
+                                          (see later)
  * `SDVector(BitVector)` — A bit vector which compresses very sparse populated
                            bit vectors by representing the positions of 1 by the
                            Elias-Fano representation for
                            non-decreasing sequences
- * `RRRVector3(BitVector)`
- * `RRRVector15(BitVector)`
- * `RRRVector63(BitVector)`
- * `RRRVector256(BitVector)` — An H₀-compressed bitvector representation.
+ * `RamanRamanRaoVector15(BitVector)`
+ * `RamanRamanRaoVector63(BitVector)`
+ * `RamanRamanRaoVector256(BitVector)` — An H₀-compressed bitvector representation.
  * `HybVector8(BitVector)`
  * `HybVector16(BitVector)` — A hybrid-encoded compressed bitvector
                               representation
+
+See also: `pysdsl.raman_raman_rao_vectors`, `pysdsl.sparse_bit_vectors`,
+`pysdsl.hybrid_bit_vectors` and `pysdsl.bit_vector_interleaved`.
 
 ## Rank and select operations on bitvectors
 
@@ -134,6 +157,22 @@ the results.
 mutable and was modified.
 
 
+## Wavelet trees
+
+The wavelet tree is a data structure that provides three efficient methods:
+
+* The `[]`-operator: `wt[i]` returns the `i`-th symbol of vector for which the wavelet tree was build for.
+* The rank method: `wt.rank(i, c)` returns the number of occurrences of symbol `c` in the prefix `[0..i-1]` in the vector for which the wavelet tree was build for.
+* The select method: `wt.select(j, c)` returns the index `i` from `[0..size()-1]` of the `j`-th occurrence of symbol `c`.
+
+## Comressed suffix arrays
+
+Suffix array is a sorted array of all suffixes of a string.
+
+SDSL supports bitcompressed and compressed suffix arrays.
+
+Byte representaion of original IntVector should have no zero symbols in order to construct SuffixArray.
+
 ## Objects memory structure
 
 Any object has a `.structure` property with technical information about an
@@ -150,22 +189,6 @@ object into a file.
 
 All classes provide `.load_from_checkded_file()` static method allowing one to
 load object stored  with `.store_to_checked_file()`
-
-## Wavelet trees
-
-The wavelet tree is a data structure that provides three efficient methods:
-
-* The `[]`-operator: `wt[i]` returns the `i`-th symbol of vector for which the wavelet tree was build for.
-* The rank method: `wt.rank(i, c)` returns the number of occurrences of symbol `c` in the prefix `[0..i-1]` in the vector for which the wavelet tree was build for.
-* The select method: `wt.select(j, c)` returns the index `i` from `[0..size()-1]` of the `j`-th occurrence of symbol `c`.
-
-## Comressed suffix arrays
-
-Suffix array is a sorted array of all suffixes of a string.
-
-SDSL supports bitcompressed and compressed suffix arrays.
-
-Byte representaion of original IntVector should have no zero symbols in order to construct SuffixArray.
 
 
 ## Building

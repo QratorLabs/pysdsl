@@ -22,12 +22,20 @@ namespace py = pybind11;
 namespace detail
 {
 
-template <class T, typename value_type = typename T::value_type>
+template <class T, typename value_type = typename T::value_type,
+          bool is_bitvector1 = std::is_same<sdsl::int_vector<1>, T>::value>
 struct IntermediateVector { using type = sdsl::int_vector<>; };
 
 
-template <class T>
-struct IntermediateVector<T, bool> { using type = sdsl::int_vector<1>; };
+template <class T, bool b>
+struct IntermediateVector<T, bool, b> { using type = sdsl::int_vector<1>; };
+
+
+template <uint8_t N, typename value_type>
+struct IntermediateVector<sdsl::int_vector<N>, value_type, false>
+{
+    using type = sdsl::int_vector<N>;
+};
 
 
 template <

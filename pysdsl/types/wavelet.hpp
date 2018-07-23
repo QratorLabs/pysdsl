@@ -142,27 +142,23 @@ public:
     //            .def_property_readonly("sym", &t_node::sym )
             ;
         }
-        catch(std::runtime_error&) {}
-
+        catch(std::runtime_error& /* ignore */) {}
 
         cls.def("root_node", &T::root);
         cls.def("node_is_leaf", &T::is_leaf);
         cls.def(
             "node_empty",
             [] (const T& self, const t_node& node)
-            { return self.empty(node); }
-        );
+            { return self.empty(node); });
         cls.def(
             "node_size",
             [] (const T& self, const t_node& node)
-            { return self.size(node); }
-        );
+            { return self.size(node); });
         cls.def("node_sym", &T::sym);
         cls.def(
             "node_expand",
             [] (const T& self, const t_node& node)
-            { return self.expand(node); }
-        );
+            { return self.expand(node); });
         cls.def(
             "node_expand_ranges",
             [] (const T& self, const t_node& node,
@@ -170,46 +166,37 @@ public:
             {
                 return self.expand(node, ranges);
             },
-            py::arg("node"), py::arg("ranges")
-        );
+            py::arg("node"), py::arg("ranges"));
         cls.def(
             "node_bit_vec",
-            [] (const T& self, const t_node& node)
-            {
+            [] (const T& self, const t_node& node) {
                 auto bit_vec = self.bit_vec(node);
                 return std::make_pair(
                     bit_vec.size(),
-                    py::make_iterator(bit_vec.begin(), bit_vec.end())
-                );
-            }
-        );
+                    py::make_iterator(
+                        detail::cbegin(bit_vec),
+                        detail::cend(bit_vec))); });
         cls.def(
             "node_seq",
-            [] (const T& self, const t_node& node)
-            {
+            [] (const T& self, const t_node& node) {
                 auto seq = self.seq(node);
                 sdsl::int_vector<> s(seq.size());
                 std::copy(seq.begin(), seq.end(), s.begin());
-                return s;
-            }
-        );
+                return s; } );
 
         cls.def(
             "intersect",
-            [] (const T& self, std::vector<sdsl::range_type> ranges, size_t t)
-            {
-                return sdsl::intersect(self, ranges, t);
-            },
+            [] (const T& self, std::vector<sdsl::range_type> ranges, size_t t) {
+                return sdsl::intersect(self, ranges, t); },
             py::arg("ranges"), py::arg("t") = 0,
             "Intersection of elements in "
             "WT[s₀, e₀], WT[s₁, e₁], ...,WT[sₖ,eₖ]\n"
             "\tranges: The ranges.\n\tt: Threshold in how many distinct ranges "
-            "he value has to be present. Default: t=ranges.size()\n"
+            "the value has to be present. Default: t=ranges.size()\n"
             "Return a vector containing (value, frequency) - of value which "
             "are contained in t different ranges. Frequency = accumulated "
             "frequencies in all ranges. The tuples are ordered according "
-            "to value, if wt is lex_ordered."
-        );
+            "to value, if wt is lex_ordered.");
         cls.def(
             "interval_symbols",
             [] (const T& self, size_t i, size_t j) {
@@ -228,8 +215,7 @@ public:
 
                 return std::make_tuple(k, cs, rank_c_i, rank_c_j); },
             py::arg("i"), py::arg("j"),
-            "For each symbol c in wt[i..j - 1] get rank(i, c) and rank(j, c)."
-        );
+            "For each symbol c in wt[i..j - 1] get rank(i, c) and rank(j, c).");
         return cls;
     }
 };
@@ -304,11 +290,21 @@ inline auto add_wavelet_class(py::module& m, const std::string&& name,
             [] (const py::bytes& bytes)
             {
                 T wt;
-                sdsl::construct_im(wt, std::string(bytes), 1);
+                sdsl::construct_im(wt, std::string(bytes),
+                                   sizeof(typename T::value_type));
                 return wt;
             },
             py::arg("s"),
-            "Construct from a build sequence")
+            "Construct from a build sequence",
+            py::call_guard<py::gil_scoped_release>())
+        .def_static(
+            "from_binary_file",
+            [] (const std::string& file_name) {
+                T wt;
+                sdsl::construct(wt, file_name, sizeof(typename T::value_type));
+                return wt; },
+            py::arg("file_name"),
+            py::call_guard<py::gil_scoped_release>())
         .def_static(
             "parse_string",
             [] (const std::string& s)
@@ -318,8 +314,7 @@ inline auto add_wavelet_class(py::module& m, const std::string&& name,
                 return wt;
             },
             py::arg("s"),
-            "Construct from space-separated human-readable string"
-        )
+            "Construct from space-separated human-readable string")
         .def(
             "rank",
             [] (const T& self, typename T::size_type i,
@@ -333,8 +328,7 @@ inline auto add_wavelet_class(py::module& m, const std::string&& name,
             "supported vector (i in [0..size]).\nTime complexity: "
             "Order(log(|Sigma|))",
             py::arg("i"), py::arg("c"),
-            py::call_guard<py::gil_scoped_release>()
-        )
+            py::call_guard<py::gil_scoped_release>())
         .def(
             "inverse_select",
             [] (const T& self, typename T::size_type i) {
@@ -345,8 +339,7 @@ inline auto add_wavelet_class(py::module& m, const std::string&& name,
             "Calculates how many occurrences of value wt[i] are in the prefix"
             "[0..i-1] of the original sequence, returns pair "
             "(rank(wt[i], i), wt[i])",
-            py::call_guard<py::gil_scoped_release>()
-        )
+            py::call_guard<py::gil_scoped_release>())
         .def(
             "select",
             [] (const T& self, typename T::size_type i,
@@ -358,8 +351,7 @@ inline auto add_wavelet_class(py::module& m, const std::string&& name,
                     throw std::invalid_argument(
                         std::to_string(i) + " is greater than rank(" +
                         std::to_string(i) + ", " + std::to_string(c) + ")"); }
-                return self.select(i, c);
-            },
+                return self.select(i, c); },
             py::arg("i"), py::arg("c"),
             "Calculates the i-th occurrence of the value c in the supported "
             "vector.\nTime complexity: Order(log(|Sigma|))",
@@ -380,31 +372,73 @@ inline auto add_wavelet_class(py::module& m, const std::string&& name,
 
     if (doc) cls.doc() = doc;
 
-     return cls;
+    m.attr("all_wavelet_trees").attr("append")(cls);
+
+    return cls;
 }
 
 
-inline auto add_wavelet(py::module& m)
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_int(py::module& m, std::string&& base_name)
 {
+    auto cls = add_wavelet_class<sdsl::wt_int<bit_vector>>(
+        m, ("WaveletTreeInt" + base_name).c_str(), doc_wtint);
+    m.attr("wavelet_tree_int").attr("__setitem__")(base_name, cls);
+
+    return cls;
+}
+
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_int(py::module& m, const std::string& base_name)
+{ return add_wt_int<bit_vector>(m, std::string(base_name)); }
+
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_int(py::module& m, const py::class_<bit_vector>& base)
+{
+    auto base_name = py::cast<std::string>(base.attr("__name__"));
+
+    auto cls = add_wt_int<bit_vector>(m, base_name);
+
+    m.attr("wavelet_tree_int").attr("__setitem__")(base_name, cls);
+    m.attr("wavelet_tree_int_by_base").attr("__setitem__")(base, cls);
+
+    return cls;
+}
+
+
+template <class... T>
+inline auto add_wavelet(py::module& m,
+                        const std::tuple<py::class_<T>...> t)
+{
+    m.attr("all_wavelet_trees") = py::list();
+    m.attr("wavelet_tree_int") = py::dict();
+    m.attr("wavelet_tree_int_by_base") = py::dict();
+
     return std::make_tuple(
-        add_wavelet_class<sdsl::wt_int<sdsl::bit_vector>>(m, "WtInt",
-                                                          doc_wtint),
-        add_wavelet_class<sdsl::wt_int<sdsl::bit_vector_il<>>>(m, "WtIntIL",
-                                                               doc_wtint),
-        add_wavelet_class<sdsl::wt_int<sdsl::rrr_vector<>>>(m, "WtIntRRR",
-                                                            doc_wtint),
-        add_wavelet_class<sdsl::wt_int<sdsl::sd_vector<>>>(m, "WtIntSD",
-                                                           doc_wtint),
-        //add_wavelet_class<sdsl::wt_int<sdsl::hyb_vector<>>>(m, "WtIntHyb",
-        //                                                    doc_wtint),
-        add_wavelet_class<sdsl::wt_gmr_rs<>>(m, "WtGMRrs", doc_wt_gmr_rs),
-        add_wavelet_class<sdsl::wt_gmr<>>(m, "WtGMR", doc_wt_gmr),
-        add_wavelet_class<sdsl::wt_ap<>>(m, "WtAP", doc_wt_ap),
-        add_wavelet_class<sdsl::wt_huff<>>(m, "WtHuff", doc_wt_huff),
-        add_wavelet_class<sdsl::wt_huff_int<>>(m, "WtHuffInt", doc_wt_huff),
-        add_wavelet_class<sdsl::wm_int<>>(m, "WmInt", doc_wm_int),
-        add_wavelet_class<sdsl::wt_blcd<>>(m, "WtBlcd", doc_wt_blcd),
-        add_wavelet_class<sdsl::wt_blcd_int<>>(m, "WtBlcdInt", doc_wt_blcd),
-        add_wavelet_class<sdsl::wt_hutu<>>(m, "WtHutu", doc_wt_hutu),
-        add_wavelet_class<sdsl::wt_hutu_int<>>(m, "WtHutuInt", doc_wt_hutu));
+        add_wt_int<>(m, ""),
+        add_wt_int(m, std::get<0>(t)),
+        add_wt_int(m, std::get<3>(t)),
+        //add_wt_int(m, std::get<5>(t)),
+        add_wt_int(m, std::get<6>(t)),
+        add_wt_int(m, std::get<8>(t)),
+        add_wt_int(m, std::get<10>(t)),
+        add_wavelet_class<sdsl::wm_int<>>(m, "WaveletMatrixInt", doc_wm_int),
+
+        add_wavelet_class<sdsl::wt_gmr_rs<>>(m, "WaveletTreeGMRrs",
+                                             doc_wt_gmr_rs),
+        add_wavelet_class<sdsl::wt_gmr<>>(m, "WaveletTreeGMR", doc_wt_gmr),
+        add_wavelet_class<sdsl::wt_huff<>>(m, "WaveletTreeHuffman",
+                                           doc_wt_huff),
+        add_wavelet_class<sdsl::wt_huff_int<>>(m, "WaveletTreeHuffmanInt",
+                                               doc_wt_huff),
+        add_wavelet_class<sdsl::wt_blcd<>>(m, "WaveletTreeBlcd", doc_wt_blcd),
+        add_wavelet_class<sdsl::wt_blcd_int<>>(m, "WaveletTreeBlcdInt",
+                                               doc_wt_blcd),
+        add_wavelet_class<sdsl::wt_hutu<>>(m, "WaveletTreeHuTucker",
+                                           doc_wt_hutu),
+        add_wavelet_class<sdsl::wt_hutu_int<>>(m, "WaveletTreeHuTuckerInt",
+                                               doc_wt_hutu),
+        add_wavelet_class<sdsl::wt_ap<>>(m, "WaveletTreeAP", doc_wt_ap));
 }

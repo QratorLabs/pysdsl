@@ -1,6 +1,9 @@
 #include <cstdint>
 #include <string>
 #include <tuple>
+#include <stdexcept>
+
+#define assert(x) if(!x) {throw std::runtime_error("assertion failed");}
 
 #include <sdsl/vectors.hpp>
 
@@ -13,7 +16,6 @@
 #include "types/intvector.hpp"
 #include "types/suffixarray.hpp"
 #include "types/wavelet.hpp"
-
 
 namespace py = pybind11;
 
@@ -31,7 +33,7 @@ PYBIND11_MODULE(pysdsl, m)
 
     auto enc_classes = add_encoded_vectors(m);
 
-    auto wavelet_classes = add_wavelet(m);
+    auto wavelet_classes = add_wavelet(m, compressed_bit_vector_classes);
 
     auto csa_classes = add_csa(m);
 
@@ -56,7 +58,6 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(iv_classes));
 #ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(enc_classes));
-    for_each_in_tuple(wavelet_classes, make_inits_many_functor(compressed_bit_vector_classes));
     for_each_in_tuple(wavelet_classes,
                       make_inits_many_functor(wavelet_classes));
 #endif
@@ -67,6 +68,5 @@ PYBIND11_MODULE(pysdsl, m)
     //for_each_in_tuple(sd_classes, make_pysequence_init_functor());
 
     for_each_in_tuple(wavelet_classes, make_pysequence_init_functor());
-
     for_each_in_tuple(csa_classes, make_pysequence_init_functor());
 }

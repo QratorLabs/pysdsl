@@ -18,12 +18,42 @@
 namespace py = pybind11;
 
 
-template <class T, typename S = typename T::value_type, typename KEY>
-inline
-auto add_int_class(py::module& m, py::dict& dict, KEY key,
-                   const char *name, const char *doc = nullptr)
+template <class T,
+          unsigned int width = static_cast<unsigned int>(T::fixed_int_width)>
+inline auto add_int_init(py::module& m, const char* name)
 {
-    auto cls = py::class_<T>(m, name)
+    if (width == 8 || width == 16 || width == 32 || width == 64)
+    {
+        return py::class_<T>(m, name, py::buffer_protocol())
+            .def_buffer([] (T& self) {
+                char sym;
+                if (width == 8) {
+                    sym = 'B'; }
+                else if (width == 16) {
+                    sym = 'H'; }
+                else if (width == 32) {
+                    sym = 'I'; }
+                else if (width == 64) {
+                    sym = 'Q'; }
+
+                return py::buffer_info(
+                    reinterpret_cast<void*>(self.data()),
+                    width / 8,
+                    std::string(1, sym),
+                    1,
+                    { detail::size(self) },
+                    { width / 8 }
+                ); });
+    }
+    return py::class_<T>(m, name);
+}
+
+
+template <class T, typename S = typename T::value_type, typename KEY_T>
+inline auto add_int_class(py::module& m, py::dict& dict, KEY_T key,
+                          const char *name, const char *doc = nullptr)
+{
+    auto cls = add_int_init<T>(m, name)
         .def_property_readonly("width", (uint8_t(T::*)(void) const) & T::width)
         .def_property_readonly("data",
                                (const uint64_t *(T::*)(void)const) & T::data)
@@ -40,10 +70,8 @@ auto add_int_class(py::module& m, py::dict& dict, KEY key,
         .def(
             "__setitem__",
             [](T &self, size_t position, S value) {
-                if (position >= self.size())
-                {
-                    throw std::out_of_range(std::to_string(position));
-                }
+                if (position >= self.size()) {
+                    throw std::out_of_range(std::to_string(position)); }
                 self[position] = value; })
 
         .def("set_to_id",
@@ -141,8 +169,7 @@ auto add_int_class(py::module& m, py::dict& dict, KEY key,
 }
 
 
-inline
-auto add_int_vectors(py::module& m)
+inline auto add_int_vectors(py::module& m)
 {
     py::dict int_vectors_dict;
 
@@ -183,14 +210,14 @@ auto add_int_vectors(py::module& m)
                  "Flip all bits of bit_vector",
                  py::call_guard<py::gil_scoped_release>()),
 
-        add_int_class<sdsl::int_vector<4>, uint8_t>(
+        add_int_class<sdsl::int_vector<4>, uint16_t>(
                 m, int_vectors_dict, 4, "Int4Vector")
             .def(py::init(
                 [](size_t size, uint8_t default_value) {
                     return sdsl::int_vector<4>(size, default_value, 4); }),
                 py::arg("size") = 0, py::arg("default_value") = 0),
 
-        add_int_class<sdsl::int_vector<8>, uint8_t>(
+        add_int_class<sdsl::int_vector<8>, uint16_t>(
                 m, int_vectors_dict, 8, "Int8Vector")
             .def(py::init(
                 [](size_t size, uint8_t default_value) {
