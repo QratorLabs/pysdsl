@@ -455,7 +455,7 @@ inline auto add_wt_blcd(py::module& m, std::string&& base_name)
 template <class bit_vector=sdsl::bit_vector>
 inline auto add_wt_blcd_int(py::module& m, std::string&& base_name)
 {
-    auto cls = add_wavelet_class<sdsl::wt_huff_int<bit_vector>>(
+    auto cls = add_wavelet_class<sdsl::wt_blcd_int<bit_vector>>(
         m, ("WaveletTreeBalancedInt" + base_name).c_str(), doc_wt_blcd);
     m.attr("wavelet_tree_balanced_int").attr("__setitem__")(base_name, cls);
 
