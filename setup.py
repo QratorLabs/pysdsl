@@ -65,6 +65,7 @@ class BuildExt(build_ext):
             opts.append(
                 '-DVERSION_INFO="%s"' % self.distribution.get_version()
             )
+            opts.append('-DNOCROSSCONSTRUCTORS=1')
             opts.append(cpp_flag(self.compiler))
             if has_flag(self.compiler, '-fvisibility=hidden'):
                 opts.append('-fvisibility=hidden')
