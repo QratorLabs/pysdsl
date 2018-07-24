@@ -29,11 +29,14 @@ PYBIND11_MODULE(pysdsl, m)
     py::class_<sdsl::int_vector<1>>& bit_vector_cls = std::get<1>(iv_classes);
 
     auto bit_vector_classes = std::make_tuple(bit_vector_cls);
-    auto compressed_bit_vector_classes = add_bitvectors(m, bit_vector_cls);
+
+    auto tmp = add_bitvectors(m, bit_vector_cls);
+    auto compressed_bit_vector_classes = std::get<0>(tmp);
+    auto cbv_propagate = std::get<1>(tmp);
 
     auto enc_classes = add_encoded_vectors(m);
 
-    auto wavelet_classes = add_wavelet(m, compressed_bit_vector_classes);
+    auto wavelet_classes = add_wavelet(m, cbv_propagate);
 
     auto csa_classes = add_csa(m);
 
@@ -64,8 +67,8 @@ PYBIND11_MODULE(pysdsl, m)
 
     for_each_in_tuple(iv_classes, make_pysequence_init_functor());
     for_each_in_tuple(enc_classes, make_pysequence_init_functor());
-
-    //for_each_in_tuple(sd_classes, make_pysequence_init_functor());
+    //for_each_in_tuple(compressed_bit_vector_classes,
+    //                  make_pysequence_init_functor());
 
     for_each_in_tuple(wavelet_classes, make_pysequence_init_functor());
     for_each_in_tuple(csa_classes, make_pysequence_init_functor());

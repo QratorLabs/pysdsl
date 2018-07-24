@@ -209,5 +209,13 @@ auto add_bitvectors(py::module& m, py::class_<B>& bit_vector_cls)
         add_sd_vector<sdsl::sd_vector<>>(m, "SDVectorSD"),
         add_sd_vector(m, std::get<1>(rrr_classes)));
 
-    return std::tuple_cat(bvil_classes, rrr_classes, sd_classes, hyb_classes);
+    return std::make_tuple(
+        std::tuple_cat(bvil_classes, rrr_classes, sd_classes, hyb_classes),
+        std::make_tuple(  // propagate
+            std::get<2>(rrr_classes),
+            std::get<0>(sd_classes),
+            std::get<3>(bvil_classes)
+        )
+    );
+
 }

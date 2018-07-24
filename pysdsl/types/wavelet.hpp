@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include <sdsl/vectors.hpp>
 #include <sdsl/wavelet_trees.hpp>
 
 #include <pybind11/pybind11.h>
@@ -388,6 +389,79 @@ inline auto add_wt_int(py::module& m, std::string&& base_name)
     return cls;
 }
 
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wm_int(py::module& m, std::string&& base_name)
+{
+    auto cls = add_wavelet_class<sdsl::wm_int<bit_vector>>(
+        m, ("WaveletMatrixInt" + base_name).c_str(), doc_wm_int);
+    m.attr("wavelet_matrix_int").attr("__setitem__")(base_name, cls);
+
+    return cls;
+}
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_huff(py::module& m, std::string&& base_name)
+{
+    auto cls = add_wavelet_class<sdsl::wt_huff<bit_vector>>(
+        m, ("WaveletTreeHuffman" + base_name).c_str(), doc_wt_huff);
+    m.attr("wavelet_tree_huffman").attr("__setitem__")(base_name, cls);
+
+    return cls;
+}
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_huff_int(py::module& m, std::string&& base_name)
+{
+    auto cls = add_wavelet_class<sdsl::wt_huff_int<bit_vector>>(
+        m, ("WaveletTreeHuffmanInt" + base_name).c_str(), doc_wt_huff);
+    m.attr("wavelet_tree_huffman_int").attr("__setitem__")(base_name, cls);
+
+    return cls;
+}
+
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_hutu(py::module& m, std::string&& base_name)
+{
+    auto cls = add_wavelet_class<sdsl::wt_hutu<bit_vector>>(
+        m, ("WaveletTreeHuTucker" + base_name).c_str(), doc_wt_hutu);
+    m.attr("wavelet_tree_hu_tucker").attr("__setitem__")(base_name, cls);
+
+    return cls;
+}
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_hutu_int(py::module& m, std::string&& base_name)
+{
+    auto cls = add_wavelet_class<sdsl::wt_hutu_int<bit_vector>>(
+        m, ("WaveletTreeHuTuckerInt" + base_name).c_str(), doc_wt_hutu);
+    m.attr("wavelet_tree_hu_tucker_int").attr("__setitem__")(base_name, cls);
+
+    return cls;
+}
+
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_blcd(py::module& m, std::string&& base_name)
+{
+    auto cls = add_wavelet_class<sdsl::wt_blcd<bit_vector>>(
+        m, ("WaveletTreeBalanced" + base_name).c_str(), doc_wt_blcd);
+    m.attr("wavelet_tree_balanced").attr("__setitem__")(base_name, cls);
+
+    return cls;
+}
+
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_blcd_int(py::module& m, std::string&& base_name)
+{
+    auto cls = add_wavelet_class<sdsl::wt_huff_int<bit_vector>>(
+        m, ("WaveletTreeBalancedInt" + base_name).c_str(), doc_wt_blcd);
+    m.attr("wavelet_tree_balanced_int").attr("__setitem__")(base_name, cls);
+
+    return cls;
+}
+
 
 template <class bit_vector=sdsl::bit_vector>
 inline auto add_wt_int(py::module& m, const std::string& base_name)
@@ -395,15 +469,106 @@ inline auto add_wt_int(py::module& m, const std::string& base_name)
 
 
 template <class bit_vector=sdsl::bit_vector>
+inline auto add_wm_int(py::module& m, const std::string& base_name)
+{ return add_wm_int<bit_vector>(m, std::string(base_name)); }
+
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_huff(py::module& m, const std::string& base_name)
+{ return add_wt_huff<bit_vector>(m, std::string(base_name)); }
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_huff_int(py::module& m, const std::string& base_name)
+{ return add_wt_huff_int<bit_vector>(m, std::string(base_name)); }
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_hutu(py::module& m, const std::string& base_name)
+{ return add_wt_hutu<bit_vector>(m, std::string(base_name)); }
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_hutu_int(py::module& m, const std::string& base_name)
+{ return add_wt_hutu_int<bit_vector>(m, std::string(base_name)); }
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_blcd(py::module& m, const std::string& base_name)
+{ return add_wt_blcd<bit_vector>(m, std::string(base_name)); }
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_blcd_int(py::module& m, const std::string& base_name)
+{ return add_wt_blcd_int<bit_vector>(m, std::string(base_name)); }
+
+
+template <class bit_vector=sdsl::bit_vector>
 inline auto add_wt_int(py::module& m, const py::class_<bit_vector>& base)
 {
     auto base_name = py::cast<std::string>(base.attr("__name__"));
-
     auto cls = add_wt_int<bit_vector>(m, base_name);
-
-    m.attr("wavelet_tree_int").attr("__setitem__")(base_name, cls);
     m.attr("wavelet_tree_int_by_base").attr("__setitem__")(base, cls);
+    return cls;
+}
 
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wm_int(py::module& m, const py::class_<bit_vector>& base)
+{
+    auto base_name = py::cast<std::string>(base.attr("__name__"));
+    auto cls = add_wm_int<bit_vector>(m, base_name);
+    m.attr("wavelet_matrix_int_by_base").attr("__setitem__")(base, cls);
+    return cls;
+}
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_huff(py::module& m, const py::class_<bit_vector>& base)
+{
+    auto base_name = py::cast<std::string>(base.attr("__name__"));
+    auto cls = add_wt_huff<bit_vector>(m, base_name);
+    m.attr("wavelet_tree_huffman_by_base").attr("__setitem__")(base, cls);
+    return cls;
+}
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_huff_int(py::module& m, const py::class_<bit_vector>& base)
+{
+    auto base_name = py::cast<std::string>(base.attr("__name__"));
+    auto cls = add_wt_huff_int<bit_vector>(m, base_name);
+    m.attr("wavelet_tree_huffman_int_by_base").attr("__setitem__")(base, cls);
+    return cls;
+}
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_hutu(py::module& m, const py::class_<bit_vector>& base)
+{
+    auto base_name = py::cast<std::string>(base.attr("__name__"));
+    auto cls = add_wt_hutu<bit_vector>(m, base_name);
+    m.attr("wavelet_tree_hu_tucker_by_base").attr("__setitem__")(base, cls);
+    return cls;
+}
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_hutu_int(py::module& m, const py::class_<bit_vector>& base)
+{
+    auto base_name = py::cast<std::string>(base.attr("__name__"));
+    auto cls = add_wt_hutu_int<bit_vector>(m, base_name);
+    m.attr("wavelet_tree_hu_tucker_int_by_base").attr("__setitem__")(base, cls);
+    return cls;
+}
+
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_blcd(py::module& m, const py::class_<bit_vector>& base)
+{
+    auto base_name = py::cast<std::string>(base.attr("__name__"));
+    auto cls = add_wt_blcd<bit_vector>(m, base_name);
+    m.attr("wavelet_tree_balanced_by_base").attr("__setitem__")(base, cls);
+    return cls;
+}
+
+template <class bit_vector=sdsl::bit_vector>
+inline auto add_wt_blcd_int(py::module& m, const py::class_<bit_vector>& base)
+{
+    auto base_name = py::cast<std::string>(base.attr("__name__"));
+    auto cls = add_wt_blcd_int<bit_vector>(m, base_name);
+    m.attr("wavelet_tree_balanced_int_by_base").attr("__setitem__")(base, cls);
     return cls;
 }
 
@@ -415,30 +580,70 @@ inline auto add_wavelet(py::module& m,
     m.attr("all_wavelet_trees") = py::list();
     m.attr("wavelet_tree_int") = py::dict();
     m.attr("wavelet_tree_int_by_base") = py::dict();
+    m.attr("wavelet_matrix_int") = py::dict();
+    m.attr("wavelet_matrix_int_by_base") = py::dict();
+    m.attr("wavelet_tree_huffman") = py::dict();
+    m.attr("wavelet_tree_huffman_by_base") = py::dict();
+    m.attr("wavelet_tree_huffman_int") = py::dict();
+    m.attr("wavelet_tree_huffman_int_by_base") = py::dict();
+    m.attr("wavelet_tree_hu_tucker") = py::dict();
+    m.attr("wavelet_tree_hu_tucker_by_base") = py::dict();
+    m.attr("wavelet_tree_hu_tucker_int") = py::dict();
+    m.attr("wavelet_tree_hu_tucker_int_by_base") = py::dict();
+    m.attr("wavelet_tree_balanced") = py::dict();
+    m.attr("wavelet_tree_balanced_by_base") = py::dict();
+    m.attr("wavelet_tree_balanced_int") = py::dict();
+    m.attr("wavelet_tree_balanced_int_by_base") = py::dict();
 
     return std::make_tuple(
         add_wt_int<>(m, ""),
         add_wt_int(m, std::get<0>(t)),
-        add_wt_int(m, std::get<3>(t)),
-        //add_wt_int(m, std::get<5>(t)),
-        add_wt_int(m, std::get<6>(t)),
-        add_wt_int(m, std::get<8>(t)),
-        add_wt_int(m, std::get<10>(t)),
-        add_wavelet_class<sdsl::wm_int<>>(m, "WaveletMatrixInt", doc_wm_int),
+        add_wt_int(m, std::get<1>(t)),
+        add_wt_int(m, std::get<2>(t)),
 
-        add_wavelet_class<sdsl::wt_gmr_rs<>>(m, "WaveletTreeGMRrs",
+        add_wm_int<>(m, ""),
+        add_wm_int(m, std::get<0>(t)),
+        add_wm_int(m, std::get<1>(t)),
+        add_wm_int(m, std::get<2>(t)),
+
+        add_wt_huff<>(m, ""),
+        add_wt_huff(m, std::get<0>(t)),
+        add_wt_huff(m, std::get<1>(t)),
+        add_wt_huff(m, std::get<2>(t)),
+
+        add_wt_huff_int<>(m, ""),
+        add_wt_huff_int(m, std::get<0>(t)),
+        add_wt_huff_int(m, std::get<1>(t)),
+        add_wt_huff_int(m, std::get<2>(t)),
+
+        add_wt_hutu<>(m, ""),
+        add_wt_hutu(m, std::get<0>(t)),
+        add_wt_hutu(m, std::get<1>(t)),
+        add_wt_hutu(m, std::get<2>(t)),
+
+        add_wt_hutu_int<>(m, ""),
+        add_wt_hutu_int(m, std::get<0>(t)),
+        add_wt_hutu_int(m, std::get<1>(t)),
+        add_wt_hutu_int(m, std::get<2>(t)),
+
+        add_wt_blcd<>(m, ""),
+        add_wt_blcd(m, std::get<0>(t)),
+        add_wt_blcd(m, std::get<1>(t)),
+        add_wt_blcd(m, std::get<2>(t)),
+
+        add_wt_blcd_int<>(m, ""),
+        add_wt_blcd_int(m, std::get<0>(t)),
+        add_wt_blcd_int(m, std::get<1>(t)),
+        add_wt_blcd_int(m, std::get<2>(t)),
+
+        add_wavelet_class<sdsl::wt_gmr_rs<>>(m, "WaveletTreeGMRrankselect",
                                              doc_wt_gmr_rs),
-        add_wavelet_class<sdsl::wt_gmr<>>(m, "WaveletTreeGMR", doc_wt_gmr),
-        add_wavelet_class<sdsl::wt_huff<>>(m, "WaveletTreeHuffman",
-                                           doc_wt_huff),
-        add_wavelet_class<sdsl::wt_huff_int<>>(m, "WaveletTreeHuffmanInt",
-                                               doc_wt_huff),
-        add_wavelet_class<sdsl::wt_blcd<>>(m, "WaveletTreeBlcd", doc_wt_blcd),
-        add_wavelet_class<sdsl::wt_blcd_int<>>(m, "WaveletTreeBlcdInt",
-                                               doc_wt_blcd),
-        add_wavelet_class<sdsl::wt_hutu<>>(m, "WaveletTreeHuTucker",
-                                           doc_wt_hutu),
-        add_wavelet_class<sdsl::wt_hutu_int<>>(m, "WaveletTreeHuTuckerInt",
-                                               doc_wt_hutu),
+        add_wavelet_class<sdsl::wt_gmr_rs<sdsl::enc_vector<>>>(
+            m, "WaveletTreeGMRrankselectEnc", doc_wt_gmr_rs),
+        add_wavelet_class<sdsl::wt_gmr<>>(m, "WaveletTreeGolynskiMunroRao",
+                                          doc_wt_gmr),
+        add_wavelet_class<sdsl::wt_gmr<sdsl::enc_vector<>>>(
+            m, "WaveletTreeGolynskiMunroRaoEnc", doc_wt_gmr),
+
         add_wavelet_class<sdsl::wt_ap<>>(m, "WaveletTreeAP", doc_wt_ap));
 }

@@ -90,7 +90,11 @@ EXT_MODULES = [
         libraries=['sdsl'],
     ),
     Extension(
-        'pysdsl/__init__',
+        (
+            'pysdsl/pysdsl'
+            if sys.version_info.major == 2
+            else 'pysdsl/__init__'
+        ),
         ['pysdsl/__init__.cpp'],
         include_dirs=[
             # Path to pybind11 headers
