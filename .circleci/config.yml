@@ -1,0 +1,9 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: ubuntu
+      - name: dev
+    steps:
+      - checkout
+      - run: echo 'Hello, World!'
