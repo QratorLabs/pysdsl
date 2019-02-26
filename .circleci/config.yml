@@ -5,4 +5,7 @@ jobs:
       - image: library/ubuntu:latest
     steps:
       - checkout
-      - run: echo 'Hello, World!
+      - run: echo 'Hello, World!' \
+                && apt update \
+                && apt install clang \
+                && ls
