@@ -2,7 +2,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: circleci/node:latest
+      - image: library/ubuntu:latest
     steps:
       - checkout
-      - run: echo 'Hello, World!'
+      - run: echo 'Hello, World!
