@@ -208,49 +208,17 @@ inline auto add_int_vectors(py::module& m)
                 py::arg("size") = 0, py::arg("default_value") = false)
             .def("flip", &sdsl::int_vector<1>::flip,
                  "Flip all bits of bit_vector",
-                 py::call_guard<py::gil_scoped_release>()),
+                 py::call_guard<py::gil_scoped_release>())
 
-        add_int_class<sdsl::int_vector<4>, uint16_t>(
-                m, int_vectors_dict, 4, "Int4Vector")
-            .def(py::init(
-                [](size_t size, uint8_t default_value) {
-                    return sdsl::int_vector<4>(size, default_value, 4); }),
-                py::arg("size") = 0, py::arg("default_value") = 0),
-
-        add_int_class<sdsl::int_vector<8>, uint16_t>(
-                m, int_vectors_dict, 8, "Int8Vector")
-            .def(py::init(
-                [](size_t size, uint8_t default_value) {
-                    return sdsl::int_vector<8>(size, default_value, 8); }),
-                py::arg("size") = 0, py::arg("default_value") = 0),
-
-        add_int_class<sdsl::int_vector<16>, uint16_t>(
-                m, int_vectors_dict, 16, "Int16Vector")
-            .def(py::init(
-                [](size_t size, uint16_t default_value) {
-                    return sdsl::int_vector<16>(size, default_value, 16); }),
-                py::arg("size") = 0, py::arg("default_value") = 0),
-
-        add_int_class<sdsl::int_vector<24>, uint32_t>(
-                m, int_vectors_dict, 24, "Int24Vector")
-            .def(py::init(
-                [](size_t size, uint32_t default_value) {
-                    return sdsl::int_vector<24>(size, default_value, 24); }),
-                py::arg("size") = 0, py::arg("default_value") = 0),
-
-        add_int_class<sdsl::int_vector<32>, uint32_t>(
-                m, int_vectors_dict, 32, "Int32Vector")
-            .def(py::init(
-                [](size_t size, uint32_t default_value) {
-                    return sdsl::int_vector<32>(size, default_value, 32); }),
-                py::arg("size") = 0, py::arg("default_value") = 0),
-
-        add_int_class<sdsl::int_vector<64>, uint64_t>(
-                m, int_vectors_dict, 64, "Int64Vector")
-            .def(py::init(
-                [](size_t size, uint64_t default_value) {
-                    return sdsl::int_vector<64>(size, default_value, 64); }),
-                py::arg("size") = 0, py::arg("default_value") = 0)
+#define DEF_INC_VECTOR(width, value_type) ,\
+            add_int_class<sdsl::int_vector<width>, value_type>( \
+                    m, int_vectors_dict, width, "Int" #width "Vector") \
+                .def(py::init( \
+                    [](size_t size, value_type default_value) { \
+                        return sdsl::int_vector<width>(size, default_value, width); }), \
+                    py::arg("size") = 0, py::arg("default_value") = 0)
+#include "int_vectors.h"
+#undef DEF_INC_VECTOR
     );
 
 }
