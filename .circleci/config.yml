@@ -2,10 +2,9 @@ version: 2
 jobs:
   build:
     docker:
-      - image: library/ubuntu:latest
+      - image: ivigns/nice-ubuntu:0.0.1
     steps:
       - checkout
-      - run: echo 'Hello, World!' \
-                && apt update \
-                && apt install clang \
-                && ls
+      - run:
+          name: Build libary(WIP)
+          command: ls
