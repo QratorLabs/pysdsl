@@ -168,15 +168,21 @@ inline auto add_int_class(py::module& m, py::dict& dict, KEY_T key,
     return cls;
 }
 
+template <typename VectorT>
+auto add_int_vector(py::module& m, py::dict& int_vectors_dict) {
+    size_t width = VectorT::fixed_int_width;
+    std::string name = "Int" + std::to_string(width) + "Vector";
+    return add_int_class<VectorT, typename VectorT::value_type>(
+                    m, int_vectors_dict, width, name.c_str())
+                .def(py::init(
+                    [width](size_t size, typename VectorT::value_type default_value) {
+                        return VectorT(size, default_value, width); }),
+                    py::arg("size") = 0, py::arg("default_value") = 0);
+}
 
-inline auto add_int_vectors(py::module& m)
-{
-    py::dict int_vectors_dict;
-
-    m.attr("int_vector") = int_vectors_dict;
-
-    return std::make_tuple(
-        add_int_class<sdsl::int_vector<0>>(
+template<>
+auto add_int_vector<sdsl::int_vector<0>>(py::module& m, py::dict& int_vectors_dict) {
+    return add_int_class<sdsl::int_vector<0>>(
                 m, int_vectors_dict, "dynamic", "IntVector", doc_int_vector)
             .def(
                 py::init([](size_t size,
@@ -198,9 +204,12 @@ inline auto add_int_vectors(py::module& m)
                 [](sdsl::int_vector<0> &self) {
                     sdsl::util::bit_compress(self); },
                 doc_bit_compress,
-                py::call_guard<py::gil_scoped_release>()),
+                py::call_guard<py::gil_scoped_release>());
+}
 
-        add_int_class<sdsl::int_vector<1>, bool>(
+template <>
+auto add_int_vector<sdsl::int_vector<1>>(py::module& m, py::dict& int_vectors_dict) {
+    return add_int_class<sdsl::int_vector<1>, bool>(
                 m, int_vectors_dict, 1ul , "BitVector")
             .def(py::init(
                 [](size_t size, bool default_value) {
@@ -208,17 +217,41 @@ inline auto add_int_vectors(py::module& m)
                 py::arg("size") = 0, py::arg("default_value") = false)
             .def("flip", &sdsl::int_vector<1>::flip,
                  "Flip all bits of bit_vector",
-                 py::call_guard<py::gil_scoped_release>())
+                 py::call_guard<py::gil_scoped_release>());
+}
 
-#define DEF_INC_VECTOR(width, value_type) ,\
-            add_int_class<sdsl::int_vector<width>, value_type>( \
-                    m, int_vectors_dict, width, "Int" #width "Vector") \
-                .def(py::init( \
-                    [](size_t size, value_type default_value) { \
-                        return sdsl::int_vector<width>(size, default_value, width); }), \
-                    py::arg("size") = 0, py::arg("default_value") = 0)
-#include "int_vectors.h"
-#undef DEF_INC_VECTOR
-    );
+
+template <typename... VectorT>
+auto make_int_vectors(py::module& m, py::dict& int_vectors_dict) {
+    return std::make_tuple(add_int_vector<VectorT>(m, int_vectors_dict)...);
+}
+
+
+inline auto add_int_vectors(py::module& m)
+{
+    py::dict int_vectors_dict;
+
+    m.attr("int_vector") = int_vectors_dict;
+
+    return make_int_vectors<sdsl::int_vector<0>, 
+                            sdsl::int_vector<1>, 
+                            sdsl::int_vector<4>, 
+                            sdsl::int_vector<8>, 
+                            sdsl::int_vector<16>, 
+                            sdsl::int_vector<24>, 
+                            sdsl::int_vector<32>, 
+                            sdsl::int_vector<48>, 
+                            sdsl::int_vector<64>>(m, int_vectors_dict);
+
+// #define DEF_INC_VECTOR(width, value_type) ,\
+//             add_int_class<sdsl::int_vector<width>, value_type>( \
+//                     m, int_vectors_dict, width, "Int" #width "Vector") \
+//                 .def(py::init( \
+//                     [](size_t size, value_type default_value) { \
+//                         return sdsl::int_vector<width>(size, default_value, width); }), \
+//                     py::arg("size") = 0, py::arg("default_value") = 0)
+// #include "int_vectors.h"
+// #undef DEF_INC_VECTOR
+//     );
 
 }
