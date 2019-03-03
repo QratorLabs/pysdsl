@@ -10,6 +10,9 @@ jobs:
       - run:
           name: Build pysdsl
           command: |
+            #-- partial build ---
+            cp .circleci/__init__.cpp pysdsl/__init__.cpp
+            #--------------------
             git submodule sync
             git submodule update --init --recursive
             git submodule update --recursive
