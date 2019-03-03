@@ -10,13 +10,11 @@ jobs:
       - run:
           name: Build pysdsl
           command: |
-            cd /work
             git submodule sync
             git submodule update --init --recursive
             git submodule update --recursive
             cd /work/sdsl-lite
-            ls
-            bash unsinstall.sh /usr
+            bash uninstall.sh /usr
             cd /tmp
             rm -rf sdsl-lite-build
             rm -rf libdivsufsort-build
