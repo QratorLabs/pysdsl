@@ -4,6 +4,7 @@ jobs:
     docker:
       - image: ivigns/nice-ubuntu:0.0.1
     resource_class: xlarge
+    working_directory: /work
     steps:
       - checkout
       - run:
