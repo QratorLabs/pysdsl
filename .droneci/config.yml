@@ -11,6 +11,7 @@ steps:
   - git submodule sync
   - git submodule update --init --recursive
   - git submodule update --recursive
+  - cd /drone/src && ls -aR
   - cd /drone/src/sdsl-lite
   - bash uninstall.sh /usr
   - cd /tmp
@@ -22,16 +23,8 @@ steps:
   - export CXX=clang++
   - export CFLAGS="-O3 -pipe -fPIC"
   - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
-  - echo $CXXFLAGS
   - cd /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
   - make install
   - export CXXFLAGS="${CXXFLAGS} -DNOCROSSCONSTRUCTORS"
-  - cd /tmp/sdsl-lite-build
-  - cmake /drone/src/sdsl-lite
-  - make install
-  - cd /drone/src/pybind11
-  - pip install --no-binary ':all:' --no-cache-dir . --verbose
-  - cd /drone/src
-  - pip install --no-binary ':all:' --no-cache-dir . --verbose
-  - cd /drone/src && ls -aR
+  - echo $CXXFLAGS
