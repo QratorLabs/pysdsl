@@ -5,13 +5,13 @@ steps:
 - name: build
   image: ivigns/nice-ubuntu:0.0.1
   commands:
-  - export DRONEWORKDIR='/drone/src'
   - #-- partial build ---
   - cp .droneci/__init__.cpp pysdsl/__init__.cpp
   - #--------------------
   - git submodule sync
   - git submodule update --init --recursive
   - git submodule update --recursive
+  - DRONEWORKDIR='/drone/src'
   - cd ${DRONEWORKDIR}/sdsl-lite
   - bash uninstall.sh /usr
   - cd /tmp
