@@ -4,7 +4,7 @@ name: default
 steps:
   - name: build
     image: ivigns/nice-ubuntu:0.0.1
-    command: |
+    commands: |
       #-- partial build ---
       cp .circleci/__init__.cpp pysdsl/__init__.cpp
       #--------------------
