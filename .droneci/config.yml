@@ -30,7 +30,7 @@ steps:
   - cmake /work/sdsl-lite
   - make install
   - cd /work/pybind11
-  - pip install --no-binary :all: --no-cache-dir . --verbose
+  - pip install --no-binary ':all:' --no-cache-dir . --verbose
   - cd /work
-  - pip install --no-binary :all: --no-cache-dir . --verbose
+  - pip install --no-binary ':all:' --no-cache-dir . --verbose
   - cd /work && ls -aR
