@@ -5,14 +5,14 @@ steps:
 - name: build
   image: ivigns/nice-ubuntu:0.0.1
   commands:
-  - extern DRONEWORKDIR=$(PWD)
+  - export DRONEWORKDIR=${PWD}
   - #-- partial build ---
   - cp .droneci/__init__.cpp pysdsl/__init__.cpp
   - #--------------------
   - git submodule sync
   - git submodule update --init --recursive
   - git submodule update --recursive
-  - cd $(DRONEWORKDIR)/sdsl-lite
+  - cd ${DRONEWORKDIR}/sdsl-lite
   - bash uninstall.sh /usr
   - cd /tmp
   - rm -rf sdsl-lite-build
@@ -24,14 +24,14 @@ steps:
   - export CFLAGS="-O3 -pipe -fPIC"
   - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
   - cd /tmp/libdivsufsort-build
-  - cmake $(DRONEWORKDIR)/libdivsufsort
+  - cmake ${DRONEWORKDIR}/libdivsufsort
   - make install
   - export CXXFLAGS="${CXXFLAGS} -DNOCROSSCONSTRUCTORS"
   - cd /tmp/sdsl-lite-build
-  - cmake $(DRONEWORKDIR)/sdsl-lite
+  - cmake ${DRONEWORKDIR}/sdsl-lite
   - make install
-  - cd $(DRONEWORKDIR)/pybind11
+  - cd ${DRONEWORKDIR}/pybind11
   - pip install --no-binary ':all:' --no-cache-dir . --verbose
-  - cd $(DRONEWORKDIR)
+  - cd ${DRONEWORKDIR}
   - pip install --no-binary ':all:' --no-cache-dir . --verbose
-  - cd $(DRONEWORKDIR) && ls -aR
+  - cd ${DRONEWORKDIR} && ls -aR
