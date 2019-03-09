@@ -26,5 +26,5 @@ steps:
   - cd /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
   - make install
-  - export CXXFLAGS="${CXXFLAGS} -DNOCROSSCONSTRUCTORS"
+  - export CXXFLAGS="$CXXFLAGS -DNOCROSSCONSTRUCTORS"
   - echo $CXXFLAGS
