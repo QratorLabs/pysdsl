@@ -5,7 +5,7 @@ steps:
 - name: build
   image: ivigns/nice-ubuntu:0.0.1
   commands:
-  - export DRONEWORKDIR=${PWD}
+  - export DRONEWORKDIR='/drone/src'
   - #-- partial build ---
   - cp .droneci/__init__.cpp pysdsl/__init__.cpp
   - #--------------------
