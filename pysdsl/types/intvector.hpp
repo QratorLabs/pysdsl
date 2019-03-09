@@ -22,18 +22,18 @@ template <class T,
           unsigned int width = static_cast<unsigned int>(T::fixed_int_width)>
 inline auto add_int_init(py::module& m, const char* name)
 {
-    if (width == 8 || width == 16 || width == 32 || width == 64)
+    if (width == 8u || width == 16u || width == 32u || width == 64u)
     {
         return py::class_<T>(m, name, py::buffer_protocol())
             .def_buffer([] (T& self) {
                 char sym;
-                if (width == 8) {
+                if (width == 8u) {
                     sym = 'B'; }
-                else if (width == 16) {
+                else if (width == 16u) {
                     sym = 'H'; }
-                else if (width == 32) {
+                else if (width == 32u) {
                     sym = 'I'; }
-                else if (width == 64) {
+                else if (width == 64u) {
                     sym = 'Q'; }
 
                 return py::buffer_info(
@@ -168,48 +168,54 @@ inline auto add_int_class(py::module& m, py::dict& dict, KEY_T key,
     return cls;
 }
 
-template <typename VectorT>
-auto add_int_vector(py::module& m, py::dict& int_vectors_dict) {
-    size_t width = VectorT::fixed_int_width;
-    std::string name = "Int" + std::to_string(width) + "Vector";
-    return add_int_class<VectorT, typename VectorT::value_type>(
-                    m, int_vectors_dict, width, name.c_str())
+
+struct AddIntVectorFunctor {
+    py::module& m;
+    py::dict& int_vectors_dict;
+
+    AddIntVectorFunctor(py::module& m, py::dict& int_vectors_dict)
+        : m(m), int_vectors_dict(int_vectors_dict) {}
+
+    template <size_t N>
+    auto operator()(std::integral_constant<size_t, N> t) {
+        using return_type = sdsl::int_vector<N>;
+        std::string name = "Int" + std::to_string(N) + "Vector";
+        return add_int_class<return_type, typename return_type::value_type>(
+                    m, int_vectors_dict, N, name.c_str())
                 .def(py::init(
-                    [width](size_t size, typename VectorT::value_type default_value) {
-                        return VectorT(size, default_value, width); }),
+                    [](size_t size, typename return_type::value_type default_value) {
+                        return return_type(size, default_value, N); }),
                     py::arg("size") = 0, py::arg("default_value") = 0);
-}
+    }
 
-template<>
-auto add_int_vector<sdsl::int_vector<0>>(py::module& m, py::dict& int_vectors_dict) {
-    return add_int_class<sdsl::int_vector<0>>(
-                m, int_vectors_dict, "dynamic", "IntVector", doc_int_vector)
-            .def(
-                py::init([](size_t size,
-                            uint64_t default_value,
-                            uint8_t bit_width) {
-                    return sdsl::int_vector<0>(size, default_value, bit_width);
-                }),
-                py::arg("size") = 0,
-                py::arg("default_value") = 0,
-                py::arg("bit_width") = 64,
-                py::call_guard<py::gil_scoped_release>())
-            .def(
-                "expand_width",
-                [](sdsl::int_vector<0> &self, size_t width) {
-                    sdsl::util::expand_width(self, width); },
-                "Expands the integer width to new_width >= v.width().",
-                py::call_guard<py::gil_scoped_release>())
-            .def("bit_compress",
-                [](sdsl::int_vector<0> &self) {
-                    sdsl::util::bit_compress(self); },
-                doc_bit_compress,
-                py::call_guard<py::gil_scoped_release>());
-}
+    auto operator()(std::integral_constant<size_t, 0> t) {
+        return add_int_class<sdsl::int_vector<0>>(
+                    m, int_vectors_dict, "dynamic", "IntVector", doc_int_vector)
+                .def(
+                    py::init([](size_t size,
+                                uint64_t default_value,
+                                uint8_t bit_width) {
+                        return sdsl::int_vector<0>(size, default_value, bit_width);
+                    }),
+                    py::arg("size") = 0,
+                    py::arg("default_value") = 0,
+                    py::arg("bit_width") = 64,
+                    py::call_guard<py::gil_scoped_release>())
+                .def(
+                    "expand_width",
+                    [](sdsl::int_vector<0> &self, size_t width) {
+                        sdsl::util::expand_width(self, width); },
+                    "Expands the integer width to new_width >= v.width().",
+                    py::call_guard<py::gil_scoped_release>())
+                .def("bit_compress",
+                    [](sdsl::int_vector<0> &self) {
+                        sdsl::util::bit_compress(self); },
+                    doc_bit_compress,
+                    py::call_guard<py::gil_scoped_release>());
+    }
 
-template <>
-auto add_int_vector<sdsl::int_vector<1>>(py::module& m, py::dict& int_vectors_dict) {
-    return add_int_class<sdsl::int_vector<1>, bool>(
+    auto operator()(std::integral_constant<size_t, 1> t) {
+        return add_int_class<sdsl::int_vector<1>, bool>(
                 m, int_vectors_dict, 1ul , "BitVector")
             .def(py::init(
                 [](size_t size, bool default_value) {
@@ -218,13 +224,8 @@ auto add_int_vector<sdsl::int_vector<1>>(py::module& m, py::dict& int_vectors_di
             .def("flip", &sdsl::int_vector<1>::flip,
                  "Flip all bits of bit_vector",
                  py::call_guard<py::gil_scoped_release>());
-}
-
-
-template <typename... VectorT>
-auto make_int_vectors(py::module& m, py::dict& int_vectors_dict) {
-    return std::make_tuple(add_int_vector<VectorT>(m, int_vectors_dict)...);
-}
+    }
+};
 
 
 inline auto add_int_vectors(py::module& m)
@@ -233,25 +234,16 @@ inline auto add_int_vectors(py::module& m)
 
     m.attr("int_vector") = int_vectors_dict;
 
-    return make_int_vectors<sdsl::int_vector<0>, 
-                            sdsl::int_vector<1>, 
-                            sdsl::int_vector<4>, 
-                            sdsl::int_vector<8>, 
-                            sdsl::int_vector<16>, 
-                            sdsl::int_vector<24>, 
-                            sdsl::int_vector<32>, 
-                            sdsl::int_vector<48>, 
-                            sdsl::int_vector<64>>(m, int_vectors_dict);
+    using params = std::tuple<
+        std::integral_constant<size_t, 0>,
+        std::integral_constant<size_t, 1>,
+        std::integral_constant<size_t, 4>,
+        std::integral_constant<size_t, 8>,
+        std::integral_constant<size_t, 16>,
+        std::integral_constant<size_t, 24>,
+        std::integral_constant<size_t, 32>,
+        std::integral_constant<size_t, 48>,
+        std::integral_constant<size_t, 64>>;
 
-// #define DEF_INC_VECTOR(width, value_type) ,\
-//             add_int_class<sdsl::int_vector<width>, value_type>( \
-//                     m, int_vectors_dict, width, "Int" #width "Vector") \
-//                 .def(py::init( \
-//                     [](size_t size, value_type default_value) { \
-//                         return sdsl::int_vector<width>(size, default_value, width); }), \
-//                     py::arg("size") = 0, py::arg("default_value") = 0)
-// #include "int_vectors.h"
-// #undef DEF_INC_VECTOR
-//     );
-
+    return for_each_in_tuple(params(), AddIntVectorFunctor(m, int_vectors_dict));
 }
