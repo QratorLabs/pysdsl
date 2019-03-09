@@ -22,6 +22,7 @@ steps:
   - export CXX=clang++
   - export CFLAGS="-O3 -pipe -fPIC"
   - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
+  - echo $CXXFLAGS
   - cd /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
   - make install
