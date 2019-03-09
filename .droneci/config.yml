@@ -6,7 +6,7 @@ steps:
   image: ivigns/nice-ubuntu:0.0.1
   commands:
   - #-- partial build ---
-  - cp .droneci/__init__.cpp pysdsl/__init__.cpp
+  - # cp .droneci/__init__.cpp pysdsl/__init__.cpp
   - #--------------------
   - git submodule sync
   - git submodule update --init --recursive
