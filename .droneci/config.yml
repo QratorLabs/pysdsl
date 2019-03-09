@@ -5,6 +5,7 @@ steps:
 - name: build
   image: ivigns/nice-ubuntu:0.0.1
   working_dir: /work
+  entrypoint: [ 'cd', '/work' ]
   commands:
   - #-- partial build ---
   - cp .droneci/__init__.cpp pysdsl/__init__.cpp
