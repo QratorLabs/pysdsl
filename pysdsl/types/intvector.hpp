@@ -19,35 +19,32 @@ namespace py = pybind11;
 
 
 template <class T,
-          unsigned int width = static_cast<unsigned int>(T::fixed_int_width)>
+          unsigned int width = static_cast<unsigned int>(T::fixed_int_width),
+          std::enable_if_t<!(width & (width - 1)) && (width & (128u - 8u))>* dummy = nullptr>
 inline auto add_int_init(py::module& m, const char* name)
 {
-    if (width == 8u || width == 16u || width == 32u || width == 64u)
-    {
-        return py::class_<T>(m, name, py::buffer_protocol())
-            .def_buffer([] (T& self) {
-                char sym;
-                if (width == 8u) {
-                    sym = 'B'; }
-                else if (width == 16u) {
-                    sym = 'H'; }
-                else if (width == 32u) {
-                    sym = 'I'; }
-                else if (width == 64u) {
-                    sym = 'Q'; }
+    static const char syms[] = {'B', 'H', 'I', 'Q'};
 
-                return py::buffer_info(
-                    reinterpret_cast<void*>(self.data()),
-                    width / 8,
-                    std::string(1, sym),
-                    1,
-                    { detail::size(self) },
-                    { width / 8 }
-                ); });
-    }
-    return py::class_<T>(m, name);
+    return py::class_<T>(m, name, py::buffer_protocol())
+        .def_buffer([syms] (T& self) {
+            return py::buffer_info(
+                reinterpret_cast<void*>(self.data()),
+                width / 8,
+                std::string(1, syms[(unsigned int)(width / 8 - 1)]),
+                1,
+                { detail::size(self) },
+                { width / 8 }
+            ); });
 }
 
+template <class T,
+          unsigned int width = static_cast<unsigned int>(T::fixed_int_width),
+          std::enable_if_t<(width & (width - 1)) || !(width & (128u - 8u))>* dummy = nullptr>
+inline auto add_int_init(py::module& m, const char* name)
+{
+    return py::class_<T>(m, name);
+}
+        
 
 template <class T, typename S = typename T::value_type, typename KEY_T>
 inline auto add_int_class(py::module& m, py::dict& dict, KEY_T key,
