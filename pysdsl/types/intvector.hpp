@@ -18,19 +18,35 @@
 namespace py = pybind11;
 
 
+constexpr char sym_for_width(unsigned int width) {
+    switch (width) {
+        case 8:
+            return 'B';
+        case 16:
+            return 'H';
+        case 32:
+            return 'I';
+        case 64:
+            return 'Q';
+        default: __builtin_unreachable();
+    }
+}
+
+
+// checks whether width is a power of 2 (width & (width - 1) == 0)
+//                              and this power is between 8 and 64
+// without dummy redefinition error
 template <class T,
           unsigned int width = static_cast<unsigned int>(T::fixed_int_width),
           std::enable_if_t<!(width & (width - 1)) && (width & (128u - 8u))>* dummy = nullptr>
 inline auto add_int_init(py::module& m, const char* name)
 {
-    static const char syms[] = {'B', 'H', 'I', 'Q'};
-
     return py::class_<T>(m, name, py::buffer_protocol())
-        .def_buffer([syms] (T& self) {
+        .def_buffer([] (T& self) {
             return py::buffer_info(
                 reinterpret_cast<void*>(self.data()),
                 width / 8,
-                std::string(1, syms[(unsigned int)(width / 8 - 1)]),
+                std::string(1, sym_for_width(width)),
                 1,
                 { detail::size(self) },
                 { width / 8 }
@@ -170,7 +186,7 @@ struct AddIntVectorFunctor {
     py::module& m;
     py::dict& int_vectors_dict;
 
-    AddIntVectorFunctor(py::module& m, py::dict& int_vectors_dict)
+    constexpr AddIntVectorFunctor(py::module& m, py::dict& int_vectors_dict) noexcept
         : m(m), int_vectors_dict(int_vectors_dict) {}
 
     template <size_t N>
@@ -225,6 +241,22 @@ struct AddIntVectorFunctor {
 };
 
 
+template <typename... Ts>
+struct SubsetFunctor {
+    const std::tuple<Ts...>& tpl;
+
+    // it doesn't work in C++14
+    constexpr SubsetFunctor(std::tuple<Ts...>& tpl) noexcept
+        : tpl(tpl) {}
+
+
+    template <size_t N>
+    const auto& operator()(std::integral_constant<size_t, N> t) const {
+        return std::get<py::class_<sdsl::int_vector<N>>>(tpl);
+    }
+};
+
+
 inline auto add_int_vectors(py::module& m)
 {
     py::dict int_vectors_dict;
@@ -232,7 +264,6 @@ inline auto add_int_vectors(py::module& m)
     m.attr("int_vector") = int_vectors_dict;
 
     using params = std::tuple<
-        std::integral_constant<size_t, 0>,
         std::integral_constant<size_t, 1>,
         std::integral_constant<size_t, 4>,
         std::integral_constant<size_t, 8>,
@@ -242,5 +273,17 @@ inline auto add_int_vectors(py::module& m)
         std::integral_constant<size_t, 48>,
         std::integral_constant<size_t, 64>>;
 
-    return for_each_in_tuple(params(), AddIntVectorFunctor(m, int_vectors_dict));
+    using for_enc_vectors = std::tuple<
+        std::integral_constant<size_t, 1>,
+        std::integral_constant<size_t, 4>,
+        std::integral_constant<size_t, 8>,
+        std::integral_constant<size_t, 64>>;
+
+    auto iv = for_each_in_tuple(params(), AddIntVectorFunctor(m, int_vectors_dict));
+
+    // it should be a tuple of references
+    // mb use of std::forward_as_tuple needed in for_each_in_tuple instead of std::make_tuple
+    auto iv_as_ev_params = for_each_in_tuple(for_enc_vectors(), SubsetFunctor(iv));
+
+    return std::make_tuple(iv, iv_as_ev_params);
 }
