@@ -4,6 +4,7 @@
 #include <string.h>
 #include <tuple>
 #include <type_traits>
+#include <vector>
 
 #include <pybind11/pybind11.h>
 
@@ -154,13 +155,6 @@ namespace {
 char dprrr[] = "DPRRR";
 char dp[] = "DP";
 
-template <const char* str>
-struct get_dac_name {
-    constexpr const char *get_str() const {
-         return str;
-    }
-};
-
 template <typename T, T t, bool = std::is_integral_v<T>>
 struct get_vector_type {};
 
@@ -170,12 +164,12 @@ struct get_vector_type<T, t, true> {
 };
 
 template <>
-struct get_vector_type<const char*, get_dac_name<dp>().get_str(), false> {
+struct get_vector_type<const char*, dp, false> {
     using type = sdsl::dac_vector_dp<>;
 };
 
 template <>
-struct get_vector_type<const char*, get_dac_name<dprrr>().get_str(), false> {
+struct get_vector_type<const char*, dprrr, false> {
     using type = sdsl::dac_vector_dp<sdsl::rrr_vector<>>;
 };
 
@@ -222,21 +216,25 @@ public:
 
         return cls;
     }
-
+// skip max_levels in constructor
     template <typename KEY_T, KEY_T key, std::enable_if_t<std::is_integral_v<KEY_T>>* dummy = nullptr>
     inline
     decltype(auto) operator()(std::integral_constant<KEY_T, key> t)
     {
-        return get_vector(t);
+        return get_vector(t).def(py::init([](std::vector<int> list) {
+                                return get_vector_type_t<KEY_T, key>(list);
+                            }));
         
     }
-
     template <typename KEY_T, KEY_T key,
               std::enable_if_t<std::is_same_v<const char*, KEY_T>>* dummy = nullptr>
     inline
     decltype(auto) operator()(std::integral_constant<KEY_T, key> t) {
         return get_vector(t).def("cost", &get_vector_type_t<KEY_T, key>::cost,
-                                    py::arg("n"), py::arg("m"));
+                                    py::arg("n"), py::arg("m"))
+                            .def(py::init([](std::vector<int> list) {
+                                return get_vector_type_t<KEY_T, key>(list);
+                            }));
     }
 
 private:
@@ -261,8 +259,8 @@ auto add_encoded_vectors(py::module& m)
         std::integral_constant<size_t, 8>,
         std::integral_constant<size_t, 16>,
         std::integral_constant<size_t, 63>,
-        std::integral_constant<const char*, get_dac_name<dp>().get_str()>,
-        std::integral_constant<const char*, get_dac_name<dprrr>().get_str()>
+        std::integral_constant<const char*, dp>,
+        std::integral_constant<const char*, dprrr>
     >;
     auto dac_classes = for_each_in_tuple(dac_params(), add_dac_vector_functor(m, doc_dac_vector, doc_dac_vector_dp));
 
