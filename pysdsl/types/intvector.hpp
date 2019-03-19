@@ -190,7 +190,7 @@ struct AddIntVectorFunctor {
         : m(m), int_vectors_dict(int_vectors_dict) {}
 
     template <size_t N>
-    auto operator()(std::integral_constant<size_t, N> t) {
+    auto operator()(std::integral_constant<size_t, N>) {
         using return_type = sdsl::int_vector<N>;
         std::string name = "Int" + std::to_string(N) + "Vector";
         return add_int_class<return_type, typename return_type::value_type>(
@@ -201,7 +201,7 @@ struct AddIntVectorFunctor {
                     py::arg("size") = 0, py::arg("default_value") = 0);
     }
 
-    auto operator()(std::integral_constant<size_t, 0> t) {
+    auto operator()(std::integral_constant<size_t, 0>) {
         return add_int_class<sdsl::int_vector<0>>(
                     m, int_vectors_dict, "dynamic", "IntVector", doc_int_vector)
                 .def(
@@ -227,7 +227,7 @@ struct AddIntVectorFunctor {
                     py::call_guard<py::gil_scoped_release>());
     }
 
-    auto operator()(std::integral_constant<size_t, 1> t) {
+    auto operator()(std::integral_constant<size_t, 1>) {
         return add_int_class<sdsl::int_vector<1>, bool>(
                 m, int_vectors_dict, 1ul , "BitVector")
             .def(py::init(
@@ -256,6 +256,11 @@ struct SubsetFunctor {
     }
 };
 
+template <typename T>
+struct ShowType {
+    ShowType() = delete;
+};
+
 
 inline auto add_int_vectors(py::module& m)
 {
@@ -264,6 +269,7 @@ inline auto add_int_vectors(py::module& m)
     m.attr("int_vector") = int_vectors_dict;
 
     using params = std::tuple<
+        std::integral_constant<size_t, 0>,
         std::integral_constant<size_t, 1>,
         std::integral_constant<size_t, 4>,
         std::integral_constant<size_t, 8>,
@@ -280,10 +286,7 @@ inline auto add_int_vectors(py::module& m)
         std::integral_constant<size_t, 64>>;
 
     auto iv = for_each_in_tuple(params(), AddIntVectorFunctor(m, int_vectors_dict));
-
-    // it should be a tuple of references
-    // mb use of std::forward_as_tuple needed in for_each_in_tuple instead of std::make_tuple
-    auto iv_as_ev_params = for_each_in_tuple(for_enc_vectors(), SubsetFunctor(iv));
+    auto iv_as_ev_params = for_each_in_tuple_f(for_enc_vectors(), SubsetFunctor(iv));
 
     return std::make_tuple(iv, iv_as_ev_params);
 }

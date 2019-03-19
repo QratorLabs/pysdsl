@@ -27,18 +27,15 @@ PYBIND11_MODULE(pysdsl, m)
 {
     m.doc() = "sdsl-lite bindings for python";
 
-    // ?
     auto tmp = add_int_vectors(m);
     auto& iv_classes = std::get<0>(tmp);
     auto& iv_classes_as_ev_params = std::get<1>(tmp);
 
-    // it doesn't work now
-    // std::get<1>(iv_classes) is said to be an rvalue (why?)
-    // py::class_<sdsl::int_vector<1>>& bit_vector_cls = std::get<1>(iv_classes);
+    py::class_<sdsl::int_vector<1>>& bit_vector_cls = std::get<1>(iv_classes);
 
     add_sorted_int_stack(m);
 
-//     auto bit_vector_classes = std::make_tuple(bit_vector_cls);
+    auto bit_vector_classes = std::make_tuple(bit_vector_cls);
 
 //     auto tmp = add_bitvectors(m, bit_vector_cls);
 //     auto compressed_bit_vector_classes = std::get<0>(tmp);
