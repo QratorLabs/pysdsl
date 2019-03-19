@@ -40,11 +40,11 @@ def has_flag(compiler, flagname):
 
 
 def cpp_flag(compiler):
-    """Return the -std=c++14 compiler flag"""
-    if has_flag(compiler, '-std=c++14'):
-        return '-std=c++14'
+    """Return the -std=c++17 compiler flag"""
+    if has_flag(compiler, '-std=c++17'):
+        return '-std=c++17'
     else:
-        raise RuntimeError('Unsupported compiler -- at least C++14 support '
+        raise RuntimeError('Unsupported compiler -- at least C++17 support '
                            'is needed!')
 
 
