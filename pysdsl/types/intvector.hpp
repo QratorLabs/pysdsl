@@ -285,7 +285,7 @@ inline auto add_int_vectors(py::module& m)
         std::integral_constant<size_t, 64>>;
 
     auto iv = for_each_in_tuple(params(), AddIntVectorFunctor(m, int_vectors_dict));
-    auto iv_as_ev_params = for_each_in_tuple(for_enc_vectors(), make_subset_functor(iv));
+    auto iv_as_ev_params = forward_each_in_tuple(for_enc_vectors(), make_subset_functor(iv));
 
-    return std::make_tuple(iv, iv_as_ev_params);
+    return std::forward_as_tuple(iv, iv_as_ev_params);
 }
