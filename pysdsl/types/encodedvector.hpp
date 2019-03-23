@@ -150,8 +150,8 @@ inline std::string key_to_string(KEY_T key) { return std::to_string(key); }
 
 namespace {
 
-char dprrr[] = "DPRRR";
-char dp[] = "DP";
+const char dprrr[] = "DPRRR";
+const char dp[] = "DP";
 
 template <typename T, T t, bool = std::is_integral<T>::value>
 struct get_vector_type {};
