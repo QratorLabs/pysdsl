@@ -4,15 +4,14 @@ name: default
 steps:
 - name: build
   image: ivigns/nice-ubuntu:0.0.1
+  volumes:
+  - name: cache
+    path: /drone/src
   commands:
   - git submodule sync
   - git submodule update --init --recursive
   - git submodule update --recursive
-  - cd /drone/src/sdsl-lite
-  - bash uninstall.sh /usr
   - cd /tmp
-  - rm -rf sdsl-lite-build
-  - rm -rf libdivsufsort-build
   - mkdir sdsl-lite-build
   - mkdir libdivsufsort-build
   - export CC=clang
@@ -30,4 +29,32 @@ steps:
   - pip install --no-binary ':all:' --no-cache-dir . --verbose
   - cd /drone/src
   - pip install --no-binary ':all:' --no-cache-dir . --verbose
+  - pip install wheel
+  - pip install setuptools
+  - python setup.py bdist_wheel
+
+- name: show
+  image: ivigns/nice-ubuntu:0.0.1
+  volumes:
+  - name: cache
+    path: /drone/src
+  commands:
   - cd /drone/src && ls -aR
+
+- name: publish
+  image: plugins/github-release
+  volumes:
+  - name: cache
+    path: /drone/src
+  settings:
+    api_key:
+      from_secret: repo_token
+    files:
+      - /drone/src/*.whl
+    title: 0.0.1
+  when:
+    event: tag
+
+volumes:
+- name: cache
+  temp: {}
