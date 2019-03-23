@@ -8,30 +8,30 @@ steps:
   - name: cache
     path: /tmp/cache
   commands:
-  - git submodule sync
-  - git submodule update --init --recursive
-  - git submodule update --recursive
-  - cd /tmp
-  - mkdir sdsl-lite-build
-  - mkdir libdivsufsort-build
-  - export CC=clang
-  - export CXX=clang++
-  - export CFLAGS="-O3 -pipe -fPIC"
-  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
-  - cd /tmp/libdivsufsort-build
-  - cmake /drone/src/libdivsufsort
-  - make install
-  - export CXXFLAGS="$CXXFLAGS -DNOCROSSCONSTRUCTORS"
-  - cd /tmp/sdsl-lite-build
-  - cmake /drone/src/sdsl-lite
-  - make install
-  - cd /drone/src/pybind11
-  - pip install --no-binary ':all:' --no-cache-dir . --verbose
-  - cd /drone/src
-  - pip install --no-binary ':all:' --no-cache-dir . --verbose
-  - pip install wheel
-  - pip install setuptools
-  - python setup.py bdist_wheel
+  # - git submodule sync
+  # - git submodule update --init --recursive
+  # - git submodule update --recursive
+  # - cd /tmp
+  # - mkdir sdsl-lite-build
+  # - mkdir libdivsufsort-build
+  # - export CC=clang
+  # - export CXX=clang++
+  # - export CFLAGS="-O3 -pipe -fPIC"
+  # - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
+  # - cd /tmp/libdivsufsort-build
+  # - cmake /drone/src/libdivsufsort
+  # - make install
+  # - export CXXFLAGS="$CXXFLAGS -DNOCROSSCONSTRUCTORS"
+  # - cd /tmp/sdsl-lite-build
+  # - cmake /drone/src/sdsl-lite
+  # - make install
+  # - cd /drone/src/pybind11
+  # - pip install --no-binary ':all:' --no-cache-dir . --verbose
+  # - cd /drone/src
+  # # - pip install --no-binary ':all:' --no-cache-dir . --verbose
+  # - python setup.py bdist_wheel
+  - mkdir dist
+  - touch dist/tmp.whl
   - cp -r . /tmp/cache
 
 - name: show
@@ -51,10 +51,12 @@ steps:
     api_key:
       from_secret: repo_token
     files:
-      - /tmp/cache*.whl
+      - /tmp/cache/dist/*
     title: 0.0.1
   when:
-    event: tag
+    event:
+      - tag
+      - push
 
 volumes:
 - name: cache
