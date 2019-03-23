@@ -8,28 +8,28 @@ steps:
   - name: cache
     path: /tmp/cache
   commands:
-  # - git submodule sync
-  # - git submodule update --init --recursive
-  # - git submodule update --recursive
-  # - cd /tmp
-  # - mkdir sdsl-lite-build
-  # - mkdir libdivsufsort-build
-  # - export CC=clang
-  # - export CXX=clang++
-  # - export CFLAGS="-O3 -pipe -fPIC"
-  # - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
-  # - cd /tmp/libdivsufsort-build
-  # - cmake /drone/src/libdivsufsort
-  # - make install
+  - git submodule sync
+  - git submodule update --init --recursive
+  - git submodule update --recursive
+  - cd /tmp
+  - mkdir sdsl-lite-build
+  - mkdir libdivsufsort-build
+  - export CC=clang
+  - export CXX=clang++
+  - export CFLAGS="-O3 -pipe -fPIC"
+  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
+  - cd /tmp/libdivsufsort-build
+  - cmake /drone/src/libdivsufsort
+  - make install
   # - export CXXFLAGS="$CXXFLAGS -DNOCROSSCONSTRUCTORS"
-  # - cd /tmp/sdsl-lite-build
-  # - cmake /drone/src/sdsl-lite
-  # - make install
-  # - cd /drone/src/pybind11
+  - cd /tmp/sdsl-lite-build
+  - cmake /drone/src/sdsl-lite
+  - make install
+  - cd /drone/src/pybind11
+  - pip install --no-binary ':all:' --no-cache-dir . --verbose
+  - cd /drone/src
   # - pip install --no-binary ':all:' --no-cache-dir . --verbose
-  # - cd /drone/src
-  # # - pip install --no-binary ':all:' --no-cache-dir . --verbose
-  # - python setup.py bdist_wheel
+  - python setup.py bdist_wheel --verbose
   - mkdir dist
   - touch dist/tmp.whl
   - cp -r . /tmp/cache
@@ -42,16 +42,6 @@ steps:
   commands:
   - cd /tmp/cache && ls -aR
 
-- name: push-tag
-  image: gempesaw/drone-git-tag
-  volumes:
-  - name: cache
-    path: /tmp/cache
-  plugin: true
-  settings:
-    api_key:
-      from_secret: repo_token
-
 - name: publish
   image: plugins/github-release
   volumes:
@@ -62,7 +52,7 @@ steps:
       from_secret: repo_token
     files:
       - /tmp/cache/dist/*
-    title: 1.0.1a0
+    title: ${DRONE_TAG}
   when:
     event: tag
 
