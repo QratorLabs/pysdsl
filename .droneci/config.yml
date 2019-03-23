@@ -9,8 +9,8 @@ steps:
     path: /tmp/cache
   commands:
   - git fetch --tags
-  - git tag 1.0.0a0
-  - git push origin 1.0.0a0
+  - git tag 1.0.0a1
+  - git push origin 1.0.0a1
   # - git submodule sync
   # - git submodule update --init --recursive
   # - git submodule update --recursive
