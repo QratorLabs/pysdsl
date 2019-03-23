@@ -21,16 +21,25 @@ steps:
   - cd /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
   - make install
-  # - export CXXFLAGS="$CXXFLAGS -DNOCROSSCONSTRUCTORS"
   - cd /tmp/sdsl-lite-build
   - cmake /drone/src/sdsl-lite
   - make install
   - cd /drone/src/pybind11
   - pip install --no-binary ':all:' --no-cache-dir . --verbose
   - cd /drone/src
-  # - pip install --no-binary ':all:' --no-cache-dir . --verbose
-  - python setup.py bdist_wheel --verbose
+  - pip wheel --no-binary ':all:' --no-cache-dir -w dist . --verbose
   - cp -r . /tmp/cache
+
+- name: test-wheel
+  image: python:3.5-alpine
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - pip install /tmp/cache/dist/
+  - mkdir /tmp/test
+  - cd /tmp/test
+  - python -c 'import pysdsl'
 
 - name: show
   image: ivigns/nice-ubuntu:0.0.1
