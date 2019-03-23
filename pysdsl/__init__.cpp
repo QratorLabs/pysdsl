@@ -61,7 +61,8 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(compressed_bit_vector_classes,
                       make_inits_many_functor(bit_vector_classes));
 #ifndef NOCROSSCONSTRUCTORS
-    for_each_in_tuple(compressed_bit_vector_classes, make_inits_many_functor(compressed_bit_vector_classes));
+    for_each_in_tuple(compressed_bit_vector_classes, 
+                      make_inits_many_functor(compressed_bit_vector_classes));
 #endif
 
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(iv_classes));
