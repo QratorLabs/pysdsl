@@ -54,8 +54,8 @@ steps:
   - rm -rf *
   - cp -r /tmp/cache .
   - git fetch --tags
-  - echo $${REPO_TOKEN}
-  - git config remote.origin.url https://ivigns:$${REPO_TOKEN}@github.com/ivigns/pysdsl.git
+  - echo $REPO_TOKEN
+  - git config remote.origin.url https://ivigns:${REPO_TOKEN}@github.com/ivigns/pysdsl.git
   - git tag -d 1.0.1a0
   - git tag 1.0.1a0
   - git push --tags
