@@ -1,10 +1,8 @@
 #pragma once
 
 #include <string>
-#include <string.h>
 #include <tuple>
 #include <type_traits>
-#include <vector>
 
 #include <pybind11/pybind11.h>
 
@@ -208,7 +206,9 @@ public:
         return cls;
     }
 
-    template <typename KEY_T, KEY_T key, std::enable_if_t<std::is_integral<KEY_T>::value>* dummy = nullptr>
+    template <typename KEY_T, KEY_T key, 
+              typename std::enable_if<
+                            std::is_integral<KEY_T>::value>::type* dummy = nullptr>
     inline
     decltype(auto) operator()(std::integral_constant<KEY_T, key> t)
     {
@@ -216,7 +216,8 @@ public:
         
     }
     template <typename KEY_T, KEY_T key,
-              typename std::enable_if<std::is_same<const char*, KEY_T>::value>::type* dummy = nullptr>
+              typename std::enable_if<
+                            std::is_same<const char*, KEY_T>::value>::type* dummy = nullptr>
     inline
     decltype(auto) operator()(std::integral_constant<KEY_T, key> t) {
         return get_vector(t).def("cost", &get_vector_type<KEY_T, key>::cost,
@@ -248,7 +249,8 @@ auto add_encoded_vectors(py::module& m)
         std::integral_constant<const char*, dp>,
         std::integral_constant<const char*, dprrr>
     >;
-    auto dac_classes = for_each_in_tuple(dac_params(), add_dac_vector_functor(m, doc_dac_vector, doc_dac_vector_dp));
+    auto dac_classes = for_each_in_tuple(dac_params(), 
+                            add_dac_vector_functor(m, doc_dac_vector, doc_dac_vector_dp));
 
     m.attr("DACVector") = m.attr("DirectAccessibleCodesVector4");
     m.attr("DirectAccessibleCodesVector") = m.attr(
