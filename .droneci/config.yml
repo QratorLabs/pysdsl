@@ -2,14 +2,6 @@ kind: pipeline
 name: default
 
 steps:
-- name: push-tag
-  image: docker:git
-  commands:
-  - git fetch --tags
-  - git tag -d 1.0.1a0
-  - git tag 1.0.1a0
-  - git push --tags
-
 - name: build
   image: ivigns/nice-ubuntu:0.0.1
   volumes:
@@ -49,6 +41,23 @@ steps:
     path: /tmp/cache
   commands:
   - cd /tmp/cache && ls -aR
+
+- name: push-tag
+  image: docker:git
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  evironment:
+    REPO_TOKEN:
+      from_secret: repo_token
+  commands:
+  - rm -rf *
+  - cp -r /tmp/cache .
+  - git fetch --tags
+  - git config remote.origin.url https://ivigns:$REPO_TOKEN@github.com/ivigns/pysdsl.git
+  - git tag -d 1.0.1a0
+  - git tag 1.0.1a0
+  - git push --tags
 
 - name: publish
   image: plugins/github-release
