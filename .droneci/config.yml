@@ -10,7 +10,7 @@ steps:
   commands:
   - git submodule sync
   - git submodule update --init --recursive
-  - git submodule update --recursive
+  - git submodule foreach --recursive git pull
   - cd /tmp
   - mkdir sdsl-lite-build
   - mkdir libdivsufsort-build
