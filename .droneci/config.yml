@@ -47,12 +47,10 @@ steps:
   volumes:
   - name: cache
     path: /tmp/cache
+  plugin: true
   settings:
     api_key:
       from_secret: repo_token
-  commands:
-  - rm -rf *
-  - cp -r /tmp/cache .
 
 - name: publish
   image: plugins/github-release
