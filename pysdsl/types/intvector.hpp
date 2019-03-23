@@ -245,7 +245,6 @@ template <typename... Ts>
 struct SubsetFunctor {
     const std::tuple<Ts...>& tpl;
 
-    // it doesn't work in C++14
     constexpr SubsetFunctor(std::tuple<Ts...>& tpl) noexcept
         : tpl(tpl) {}
 
@@ -256,6 +255,11 @@ struct SubsetFunctor {
     }
 };
 
+template <typename... Ts>
+auto make_subset_functor(Ts&&... args) {
+    return SubsetFunctor<Ts...>(std::make_tuple(std::forward(args)...));
+}
+
 
 inline auto add_int_vectors(py::module& m)
 {
@@ -264,6 +268,7 @@ inline auto add_int_vectors(py::module& m)
     m.attr("int_vector") = int_vectors_dict;
 
     using params = std::tuple<
+        std::integral_constant<size_t, 0>,
         std::integral_constant<size_t, 1>,
         std::integral_constant<size_t, 4>,
         std::integral_constant<size_t, 8>,
@@ -280,10 +285,7 @@ inline auto add_int_vectors(py::module& m)
         std::integral_constant<size_t, 64>>;
 
     auto iv = for_each_in_tuple(params(), AddIntVectorFunctor(m, int_vectors_dict));
-
-    // it should be a tuple of references
-    // mb use of std::forward_as_tuple needed in for_each_in_tuple instead of std::make_tuple
-    auto iv_as_ev_params = for_each_in_tuple(for_enc_vectors(), SubsetFunctor(iv));
+    auto iv_as_ev_params = for_each_in_tuple(for_enc_vectors(), make_subset_functor(iv));
 
     return std::make_tuple(iv, iv_as_ev_params);
 }
