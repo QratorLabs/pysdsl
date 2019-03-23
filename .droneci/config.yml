@@ -30,8 +30,6 @@ steps:
   - cd /drone/src
   # - pip install --no-binary ':all:' --no-cache-dir . --verbose
   - python setup.py bdist_wheel --verbose
-  - mkdir dist
-  - touch dist/tmp.whl
   - cp -r . /tmp/cache
 
 - name: show
