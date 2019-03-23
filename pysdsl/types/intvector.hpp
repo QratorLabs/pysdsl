@@ -256,8 +256,8 @@ struct SubsetFunctor {
 };
 
 template <typename... Ts>
-auto make_subset_functor(Ts&&... args) {
-    return SubsetFunctor<Ts...>(std::make_tuple(std::forward(args)...));
+auto make_subset_functor(std::tuple<Ts...>& tpl) {
+    return SubsetFunctor<Ts...>(tpl);
 }
 
 
@@ -278,14 +278,14 @@ inline auto add_int_vectors(py::module& m)
         std::integral_constant<size_t, 48>,
         std::integral_constant<size_t, 64>>;
 
-    using for_enc_vectors = std::tuple<
+    using as_params = std::tuple<
         std::integral_constant<size_t, 1>,
         std::integral_constant<size_t, 4>,
         std::integral_constant<size_t, 8>,
         std::integral_constant<size_t, 64>>;
 
     auto iv = for_each_in_tuple(params(), AddIntVectorFunctor(m, int_vectors_dict));
-    auto iv_as_ev_params = forward_each_in_tuple(for_enc_vectors(), make_subset_functor(iv));
+    auto iv_as_params = forward_each_in_tuple(for_enc_vectors(), make_subset_functor(iv));
 
-    return std::forward_as_tuple(iv, iv_as_ev_params);
+    return std::forward_as_tuple(iv, iv_as_params);
 }
