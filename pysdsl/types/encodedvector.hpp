@@ -155,17 +155,17 @@ namespace {
 char dprrr[] = "DPRRR";
 char dp[] = "DP";
 
-template <typename T, T t, bool = std::is_integral_v<T>>
+template <typename T, T t, bool = std::is_integral<T>::value>
 struct get_vector_type {};
 
 template <typename T, T t>
-struct get_vector_type<T, t, true> : sdsl::dac_vector<t>;
+struct get_vector_type<T, t, true> : sdsl::dac_vector<t> {};
 
 template <>
-struct get_vector_type<const char*, dp, false> : sdsl::dac_vector_dp<>;
+struct get_vector_type<const char*, dp, false> : sdsl::dac_vector_dp<> {};
 
 template <>
-struct get_vector_type<const char*, dprrr, false> : sdsl::dac_vector_dp<sdsl::rrr_vector<>>;
+struct get_vector_type<const char*, dprrr, false> : sdsl::dac_vector_dp<sdsl::rrr_vector<>> {};
 
 } // namespace
 
@@ -194,9 +194,9 @@ public:
         add_read_access<type>(cls);
         add_std_algo<type>(cls);
 
-        if (doc && std::is_integral_v<KEY_T>)
+        if (doc && std::is_integral<KEY_T>::value)
             cls.doc() = doc;
-        else if (doc_dp && !std::is_integral_v<KEY_T>)
+        else if (doc_dp && !std::is_integral<KEY_T>::value)
             cls.doc() = doc_dp;
 
 
@@ -208,7 +208,7 @@ public:
         return cls;
     }
 
-    template <typename KEY_T, KEY_T key, std::enable_if_t<std::is_integral_v<KEY_T>>* dummy = nullptr>
+    template <typename KEY_T, KEY_T key, std::enable_if_t<std::is_integral<KEY_T>::value>* dummy = nullptr>
     inline
     decltype(auto) operator()(std::integral_constant<KEY_T, key> t)
     {
@@ -216,7 +216,7 @@ public:
         
     }
     template <typename KEY_T, KEY_T key,
-              std::enable_if_t<std::is_same_v<const char*, KEY_T>>* dummy = nullptr>
+              typename std::enable_if<std::is_same<const char*, KEY_T>::value>::type* dummy = nullptr>
     inline
     decltype(auto) operator()(std::integral_constant<KEY_T, key> t) {
         return get_vector(t).def("cost", &get_vector_type<KEY_T, key>::cost,
