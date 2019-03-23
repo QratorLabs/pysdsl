@@ -39,6 +39,14 @@ auto constexpr coders = std::make_tuple(
     std::make_tuple("Comma4", dens<128>{}, width<0>{},
         (sdsl::coder::comma<4>*) nullptr));
 
+using dac_params = std::tuple<
+    std::integral_constant<size_t, 4>,
+    std::integral_constant<size_t, 8>,
+    std::integral_constant<size_t, 16>,
+    std::integral_constant<size_t, 63>,
+    std::integral_constant<const char*, dp>,
+    std::integral_constant<const char*, dprrr>
+>;
 
 class add_enc_coders_functor
 {
@@ -210,10 +218,8 @@ public:
               typename std::enable_if<
                             std::is_integral<KEY_T>::value>::type* dummy = nullptr>
     inline
-    decltype(auto) operator()(std::integral_constant<KEY_T, key> t)
-    {
+    decltype(auto) operator()(std::integral_constant<KEY_T, key> t) {
         return get_vector(t);
-        
     }
     template <typename KEY_T, KEY_T key,
               typename std::enable_if<
@@ -241,14 +247,7 @@ auto add_encoded_vectors(py::module& m)
     auto enc_classes = for_each_in_tuple(coders, add_enc_coders_functor(m));
     auto vlc_classes = for_each_in_tuple(coders, add_vlc_coders_functor(m));
 
-    using dac_params = std::tuple<
-        std::integral_constant<size_t, 4>,
-        std::integral_constant<size_t, 8>,
-        std::integral_constant<size_t, 16>,
-        std::integral_constant<size_t, 63>,
-        std::integral_constant<const char*, dp>,
-        std::integral_constant<const char*, dprrr>
-    >;
+
     auto dac_classes = for_each_in_tuple(dac_params(), 
                             add_dac_vector_functor(m, doc_dac_vector, doc_dac_vector_dp));
 
