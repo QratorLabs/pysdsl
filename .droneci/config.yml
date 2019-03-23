@@ -6,7 +6,7 @@ steps:
   image: ivigns/nice-ubuntu:0.0.1
   volumes:
   - name: cache
-    path: /drone/src
+    path: /tmp/cache
   commands:
   - git submodule sync
   - git submodule update --init --recursive
@@ -32,25 +32,26 @@ steps:
   - pip install wheel
   - pip install setuptools
   - python setup.py bdist_wheel
+  - cp -r . /tmp/cache
 
 - name: show
   image: ivigns/nice-ubuntu:0.0.1
   volumes:
   - name: cache
-    path: /drone/src
+    path: /tmp/cache
   commands:
-  - cd /drone/src && ls -aR
+  - cd /tmp/cache && ls -aR
 
 - name: publish
   image: plugins/github-release
   volumes:
   - name: cache
-    path: /drone/src
+    path: /tmp/cache
   settings:
     api_key:
       from_secret: repo_token
     files:
-      - /drone/src/*.whl
+      - /tmp/cache*.whl
     title: 0.0.1
   when:
     event: tag
