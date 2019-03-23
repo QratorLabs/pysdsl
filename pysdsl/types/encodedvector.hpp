@@ -157,13 +157,22 @@ template <typename T, T t, bool = std::is_integral<T>::value>
 struct get_vector_type {};
 
 template <typename T, T t>
-struct get_vector_type<T, t, true> : sdsl::dac_vector<t> {};
+struct get_vector_type<T, t, true> {
+    using type = sdsl::dac_vector<t>;
+};
 
 template <>
-struct get_vector_type<const char*, dp, false> : sdsl::dac_vector_dp<> {};
+struct get_vector_type<const char*, dp, false> {
+    using type = sdsl::dac_vector_dp<>;
+};
 
 template <>
-struct get_vector_type<const char*, dprrr, false> : sdsl::dac_vector_dp<sdsl::rrr_vector<>> {};
+struct get_vector_type<const char*, dprrr, false> {
+    using type = sdsl::dac_vector_dp<sdsl::rrr_vector<>>;
+};
+
+template <typename T, T t>
+using get_vector_type_t = typename get_vector_type<T, t>::type;
 
 } // namespace
 
@@ -179,7 +188,7 @@ public:
     template <typename KEY_T, KEY_T key>
     inline
     decltype(auto) get_vector(std::integral_constant<KEY_T, key>) {
-        using type = get_vector_type<KEY_T, key>;
+        using type = get_vector_type_t<KEY_T, key>;
         auto name = "DirectAccessibleCodesVector" + key_to_string(key);
 
         auto cls = py::class_<type>(m, name.c_str()).def(py::init());
@@ -218,7 +227,7 @@ public:
                             std::is_same<const char*, KEY_T>::value>::type* dummy = nullptr>
     inline
     decltype(auto) operator()(std::integral_constant<KEY_T, key> t) {
-        return get_vector(t).def("cost", &get_vector_type<KEY_T, key>::cost,
+        return get_vector(t).def("cost", &get_vector_type_t<KEY_T, key>::cost,
                                     py::arg("n"), py::arg("m"));
     }
 
