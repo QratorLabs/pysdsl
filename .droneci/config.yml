@@ -4,9 +4,6 @@ name: default
 steps:
 - name: build
   image: ivigns/nice-ubuntu:0.0.1
-  # volumes:
-  # - name: cache
-  #   path: /tmp/cache
   commands:
     - git fetch --tags
   # - git submodule sync
@@ -37,17 +34,11 @@ steps:
 
 - name: show
   image: ivigns/nice-ubuntu:0.0.1
-  # volumes:
-  # - name: cache
-  #   path: /tmp/cache
   commands:
   - cd /tmp/cache && ls -aR
 
 - name: publish
   image: plugins/github-release
-  # volumes:
-  # - name: cache
-  #   path: /tmp/cache
   settings:
     api_key:
       from_secret: repo_token
@@ -56,7 +47,3 @@ steps:
     title: 0.0.1
   when:
     event: tag
-
-# volumes:
-# - name: cache
-#   temp: {}
