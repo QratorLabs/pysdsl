@@ -5,7 +5,7 @@ steps:
 - name: build
   image: ivigns/nice-ubuntu:0.0.1
   commands:
-    - git fetch origin --tags
+  - git fetch --tags
   # - git submodule sync
   # - git submodule update --init --recursive
   # - git submodule update --recursive
