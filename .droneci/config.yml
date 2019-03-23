@@ -48,7 +48,7 @@ steps:
   - name: cache
     path: /tmp/cache
   evironment:
-    REPO_TOKEN:
+    - REPO_TOKEN:
       from_secret: repo_token
   commands:
   - rm -rf *
