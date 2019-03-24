@@ -16,8 +16,8 @@ steps:
   - mkdir libdivsufsort-build
   - export CC=clang
   - export CXX=clang++
-  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -fPIC"
-  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -fPIC"
+  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC"
+  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC"
   - cd /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
   - make install
@@ -44,7 +44,7 @@ steps:
   - name: cache
     path: /tmp/cache
   commands:
-  - pip install $(ls /tmp/cache/dist)
+  - pip install $(ls -d /tmp/cache/dist/*)
   - mkdir /tmp/test
   - cd /tmp/test
   - python -c 'import pysdsl'
