@@ -2,20 +2,6 @@ kind: pipeline
 name: default
 
 steps:
-- name: test-wheel
-  image: debian:testing
-  volumes:
-  - name: cache
-    path: /tmp/cache
-  commands:
-  - apt-get update
-  - apt-get install -y python python-pip
-  # - pip install $(ls -d /tmp/cache/dist/*)
-  - pip install https://github.com/QratorLabs/pysdsl/releases/download/1.0.0a0/pysdsl-1.0.0a0-cp27-cp27mu-linux_x86_64.whl
-  - mkdir /tmp/test
-  - cd /tmp/test
-  - python -c 'import pysdsl'
-
 - name: build
   image: ivigns/nice-ubuntu:0.0.1
   volumes:
@@ -58,6 +44,19 @@ steps:
     path: /tmp/cache
   commands:
   - cd /tmp/cache && ls -aR
+
+- name: test-wheel
+  image: debian:testing
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - apt-get update
+  - apt-get install -y python python-pip
+  - pip install $(ls -d /tmp/cache/dist/*)
+  - mkdir /tmp/test
+  - cd /tmp/test
+  - python -c 'import pysdsl'
 
 - name: publish
   image: plugins/github-release
