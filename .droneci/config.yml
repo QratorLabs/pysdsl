@@ -3,7 +3,7 @@ name: default
 
 steps:
 - name: test-wheel
-  image: debian:7-slim
+  image: debian:7
   volumes:
   - name: cache
     path: /tmp/cache
