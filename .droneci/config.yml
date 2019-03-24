@@ -2,6 +2,19 @@ kind: pipeline
 name: default
 
 steps:
+- name: test-wheel
+  image: debian:7-slim
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - apt update
+  - apt install -y python python-pip
+  - pip install $(ls -d /tmp/cache/dist/*)
+  - mkdir /tmp/test
+  - cd /tmp/test
+  - python -c 'import pysdsl'
+
 - name: build
   image: ivigns/nice-ubuntu:0.0.1
   volumes:
@@ -23,8 +36,8 @@ steps:
   - mkdir libdivsufsort-build
   - export CC=clang
   - export CXX=clang++
-  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -static -libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
-  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static -libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
+  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
+  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
   - cd /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
   - make install
@@ -44,30 +57,6 @@ steps:
     path: /tmp/cache
   commands:
   - cd /tmp/cache && ls -aR
-
-- name: test-wheel-1
-  image: debian:7-slim
-  volumes:
-  - name: cache
-    path: /tmp/cache
-  commands:
-  - apt update
-  - apt install -y python python-pip
-  - pip install $(ls -d /tmp/cache/dist/*)
-  - mkdir /tmp/test
-  - cd /tmp/test
-  - python -c 'import pysdsl'
-
-- name: test-wheel-2
-  image: python:2.7-alpine
-  volumes:
-  - name: cache
-    path: /tmp/cache
-  commands:
-  - pip install $(ls -d /tmp/cache/dist/*)
-  - mkdir /tmp/test
-  - cd /tmp/test
-  - python -c 'import pysdsl'
 
 - name: publish
   image: plugins/github-release
