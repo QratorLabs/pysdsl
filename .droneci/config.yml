@@ -10,7 +10,14 @@ steps:
   commands:
   - git submodule sync
   - git submodule update --init --recursive
-  - git submodule foreach --recursive '["$path" == "external/googletest"] || git pull origin master'
+  - cd /drone/src/libdivsufsort
+  - git pull origin master
+  - cd /drone/src/sdsl-lite
+  - git pull origin master
+  - cd /drone/src/sdsl-lite/external/libdivsufsort
+  - git pull origin master
+  - cd /drone/src/pybind11
+  - git pull origin master
   - cd /tmp
   - mkdir sdsl-lite-build
   - mkdir libdivsufsort-build
