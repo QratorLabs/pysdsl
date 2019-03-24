@@ -10,7 +10,7 @@ steps:
   commands:
   - git submodule sync
   - git submodule update --init --recursive
-  - git submodule foreach --recursive '["$path" == "/drone/src/sdsl-lite/external/googletest"] || git pull origin master'
+  - git submodule foreach --recursive '["$path" == "googletest"] || git pull origin master'
   - cd /tmp
   - mkdir sdsl-lite-build
   - mkdir libdivsufsort-build
