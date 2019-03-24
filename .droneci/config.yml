@@ -10,14 +10,14 @@ steps:
   commands:
   - git submodule sync
   - git submodule update --init --recursive
-  - git submodule foreach --recursive '["$PWD" == "/drone/src/sdsl-lite/external/googletest"] || git pull origin master'
+  - git submodule foreach --recursive '["$path" == "/drone/src/sdsl-lite/external/googletest"] || git pull origin master'
   - cd /tmp
   - mkdir sdsl-lite-build
   - mkdir libdivsufsort-build
   - export CC=clang
   - export CXX=clang++
   - export CFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC"
-  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgccgit  -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
+  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
   - cd /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
   - make install
