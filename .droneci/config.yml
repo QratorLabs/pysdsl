@@ -23,7 +23,7 @@ steps:
   - mkdir libdivsufsort-build
   - export CC=clang
   - export CXX=clang++
-  - export CFLAGS="-O3 -Wl,-Bstatic -static-libgcc -pipe -fcolor-diagnostics -lpthread -fPIC "
+  - export CFLAGS="-O3 -fPIC -Wl,-Bstatic -static-libgcc -pipe -fcolor-diagnostics -lpthread"
   - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -lpthread -static-libgcc -static-libstdc++ -fPIC -stdlib=libc++ -Wl,-Bstatic"
   - cd /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
