@@ -23,11 +23,13 @@ steps:
   - mkdir libdivsufsort-build
   - export CC=clang
   - export CXX=clang++
-  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
-  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
+  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -stdlib=glibc -lpthread -Wl,-Bstatic"
+  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -stdlib=libc++ -lpthread -Wl,-Bstatic"
   - cd /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
   - make install
+  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
+  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -stdlib=libc++ -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
   - cd /tmp/sdsl-lite-build
   - cmake /drone/src/sdsl-lite
   - make install
@@ -51,8 +53,8 @@ steps:
   - name: cache
     path: /tmp/cache
   commands:
-  - apt-get update -q
-  - apt-get install -q -y python python-pip
+  - apt-get update -qq
+  - apt-get install -qqy python python-pip
   - pip install $(ls -d /tmp/cache/dist/*)
   - mkdir /tmp/test
   - cd /tmp/test
