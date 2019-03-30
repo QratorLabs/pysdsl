@@ -3,7 +3,7 @@ name: default
 
 steps:
 - name: build
-  image: ivigns/nice-ubuntu:0.0.1
+  image: ivigns/nice-linux:debian-0.0.1
   volumes:
   - name: cache
     path: /tmp/cache
@@ -24,9 +24,8 @@ steps:
   - export CC=clang
   - export CXX=clang++
   - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
-  - sed -i 's/option(BUILD_SHARED_LIBS.*/option(BUILD_SHARED_LIBS OFF)/' /drone/src/libdivsufsort/CMakeLists.txt
   - cd /tmp/libdivsufsort-build
-  - cmake /drone/src/libdivsufsort
+  - cmake -D BUILD_SHARED_LIBS=OFF /drone/src/libdivsufsort
   - make install
   - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread  -Wl,-Bstatic -Wl,-Bdynamic"
   - cd /tmp/sdsl-lite-build
@@ -41,7 +40,7 @@ steps:
   - cp -r . /tmp/cache
 
 - name: show
-  image: ivigns/nice-ubuntu:0.0.1
+  image: debian:testing
   volumes:
   - name: cache
     path: /tmp/cache
