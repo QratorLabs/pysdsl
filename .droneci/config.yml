@@ -23,10 +23,12 @@ steps:
   - mkdir libdivsufsort-build
   - export CC=clang
   - export CXX=clang++
-  - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic -DBUILD_SHARED_LIBS=OFF"
+  - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
+  - sed -i 's/option(BUILD_SHARED_LIBS.*/option(BUILD_SHARED_LIBS OFF)/' /drone/src/libdivsufsort/CMakeLists.txt
   - cd /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
   - make install
+  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -stdlib=libc -fPIC -lpthread  -Wl,-Bstatic -lc -Wl,-Bdynamic"
   - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -stdlib=libc++ -fPIC -lpthread  -Wl,-Bstatic -lc++ -Wl,-Bdynamic"
   - cd /tmp/sdsl-lite-build
   - cmake /drone/src/sdsl-lite
