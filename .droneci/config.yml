@@ -29,7 +29,7 @@ steps:
   - cmake /drone/src/libdivsufsort
   - make install
   - export CFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -Wl,-Bstatic -lc -lpthread -Wl,-Bdynamic"
-  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -stdlib=libc++ -Wl,-Bstatic -lc++ -lpthread -Wl,-Bdynamic"
+  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -Wl,-Bstatic -lc++ -lpthread -Wl,-Bdynamic"
   - cd /tmp/sdsl-lite-build
   - cmake /drone/src/sdsl-lite
   - make install
