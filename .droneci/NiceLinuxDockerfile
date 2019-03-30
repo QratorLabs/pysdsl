@@ -3,5 +3,6 @@ RUN mkdir /work
 WORKDIR /work
 RUN \
   apt update && \
-  apt install -y --no-install-recommends clang cmake python-pip ssh git tar zip ca-certificates && \
+  apt install -y --no-install-recommends clang python-pip ssh git tar zip ca-certificates && \
+  apt install -y cmake && \
   rm -rf /var/lib/apt/lists/*
