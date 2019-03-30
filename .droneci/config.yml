@@ -23,8 +23,7 @@ steps:
   - mkdir libdivsufsort-build
   - export CC=clang
   - export CXX=clang++
-  - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
-  - sed -i 's/option(BUILD_SHARED_LIBS.*/option(BUILD_SHARED_LIBS OFF)/' /drone/src/libdivsufsort/CMakeLists.txt
+  - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic -DBUILD_SHARED_LIBS=OFF"
   - cd /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
   - make install
