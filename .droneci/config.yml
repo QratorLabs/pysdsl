@@ -3,7 +3,7 @@ name: default
 
 steps:
 - name: build
-  image: ivigns/nice-linux:debian-0.0.2
+  image: ivigns/nice-linux:debian-0.0.3
   volumes:
   - name: cache
     path: /tmp/cache
