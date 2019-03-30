@@ -24,8 +24,7 @@ steps:
   - export CC=clang
   - export CXX=clang++
   - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
-  - sed -i 's/option(BUILD_SHARED_LIBS.*/option(BUILD_SHARED_LIBS OFF)/' /drone/src/libdivsufsort/CMakeLists.txt
-  - cd /tmp/libdivsufsort-build
+  - cd -D BUILD_SHARED_LIBS=OFF /tmp/libdivsufsort-build
   - cmake /drone/src/libdivsufsort
   - make install
   - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread  -Wl,-Bstatic -Wl,-Bdynamic"
