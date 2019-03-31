@@ -3,31 +3,77 @@ name: default
 
 steps:
 - name: build
-  image: ivigns/nice-ubuntu:0.0.1
+  image: ivigns/nice-linux:debian-0.0.3
+  volumes:
+  - name: cache
+    path: /tmp/cache
   commands:
   - git submodule sync
   - git submodule update --init --recursive
-  - git submodule update --recursive
+  - cd /drone/src/libdivsufsort
+  - git pull origin master
   - cd /drone/src/sdsl-lite
-  - bash uninstall.sh /usr
+  - git pull origin master
+  - cd /drone/src/sdsl-lite/external/libdivsufsort
+  - git pull origin master
+  - cd /drone/src/pybind11
+  - git pull origin master
   - cd /tmp
-  - rm -rf sdsl-lite-build
-  - rm -rf libdivsufsort-build
   - mkdir sdsl-lite-build
   - mkdir libdivsufsort-build
   - export CC=clang
   - export CXX=clang++
-  - export CFLAGS="-O3 -pipe -fPIC"
-  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
+  - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
   - cd /tmp/libdivsufsort-build
-  - cmake /drone/src/libdivsufsort
+  - cmake -D BUILD_SHARED_LIBS=OFF /drone/src/libdivsufsort
   - make install
-  - export CXXFLAGS="$CXXFLAGS -DNOCROSSCONSTRUCTORS"
+  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread  -Wl,-Bstatic -Wl,-Bdynamic"
   - cd /tmp/sdsl-lite-build
   - cmake /drone/src/sdsl-lite
   - make install
+  - export CXXFLAGS="-O3 -pipe -stdlib=libc++ -fcolor-diagnostics -fPIC"
+  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -fPIC"
   - cd /drone/src/pybind11
   - pip install --no-binary ':all:' --no-cache-dir . --verbose
   - cd /drone/src
-  - pip install --no-binary ':all:' --no-cache-dir . --verbose
-  - cd /drone/src && ls -aR
+  - pip wheel --no-binary ':all:' --no-cache-dir -w dist . --verbose
+  - cp -r . /tmp/cache
+
+- name: show
+  image: debian:testing
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - cd /tmp/cache && ls -aR
+
+- name: test-wheel
+  image: debian:testing
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - apt-get update -qq
+  - apt-get install -qqy python python-pip
+  - pip install $(ls -d /tmp/cache/dist/*)
+  - mkdir /tmp/test
+  - cd /tmp/test
+  - python -c 'import pysdsl'
+
+- name: publish
+  image: plugins/github-release
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  settings:
+    api_key:
+      from_secret: repo_token
+    files:
+      - /tmp/cache/dist/*
+    title: ${DRONE_TAG}
+  when:
+    event: tag
+
+volumes:
+- name: cache
+  temp: {}
