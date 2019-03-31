@@ -38,13 +38,11 @@ steps:
   - cp -r . /tmp/cache
 
 - name: test-wheel
-  image: debian:testing
+  image: python:3.6
   volumes:
   - name: cache
     path: /tmp/cache
   commands:
-  - apt-get update -qq
-  - apt-get install -qqy python python-pip
   - pip install /tmp/cache/dist/pysdsl*.whl
   - mkdir /tmp/test
   - cd /tmp/test
