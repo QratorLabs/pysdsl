@@ -1,8 +1,0 @@
-FROM debian:testing
-RUN mkdir /work
-WORKDIR /work
-RUN \
-  apt update && \
-  apt install -y --no-install-recommends clang ssh git tar zip ca-certificates && \
-  apt install -y cmake python-pip && \
-  rm -rf /var/lib/apt/lists/*
