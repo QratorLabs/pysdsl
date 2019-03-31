@@ -148,33 +148,94 @@ template <class KEY_T>
 inline std::string key_to_string(KEY_T key) { return std::to_string(key); }
 
 
-template <class Sequence, typename KEY_T>
-inline
-auto add_dac_vector(py::module& m, KEY_T key,
-                    const char* doc = nullptr)
+namespace {
+
+const char dprrr[] = "DPRRR";
+const char dp[] = "DP";
+
+template <typename T, T t, bool = std::is_integral<T>::value>
+struct get_vector_type {};
+
+template <typename T, T t>
+struct get_vector_type<T, t, true> {
+    using type = sdsl::dac_vector<t>;
+};
+
+template <>
+struct get_vector_type<const char*, dp, false> {
+    using type = sdsl::dac_vector_dp<>;
+};
+
+template <>
+struct get_vector_type<const char*, dprrr, false> {
+    using type = sdsl::dac_vector_dp<sdsl::rrr_vector<>>;
+};
+
+template <typename T, T t>
+using get_vector_type_t = typename get_vector_type<T, t>::type;
+
+} // namespace
+
+
+class add_dac_vector_functor
 {
-    auto name = "DirectAccessibleCodesVector" + key_to_string(key);
+public:
+    constexpr add_dac_vector_functor(py::module& m, const char* doc = nullptr,
+                                                    const char* doc_dp = nullptr): 
+        m(m), doc(doc), doc_dp(doc_dp) {}
 
-    auto cls = py::class_<Sequence>(m, name.c_str()).def(py::init());
 
-    add_sizes(cls);
-    add_description(cls);
-    add_serialization(cls);
-    add_to_string(cls);
+    template <typename KEY_T, KEY_T key>
+    inline
+    decltype(auto) get_vector(std::integral_constant<KEY_T, key>) {
+        using type = get_vector_type_t<KEY_T, key>;
+        auto name = "DirectAccessibleCodesVector" + key_to_string(key);
 
-    add_read_access<Sequence>(cls);
-    add_std_algo<Sequence>(cls);
+        auto cls = py::class_<type>(m, name.c_str()).def(py::init());
 
-    if (doc) {
-        cls.doc() = doc; }
+        add_sizes(cls);
+        add_description(cls);
+        add_serialization(cls);
+        add_to_string(cls);
 
-    cls.def_property_readonly("levels", &Sequence::levels);
+        add_read_access<type>(cls);
+        add_std_algo<type>(cls);
 
-    m.attr("direct_accessible_codes_vector").attr("__setitem__")(key, cls);
-    m.attr("all_compressed_integer_vectors").attr("append")(cls);
+        if (doc && std::is_integral<KEY_T>::value)
+            cls.doc() = doc;
+        else if (doc_dp && !std::is_integral<KEY_T>::value)
+            cls.doc() = doc_dp;
 
-    return cls;
-}
+
+        cls.def_property_readonly("levels", &type::levels);
+
+        m.attr("direct_accessible_codes_vector").attr("__setitem__")(key, cls);
+        m.attr("all_compressed_integer_vectors").attr("append")(cls);
+
+        return cls;
+    }
+
+    template <typename KEY_T, KEY_T key, 
+              typename std::enable_if<
+                            std::is_integral<KEY_T>::value>::type* dummy = nullptr>
+    inline
+    decltype(auto) operator()(std::integral_constant<KEY_T, key> t) {
+        return get_vector(t);
+    }
+    template <typename KEY_T, KEY_T key,
+              typename std::enable_if<
+                            std::is_same<const char*, KEY_T>::value>::type* dummy = nullptr>
+    inline
+    decltype(auto) operator()(std::integral_constant<KEY_T, key> t) {
+        return get_vector(t).def("cost", &get_vector_type_t<KEY_T, key>::cost,
+                                    py::arg("n"), py::arg("m"));
+    }
+
+private:
+    py::module& m;
+    const char* doc;
+    const char* doc_dp;
+};
 
 
 auto add_encoded_vectors(py::module& m)
@@ -186,20 +247,17 @@ auto add_encoded_vectors(py::module& m)
 
     auto enc_classes = for_each_in_tuple(coders, add_enc_coders_functor(m));
     auto vlc_classes = for_each_in_tuple(coders, add_vlc_coders_functor(m));
-    auto dac_classes = std::make_tuple(
-        add_dac_vector<sdsl::dac_vector<4>>(m, 4, doc_dac_vector),
-        add_dac_vector<sdsl::dac_vector<8>>(m, 8, doc_dac_vector),
-        add_dac_vector<sdsl::dac_vector<16>>(m, 16, doc_dac_vector),
-        add_dac_vector<sdsl::dac_vector<63>>(m, 63, doc_dac_vector),
-        add_dac_vector<sdsl::dac_vector_dp<>>(m, "DP", doc_dac_vector_dp)
-            .def("cost", &sdsl::dac_vector_dp<>::cost,
-                 py::arg("n"), py::arg("m")),
-        add_dac_vector<
-            sdsl::dac_vector_dp<
-                sdsl::rrr_vector<>>>(m, "DPRRR", doc_dac_vector_dp)
-            .def("cost", &sdsl::dac_vector_dp<sdsl::rrr_vector<>>::cost,
-                 py::arg("n"), py::arg("m"))
-    );
+
+    using dac_params = std::tuple<
+        std::integral_constant<size_t, 4>,
+        std::integral_constant<size_t, 8>,
+        std::integral_constant<size_t, 16>,
+        std::integral_constant<size_t, 63>,
+        std::integral_constant<const char*, dp>,
+        std::integral_constant<const char*, dprrr>
+    >;
+    auto dac_classes = for_each_in_tuple(dac_params(), 
+                            add_dac_vector_functor(m, doc_dac_vector, doc_dac_vector_dp));
 
     m.attr("DACVector") = m.attr("DirectAccessibleCodesVector4");
     m.attr("DirectAccessibleCodesVector") = m.attr(
