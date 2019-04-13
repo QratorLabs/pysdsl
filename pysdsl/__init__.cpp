@@ -16,6 +16,7 @@
 #include "types/intvector.hpp"
 #include "types/suffixarray.hpp"
 #include "types/wavelet.hpp"
+#include "types/rmq.hpp"
 
 namespace py = pybind11;
 
@@ -42,6 +43,12 @@ PYBIND11_MODULE(pysdsl, m)
     auto wavelet_classes = add_wavelet(m, cbv_propagate);
 
     auto csa_classes = add_csa(m);
+
+    // new
+    auto rmq_classes_tuple = add_rmq_classes(m);
+    auto& rmq_sparse_tables = std::get<0>(rmq_classes_tuple);
+    auto& rmq_sada = std::get<1>(rmq_classes_tuple);
+    auto& rmq_sct = std::get<2>(rmq_classes_tuple);
 
     for_each_in_tuple(iv_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(iv_classes, make_inits_many_functor(enc_classes));

@@ -7,6 +7,7 @@
 #include <pybind11/pybind11.h>
 
 #include <sdsl/rmq_support_sparse_table.hpp>
+#include <sdsl/rmq_succinct_sada.hpp>
 
 #include "operations/sizes.hpp"
 #include "operations/iteration.hpp"
@@ -15,6 +16,27 @@
 #include "io.hpp"
 #include "calc.hpp"
 
+
+
+namespace detail {
+// adds constructors of t_rac... containers
+template <typename... t_rac> 
+typename std::enable_if<sizeof...(t_rac) == 0>::type add_rac_constructor(const auto&) {}
+
+template <typename t_rac_head, typename... t_rac_tail>
+void add_rac_constructor(auto& cls) {
+    cls.def(py::init([](const t_rac_head* rac) {
+        return typename std::remove_reference<decltype(cls)>::type::type(rac);
+    }));
+    add_rac_constructor<t_rac_tail...>(cls);
+}
+}
+
+// containers names
+namespace RAC_names {
+    const char INT_VECTOR_NAME[] = "IntVector",
+               INT16_VECTOR_NAME[] = "Int16Vector";
+}
 
 
 struct add_rmq_sparse_table_functor {
@@ -36,7 +58,10 @@ struct add_rmq_sparse_table_functor {
         auto cls = py::class_<T>(m, name.c_str())
             .def_property_readonly("size", (typename T::size_type(T::*)(void) const)& T::size)
             .def(py::init([](const t_rac* rac) {return T(rac);}))
-            .def("__call__", (typename T::size_type(T::*)(typename T::size_type, typename T::size_type) const)& T::operator());
+            .def("set_vector", &T::set_vector)
+            .def("__call__",
+                (typename T::size_type
+                    (T::*)(typename T::size_type, typename T::size_type) const)& T::operator());
     
         add_sizes(cls);
         add_description(cls);
@@ -49,12 +74,91 @@ struct add_rmq_sparse_table_functor {
 };
 
 
-namespace RAC_names {
-    const char INT_VECTOR_NAME[] = "IntVector";
-}
+struct add_rmq_sada_functor {
+    py::module& m;
+    const char* doc;
 
+    constexpr add_rmq_sada_functor(py::module& m, const char* doc = nullptr)
+        : m(m), doc(doc) {}
+
+
+    template <typename... t_rac, bool t_min>
+    decltype(auto) operator()(std::tuple<std::tuple<t_rac...>,
+                              std::integral_constant<bool, t_min>>) {
+        using T = typename std::conditional<t_min, sdsl::rmq_succinct_sada<>,
+                               typename sdsl::range_maximum_support_sada<>::type>::type;
+
+        std::string name =
+            std::string("Range") + (t_min ? "Min" : "Max") + "QuerySuccintSada";
+
+        auto cls = py::class_<T>(m, name.c_str())
+            .def_property_readonly("size", (typename T::size_type(T::*)(void) const)& T::size)
+            .def(py::init())
+            .def("__call__",
+                (typename T::size_type
+                    (T::*)(typename T::size_type, typename T::size_type) const)& T::operator());
+
+        detail::add_rac_constructor<t_rac...>(cls);
+
+        add_sizes(cls);
+        add_description(cls);
+        add_serialization(cls);
+
+        return cls;
+    }
+};
+
+
+struct add_rmq_sct_functor {
+    py::module& m;
+    const char* doc;
+
+    constexpr add_rmq_sct_functor(py::module& m, const char* doc = nullptr)
+        : m(m), doc(doc) {}
+
+
+    template <typename... t_rac, bool t_min>
+    decltype(auto) operator()(std::tuple<std::tuple<t_rac...>,
+                              std::integral_constant<bool, t_min>>) {
+        using T = typename std::conditional<t_min, sdsl::rmq_succinct_sct<>,
+                               typename sdsl::range_maximum_sct<>::type>::type;
+
+        std::string name =
+            std::string("Range") + (t_min ? "Min" : "Max") + "QuerySuccintSct";
+
+        auto cls = py::class_<T>(m, name.c_str())
+            .def_property_readonly("size", (typename T::size_type(T::*)(void) const)& T::size)
+            .def(py::init())
+            .def("__call__",
+                (typename T::size_type
+                    (T::*)(typename T::size_type, typename T::size_type) const)& T::operator());
+
+        detail::add_rac_constructor<t_rac...>(cls);
+
+        add_sizes(cls);
+        add_description(cls);
+        add_serialization(cls);
+
+        return cls;
+    }
+};
+
+
+// generalized (constants -> typenames) template for usage with GeneralSubsetFunctor
 template <typename t_rac, typename t_min_ic>
 using general_rmq_sparse_table = py::class_<sdsl::rmq_support_sparse_table<t_rac, t_min_ic::value>>;
+
+template <typename t_min_ic>
+using general_rmq_sada = py::class_<
+    typename std::conditional<t_min_ic::value, 
+        sdsl::rmq_succinct_sada<>, 
+        typename sdsl::range_maximum_support_sada<>::type>::type>;
+
+template <typename t_min_ic>
+using general_rmq_sct = py::class_<
+    typename std::conditional<t_min_ic::value,
+        sdsl::rmq_succinct_sct<>,
+        typename sdsl::range_maximum_sct<>::type>::type>;
 
 
 inline auto add_rmq_classes(py::module& m) {
@@ -67,11 +171,35 @@ inline auto add_rmq_classes(py::module& m) {
                    std::integral_constant<bool, true>>,
         std::tuple<sdsl::int_vector<>, 
                    std::integral_constant<const char*, RAC_names::INT_VECTOR_NAME>,
+                   std::integral_constant<bool, false>>,
+        std::tuple<sdsl::int_vector<16>, 
+                   std::integral_constant<const char*, RAC_names::INT16_VECTOR_NAME>,
+                   std::integral_constant<bool, true>>,
+        std::tuple<sdsl::int_vector<16>, 
+                   std::integral_constant<const char*, RAC_names::INT16_VECTOR_NAME>,
+                   std::integral_constant<bool, false>>
+    >;
+
+    using rmq_sada_params = std::tuple<
+        std::tuple<std::tuple<sdsl::int_vector<>, sdsl::int_vector<16>>,
+                   std::integral_constant<bool, true>>,
+        std::tuple<std::tuple<sdsl::int_vector<>, sdsl::int_vector<16>>,
+                   std::integral_constant<bool, false>>
+    >;
+
+    using rmq_sct_params = std::tuple<
+        std::tuple<std::tuple<sdsl::int_vector<>, sdsl::int_vector<16>>,
+                   std::integral_constant<bool, true>>,
+        std::tuple<std::tuple<sdsl::int_vector<>, sdsl::int_vector<16>>,
                    std::integral_constant<bool, false>>
     >;
 
     auto rmq_sparse_tables = for_each_in_tuple(rmq_support_sparse_table_params(), 
                                 add_rmq_sparse_table_functor(m, doc_rmq_sparse_table));
+    auto rmq_sada_classes = for_each_in_tuple(rmq_sada_params(),
+                                add_rmq_sada_functor(m, doc_rmq_sada));
+    auto rmq_sct_classes = for_each_in_tuple(rmq_sct_params(),
+                                add_rmq_sct_functor(m, doc_rmq_sada));
 
     ////////////// as params //////////////////////
     using rmq_support_sparse_table_as_params = std::tuple<
@@ -83,5 +211,5 @@ inline auto add_rmq_classes(py::module& m) {
                                 make_general_sybset_functor<general_rmq_sparse_table>(rmq_sparse_tables));
     ///////////////////////////////////////////////
     
-    return std::tuple_cat(rmq_sparse_tables);
+    return std::make_tuple(rmq_sparse_tables, rmq_sada_classes, rmq_sct_classes);
 }
