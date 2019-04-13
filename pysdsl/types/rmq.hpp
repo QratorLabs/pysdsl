@@ -20,15 +20,15 @@
 
 namespace detail {
 // adds constructors of t_rac... containers
-template <typename... t_rac> 
-typename std::enable_if<sizeof...(t_rac) == 0>::type add_rac_constructor(const auto&) {}
+template <typename PybindClass, typename... t_rac> 
+typename std::enable_if<sizeof...(t_rac) == 0>::type add_rac_constructor(const PybindClass&) {}
 
-template <typename t_rac_head, typename... t_rac_tail>
-void add_rac_constructor(auto& cls) {
+template <typename PybindClass, typename t_rac_head, typename... t_rac_tail>
+void add_rac_constructor(PybindClass& cls) {
     cls.def(py::init([](const t_rac_head* rac) {
-        return typename std::remove_reference<decltype(cls)>::type::type(rac);
+        return typename PybindClass::type(rac);
     }));
-    add_rac_constructor<t_rac_tail...>(cls);
+    add_rac_constructor<PybindClass, t_rac_tail...>(cls);
 }
 }
 
@@ -98,7 +98,7 @@ struct add_rmq_sada_functor {
                 (typename T::size_type
                     (T::*)(typename T::size_type, typename T::size_type) const)& T::operator());
 
-        detail::add_rac_constructor<t_rac...>(cls);
+        detail::add_rac_constructor<decltype(cls), t_rac...>(cls);
 
         add_sizes(cls);
         add_description(cls);
@@ -133,7 +133,8 @@ struct add_rmq_sct_functor {
                 (typename T::size_type
                     (T::*)(typename T::size_type, typename T::size_type) const)& T::operator());
 
-        detail::add_rac_constructor<t_rac...>(cls);
+
+        detail::add_rac_constructor<decltype(cls), t_rac...>(cls);
 
         add_sizes(cls);
         add_description(cls);
