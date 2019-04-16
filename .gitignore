@@ -6,3 +6,5 @@ python?.*/
 tmp/
 *.whl
 *.pyc
+__pycache__/
+.pytest_cache/

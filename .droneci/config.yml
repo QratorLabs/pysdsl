@@ -56,9 +56,8 @@ steps:
   - apt-get update -qq
   - apt-get install -qqy python python-pip
   - pip install $(ls -d /tmp/cache/dist/*)
-  - mkdir /tmp/test
-  - cd /tmp/test
-  - python -c 'import pysdsl'
+  - pip install -U pytest
+  - pytest
 
 - name: publish
   image: plugins/github-release
