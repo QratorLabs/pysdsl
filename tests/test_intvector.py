@@ -11,6 +11,6 @@ def test_intvector():
     assert v.width == 28
     assert v.size_in_mega_bytes < 900
 
-    v = pysdsl.Int64Vector([1, 2, 3])
-    u = array.array('Q', v)
-    assert u[1][2] == 2
+    v = pysdsl.IntVector([3, 2, 1, 0, 2, 1, 3, 4, 1, 1, 1, 3, 2, 3])
+    v.bit_compress()
+    assert sorted(v)[2] == 1
