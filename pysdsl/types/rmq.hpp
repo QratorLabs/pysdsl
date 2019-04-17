@@ -61,11 +61,13 @@ struct add_rmq_sparse_table_functor {
             std::string("Range") + (t_min ? "Min" : "Max") + "QuerySparseTable_for_" + rac_name;
 
         auto cls = py::class_<Table>(m, name.c_str())
-            .def_property_readonly("size", (size_type(Table::*)(void) const)& Table::size)
             .def(py::init([](const t_rac* rac) {return Table(rac);}))
-            .def("set_vector", &Table::set_vector)
+            .def("set_vector", &Table::set_vector,
+                 "Sets a vector rmq is processed on.")
             .def("__call__",
-                (size_type (Table::*)(size_type, size_type) const)& Table::operator());
+                (size_type (Table::*)(size_type, size_type) const)& Table::operator(),
+                 (std::string("Returns an index of the ") + (t_min ? "minimal" : "maximal") +
+                             " value on the segment [l,r].").c_str());
     
         add_sizes(cls);
         add_description(cls);
@@ -105,10 +107,11 @@ struct add_rmq_sada_functor {
             std::string("Range") + (t_min ? "Min" : "Max") + "QuerySuccintSada";
 
         auto cls = py::class_<RMQClass>(m, name.c_str())
-            .def_property_readonly("size", (size_type (RMQClass::*)(void) const)& RMQClass::size)
             .def(py::init())
             .def("__call__",
-                (size_type (RMQClass::*)(size_type, size_type) const)& RMQClass::operator());
+                (size_type (RMQClass::*)(size_type, size_type) const)& RMQClass::operator(),
+                 (std::string("Returns an index of the ") + (t_min ? "minimal" : "maximal") +
+                             " value on the segment [l,r].").c_str());;
 
         detail::add_rac_constructor<decltype(cls), t_rac...>(cls);
 
@@ -146,10 +149,11 @@ struct add_rmq_sct_functor {
             std::string("Range") + (t_min ? "Min" : "Max") + "QuerySuccintSct";
 
         auto cls = py::class_<RMQClass>(m, name.c_str())
-            .def_property_readonly("size", (size_type (RMQClass::*)(void) const)& RMQClass::size)
             .def(py::init())
             .def("__call__",
-                (size_type (RMQClass::*)(size_type, size_type) const)& RMQClass::operator());
+                (size_type (RMQClass::*)(size_type, size_type) const)& RMQClass::operator(),
+                 (std::string("Returns an index of the ") + (t_min ? "minimal" : "maximal") +
+                             " value on the segment [l,r].").c_str());
 
 
         detail::add_rac_constructor<decltype(cls), t_rac...>(cls);

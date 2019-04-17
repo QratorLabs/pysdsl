@@ -1,8 +1,9 @@
+import random
+
 from pysdsl import IntVector, Int16Vector
 
 from pysdsl import rmq_sada, rmq_sct, rmq_sparse_tables
 
-import random
 
 
 def _test_rmq(rmq_class, container_class, target):
@@ -21,7 +22,7 @@ def _test_rmq(rmq_class, container_class, target):
 
         i = rmq(l, r)
 
-        assert(cont[i] == target(a[l:r+1]))
+        assert cont[i] == target(a[l:r+1])
 
 
 def test_rmq_sada():
