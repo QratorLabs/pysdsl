@@ -42,17 +42,12 @@ jobs:
       - run:
           name: show
           command: cd /work && ls -aR
-  build:
-    docker:
-      - image: debian:testing
-    resource_class: xlarge
-    working_directory: /work
-    steps:
-      - checkout
       - run:
-        - apt-get update -qq
-        - apt-get install -qqy python python-pip
-        - pip install $(ls -d /tmp/cache/dist/*)
-        - mkdir /tmp/test
-        - cd /tmp/test
-        - python -c 'import pysdsl'
+          name: test wheel
+          command:
+          - apt-get update -qq
+          - apt-get install -qqy python python-pip
+          - pip install $(ls -d /tmp/cache/dist/*)
+          - mkdir /tmp/test
+          - cd /tmp/test
+          - python -c 'import pysdsl'
