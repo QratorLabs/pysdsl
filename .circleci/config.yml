@@ -10,35 +10,35 @@ jobs:
       - run:
           name: build
           command: |
-          git submodule sync
-          git submodule update --init --recursive
-          cd /work/libdivsufsort
-          git pull origin master
-          cd /work/sdsl-lite
-          git pull origin master
-          cd /work/sdsl-lite/external/libdivsufsort
-          git pull origin master
-          cd /work/pybind11
-          git pull origin master
-          cd /tmp
-          mkdir sdsl-lite-build
-          mkdir libdivsufsort-build
-          export CC=clang
-          export CXX=clang++
-          export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
-          cd /tmp/libdivsufsort-build
-          cmake -D BUILD_SHARED_LIBS=OFF /work/libdivsufsort
-          make install
-          export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread  -Wl,-Bstatic -Wl,-Bdynamic"
-          cd /tmp/sdsl-lite-build
-          cmake /work/sdsl-lite
-          make install
-          export CXXFLAGS="-O3 -pipe -stdlib=libc++ -fcolor-diagnostics -fPIC -DNOCROSSCONSTRUCTORS"
-          export CFLAGS="-O3 -pipe -fcolor-diagnostics -fPIC"
-          cd /work/pybind11
-          pip install --no-binary ':all:' --no-cache-dir . --verbose
-          cd /work
-          pip wheel --no-binary ':all:' --no-cache-dir -w dist . --verbose
+            git submodule sync
+            git submodule update --init --recursive
+            cd /work/libdivsufsort
+            git pull origin master
+            cd /work/sdsl-lite
+            git pull origin master
+            cd /work/sdsl-lite/external/libdivsufsort
+            git pull origin master
+            cd /work/pybind11
+            git pull origin master
+            cd /tmp
+            mkdir sdsl-lite-build
+            mkdir libdivsufsort-build
+            export CC=clang
+            export CXX=clang++
+            export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
+            cd /tmp/libdivsufsort-build
+            cmake -D BUILD_SHARED_LIBS=OFF /work/libdivsufsort
+            make install
+            export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread  -Wl,-Bstatic -Wl,-Bdynamic"
+            cd /tmp/sdsl-lite-build
+            cmake /work/sdsl-lite
+            make install
+            export CXXFLAGS="-O3 -pipe -stdlib=libc++ -fcolor-diagnostics -fPIC -DNOCROSSCONSTRUCTORS"
+            export CFLAGS="-O3 -pipe -fcolor-diagnostics -fPIC"
+            cd /work/pybind11
+            pip install --no-binary ':all:' --no-cache-dir . --verbose
+            cd /work
+            pip wheel --no-binary ':all:' --no-cache-dir -w dist . --verbose
       - run:
           name: show
           command: cd /work && ls -aR
