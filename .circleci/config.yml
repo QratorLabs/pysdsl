@@ -2,42 +2,57 @@ version: 2
 jobs:
   build:
     docker:
-      - image: ivigns/nice-ubuntu:0.0.1
+      - image: ivigns/nice-linux:debian-0.0.3
     resource_class: xlarge
     working_directory: /work
     steps:
       - checkout
       - run:
-          name: Build pysdsl
-          command: |
-            #-- partial build ---
-            cp .circleci/__init__.cpp pysdsl/__init__.cpp
-            #--------------------
-            git submodule sync
-            git submodule update --init --recursive
-            git submodule update --recursive
-            cd /work/sdsl-lite
-            bash uninstall.sh /usr
-            cd /tmp
-            rm -rf sdsl-lite-build
-            rm -rf libdivsufsort-build
-            mkdir sdsl-lite-build
-            mkdir libdivsufsort-build
-            export CC=clang
-            export CXX=clang++
-            export CFLAGS="-O3 -pipe -fPIC"
-            export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -fPIC -lpthread -Wl,-Bstatic -Wl,-Bdynamic"
-            cd /tmp/libdivsufsort-build
-            cmake /work/libdivsufsort
-            make install
-            export CXXFLAGS="${CXXFLAGS} -DNOCROSSCONSTRUCTORS"
-            cd /tmp/sdsl-lite-build
-            cmake /work/sdsl-lite
-            make install
-            cd /work/pybind11
-            pip install --no-binary :all: --no-cache-dir . --verbose
-            cd /work
-            pip install --no-binary :all: --no-cache-dir . --verbose
+          name: build
+          command:
+          - git submodule sync
+          - git submodule update --init --recursive
+          - cd /drone/src/libdivsufsort
+          - git pull origin master
+          - cd /drone/src/sdsl-lite
+          - git pull origin master
+          - cd /drone/src/sdsl-lite/external/libdivsufsort
+          - git pull origin master
+          - cd /drone/src/pybind11
+          - git pull origin master
+          - cd /tmp
+          - mkdir sdsl-lite-build
+          - mkdir libdivsufsort-build
+          - export CC=clang
+          - export CXX=clang++
+          - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
+          - cd /tmp/libdivsufsort-build
+          - cmake -D BUILD_SHARED_LIBS=OFF /drone/src/libdivsufsort
+          - make install
+          - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread  -Wl,-Bstatic -Wl,-Bdynamic"
+          - cd /tmp/sdsl-lite-build
+          - cmake /drone/src/sdsl-lite
+          - make install
+          - export CXXFLAGS="-O3 -pipe -stdlib=libc++ -fcolor-diagnostics -fPIC -DNOCROSSCONSTRUCTORS"
+          - export CFLAGS="-O3 -pipe -fcolor-diagnostics -fPIC"
+          - cd /drone/src/pybind11
+          - pip install --no-binary ':all:' --no-cache-dir . --verbose
+          - cd /drone/src
+          - pip wheel --no-binary ':all:' --no-cache-dir -w dist . --verbose
       - run:
-          name: Show
+          name: show
           command: cd /work && ls -aR
+  build:
+    docker:
+      - image: debian:testing
+    resource_class: xlarge
+    working_directory: /work
+    steps:
+      - checkout
+      - run:
+        - apt-get update -qq
+        - apt-get install -qqy python python-pip
+        - pip install $(ls -d /tmp/cache/dist/*)
+        - mkdir /tmp/test
+        - cd /tmp/test
+        - python -c 'import pysdsl'
