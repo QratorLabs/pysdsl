@@ -10,12 +10,15 @@ def test_intvector():
     assert v.width == 28
     assert v.size_in_mega_bytes < 900
 
-    for T in [IntVector, Int4Vector, Int8Vector, Int16Vector, Int24Vector,
+    for T in [Int4Vector, Int8Vector, Int16Vector, Int24Vector,
               Int32Vector, Int64Vector]:
-        v = IntVector([3, 2, 1, 0, 2, 1, 3, 4, 1, 1, 1, 3, 2, 3])
-        v.bit_compress()
+        v = T([3, 2, 1, 0, 2, 1, 3, 4, 1, 1, 1, 3, 2, 3])
         assert sorted(v)[2] == 1
+        v.bit_resize(5)
+        assert v.size_in_bytes == 16
 
+
+def test_bitvector():
     v_len = 10
     bit_v = BitVector(v_len)
     for i in range(v_len):
