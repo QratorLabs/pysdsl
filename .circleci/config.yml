@@ -9,16 +9,16 @@ jobs:
       - checkout
       - run:
           name: build
-          command:
+          command: |
           - git submodule sync
           - git submodule update --init --recursive
-          - cd /drone/src/libdivsufsort
+          - cd /work/libdivsufsort
           - git pull origin master
-          - cd /drone/src/sdsl-lite
+          - cd /work/sdsl-lite
           - git pull origin master
-          - cd /drone/src/sdsl-lite/external/libdivsufsort
+          - cd /work/sdsl-lite/external/libdivsufsort
           - git pull origin master
-          - cd /drone/src/pybind11
+          - cd /work/pybind11
           - git pull origin master
           - cd /tmp
           - mkdir sdsl-lite-build
@@ -27,17 +27,17 @@ jobs:
           - export CXX=clang++
           - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
           - cd /tmp/libdivsufsort-build
-          - cmake -D BUILD_SHARED_LIBS=OFF /drone/src/libdivsufsort
+          - cmake -D BUILD_SHARED_LIBS=OFF /work/libdivsufsort
           - make install
           - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread  -Wl,-Bstatic -Wl,-Bdynamic"
           - cd /tmp/sdsl-lite-build
-          - cmake /drone/src/sdsl-lite
+          - cmake /work/sdsl-lite
           - make install
           - export CXXFLAGS="-O3 -pipe -stdlib=libc++ -fcolor-diagnostics -fPIC -DNOCROSSCONSTRUCTORS"
           - export CFLAGS="-O3 -pipe -fcolor-diagnostics -fPIC"
-          - cd /drone/src/pybind11
+          - cd /work/pybind11
           - pip install --no-binary ':all:' --no-cache-dir . --verbose
-          - cd /drone/src
+          - cd /work
           - pip wheel --no-binary ':all:' --no-cache-dir -w dist . --verbose
       - run:
           name: show
@@ -47,7 +47,7 @@ jobs:
           command:
           - apt-get update -qq
           - apt-get install -qqy python python-pip
-          - pip install $(ls -d /tmp/cache/dist/*)
+          - pip install $(ls -d /work/dist/*)
           - mkdir /tmp/test
           - cd /tmp/test
           - python -c 'import pysdsl'
