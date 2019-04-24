@@ -57,7 +57,7 @@ steps:
   - apt-get -qqy install python python-pip
   - pip install $(ls -d /tmp/cache/dist/*)
   - pip install -U pytest
-  - pytest tests
+  - pytest --verbose --showlocals --color=yes tests
 
 - name: publish
   image: plugins/github-release
