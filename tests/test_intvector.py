@@ -4,7 +4,7 @@ import pytest
 
 def test_intvector():
     v = pysdsl.IntVector(1024 * 1024 * 256)
-    assert v.size_in_mega_bytes < 2049
+    assert int(v.size_in_mega_bytes) == 2048
     v.set_to_id()
     assert v.width == 64
     v.bit_compress()
