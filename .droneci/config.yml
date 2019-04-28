@@ -53,12 +53,11 @@ steps:
   - name: cache
     path: /tmp/cache
   commands:
-  - apt-get update -qq
-  - apt-get install -qqy python python-pip
+  - apt-get -qq update
+  - apt-get -qqy install python python-pip
   - pip install $(ls -d /tmp/cache/dist/*)
-  - mkdir /tmp/test
-  - cd /tmp/test
-  - python -c 'import pysdsl'
+  - pip install -U pytest
+  - pytest --verbose --showlocals --color=yes tests
 
 - name: publish
   image: plugins/github-release
