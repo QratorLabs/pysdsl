@@ -2,8 +2,8 @@ import pysdsl
 import pytest
 
 
-@pytest.mark.parametrize("Type", pysdsl.enc_vector.values()
-                         + pysdsl.variable_length_codes_vector.values()
+@pytest.mark.parametrize("Type", list(pysdsl.enc_vector.values())
+                         + list(pysdsl.variable_length_codes_vector.values())
                          + [pysdsl.DirectAccessibleCodesVector4,
                             pysdsl.DirectAccessibleCodesVector8,
                             pysdsl.DirectAccessibleCodesVector16,
