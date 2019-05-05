@@ -3,7 +3,7 @@ name: build-2.7
 
 steps:
 - name: build
-  image: ivigns/nice-linux:ubuntu-0.0.3
+  image: ivigns/nice-linux:ubuntu-0.0.4
   volumes:
   - name: cache
     path: /tmp/cache
@@ -55,7 +55,7 @@ steps:
   commands:
   - apt-get -qq update
   - apt-get -qqy install python python-pip
-  - pip install $(ls -d /tmp/cache/dist/*)
+  - pip install $(ls -d /tmp/cache/dist/pysdsl*.whl)
   - pip install -U pytest
   - pytest --verbose --showlocals --color=yes tests
 
@@ -68,7 +68,7 @@ steps:
     api_key:
       from_secret: repo_token
     files:
-      - /tmp/cache/dist/*
+      - /tmp/cache/dist/pysdsl*.whl
     title: ${DRONE_TAG}
   when:
     event: tag
@@ -83,7 +83,7 @@ name: build-3.4
 
 steps:
 - name: build
-  image: ivigns/nice-linux:ubuntu-0.0.3
+  image: ivigns/nice-linux:ubuntu-0.0.4
   volumes:
   - name: cache
     path: /tmp/cache
@@ -128,7 +128,7 @@ steps:
   - cd /tmp/cache && ls -aR
 
 - name: test-wheel
-  image: ivigns/nice-linux:ubuntu-0.0.3
+  image: ivigns/nice-linux:ubuntu-0.0.4
   volumes:
   - name: cache
     path: /tmp/cache
@@ -161,7 +161,7 @@ name: build-3.5
 
 steps:
 - name: build
-  image: ivigns/nice-linux:ubuntu-0.0.3
+  image: ivigns/nice-linux:ubuntu-0.0.4
   volumes:
   - name: cache
     path: /tmp/cache
@@ -206,7 +206,7 @@ steps:
   - cd /tmp/cache && ls -aR
 
 - name: test-wheel
-  image: ivigns/nice-linux:ubuntu-0.0.3
+  image: ivigns/nice-linux:ubuntu-0.0.4
   volumes:
   - name: cache
     path: /tmp/cache
@@ -239,7 +239,7 @@ name: build-3.6
 
 steps:
 - name: build
-  image: ivigns/nice-linux:ubuntu-0.0.3
+  image: ivigns/nice-linux:ubuntu-0.0.4
   volumes:
   - name: cache
     path: /tmp/cache
@@ -284,7 +284,7 @@ steps:
   - cd /tmp/cache && ls -aR
 
 - name: test-wheel
-  image: ivigns/nice-linux:ubuntu-0.0.3
+  image: ivigns/nice-linux:ubuntu-0.0.4
   volumes:
   - name: cache
     path: /tmp/cache
@@ -317,7 +317,7 @@ name: build-3.7
 
 steps:
 - name: build
-  image: ivigns/nice-linux:ubuntu-0.0.3
+  image: ivigns/nice-linux:ubuntu-0.0.4
   volumes:
   - name: cache
     path: /tmp/cache
@@ -362,7 +362,7 @@ steps:
   - cd /tmp/cache && ls -aR
 
 - name: test-wheel
-  image: ivigns/nice-linux:ubuntu-0.0.3
+  image: ivigns/nice-linux:ubuntu-0.0.4
   volumes:
   - name: cache
     path: /tmp/cache
