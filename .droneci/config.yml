@@ -1,10 +1,9 @@
 kind: pipeline
-name: default
+name: build-2.7
 
 steps:
-- name: build-2.7
-  group: build
-  image: ivigns/nice-linux:ubuntu-0.0.2
+- name: build
+  image: ivigns/nice-linux:ubuntu-0.0.3
   volumes:
   - name: cache
     path: /tmp/cache
@@ -40,9 +39,51 @@ steps:
   - pip wheel --no-binary ':all:' --no-cache-dir -w dist . --verbose
   - cp -r . /tmp/cache
 
-- name: build-3.4
-  group: build
-  image: ivigns/nice-linux:ubuntu-0.0.2
+- name: show
+  image: debian:testing
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - cd /tmp/cache && ls -aR
+
+- name: test-wheel
+  image: debian:testing
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - apt-get -qq update
+  - apt-get -qqy install python python-pip
+  - pip install $(ls -d /tmp/cache/dist/*)
+  - pip install -U pytest
+  - pytest --verbose --showlocals --color=yes tests
+
+- name: publish
+  image: plugins/github-release
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  settings:
+    api_key:
+      from_secret: repo_token
+    files:
+      - /tmp/cache/dist/*
+    title: ${DRONE_TAG}
+  when:
+    event: tag
+
+volumes:
+- name: cache
+  temp: {}
+
+---
+kind: pipeline
+name: build-3.4
+
+steps:
+- name: build
+  image: ivigns/nice-linux:ubuntu-0.0.3
   volumes:
   - name: cache
     path: /tmp/cache
@@ -87,15 +128,13 @@ steps:
   - cd /tmp/cache && ls -aR
 
 - name: test-wheel
-  image: debian:testing
+  image: ivigns/nice-linux:ubuntu-0.0.3
   volumes:
   - name: cache
     path: /tmp/cache
   commands:
-  - apt-get -qq update
-  - apt-get -qqy install python python-pip
-  - pip install $(ls -d /tmp/cache/dist/*)
-  - pip install -U pytest
+  - python3.4 -m pip install $(ls -d /tmp/cache/dist/pysdsl*.whl)
+  - python3.4 -m pip install -U pytest
   - pytest --verbose --showlocals --color=yes tests
 
 - name: publish
@@ -107,7 +146,241 @@ steps:
     api_key:
       from_secret: repo_token
     files:
-      - /tmp/cache/dist/*
+      - /tmp/cache/dist/pysdsl*.whl
+    title: ${DRONE_TAG}
+  when:
+    event: tag
+
+volumes:
+- name: cache
+  temp: {}
+
+---
+kind: pipeline
+name: build-3.5
+
+steps:
+- name: build
+  image: ivigns/nice-linux:ubuntu-0.0.3
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - git submodule sync
+  - git submodule update --init --recursive
+  - cd /drone/src/libdivsufsort
+  - git pull origin master
+  - cd /drone/src/sdsl-lite
+  - git pull origin master
+  - cd /drone/src/sdsl-lite/external/libdivsufsort
+  - git pull origin master
+  - cd /drone/src/pybind11
+  - git pull origin master
+  - cd /tmp
+  - mkdir sdsl-lite-build
+  - mkdir libdivsufsort-build
+  - export CC=clang
+  - export CXX=clang++
+  - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
+  - cd /tmp/libdivsufsort-build
+  - cmake -D BUILD_SHARED_LIBS=OFF /drone/src/libdivsufsort
+  - make install
+  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread  -Wl,-Bstatic -Wl,-Bdynamic"
+  - cd /tmp/sdsl-lite-build
+  - cmake /drone/src/sdsl-lite
+  - make install
+  - export CXXFLAGS="-O3 -pipe -stdlib=libc++ -fcolor-diagnostics -fPIC"
+  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -fPIC"
+  - cd /drone/src/pybind11
+  - python3.5 -m pip install --no-binary ':all:' --no-cache-dir . --verbose
+  - cd /drone/src
+  - python3.5 -m pip wheel --no-binary ':all:' --no-cache-dir -w dist . --verbose
+  - cp -r . /tmp/cache
+
+- name: show
+  image: debian:testing
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - cd /tmp/cache && ls -aR
+
+- name: test-wheel
+  image: ivigns/nice-linux:ubuntu-0.0.3
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - python3.5 -m pip install $(ls -d /tmp/cache/dist/pysdsl*.whl)
+  - python3.5 -m pip install -U pytest
+  - pytest --verbose --showlocals --color=yes tests
+
+- name: publish
+  image: plugins/github-release
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  settings:
+    api_key:
+      from_secret: repo_token
+    files:
+      - /tmp/cache/dist/pysdsl*.whl
+    title: ${DRONE_TAG}
+  when:
+    event: tag
+
+volumes:
+- name: cache
+  temp: {}
+
+---
+kind: pipeline
+name: build-3.6
+
+steps:
+- name: build
+  image: ivigns/nice-linux:ubuntu-0.0.3
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - git submodule sync
+  - git submodule update --init --recursive
+  - cd /drone/src/libdivsufsort
+  - git pull origin master
+  - cd /drone/src/sdsl-lite
+  - git pull origin master
+  - cd /drone/src/sdsl-lite/external/libdivsufsort
+  - git pull origin master
+  - cd /drone/src/pybind11
+  - git pull origin master
+  - cd /tmp
+  - mkdir sdsl-lite-build
+  - mkdir libdivsufsort-build
+  - export CC=clang
+  - export CXX=clang++
+  - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
+  - cd /tmp/libdivsufsort-build
+  - cmake -D BUILD_SHARED_LIBS=OFF /drone/src/libdivsufsort
+  - make install
+  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread  -Wl,-Bstatic -Wl,-Bdynamic"
+  - cd /tmp/sdsl-lite-build
+  - cmake /drone/src/sdsl-lite
+  - make install
+  - export CXXFLAGS="-O3 -pipe -stdlib=libc++ -fcolor-diagnostics -fPIC"
+  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -fPIC"
+  - cd /drone/src/pybind11
+  - python3.6 -m pip install --no-binary ':all:' --no-cache-dir . --verbose
+  - cd /drone/src
+  - python3.6 -m pip wheel --no-binary ':all:' --no-cache-dir -w dist . --verbose
+  - cp -r . /tmp/cache
+
+- name: show
+  image: debian:testing
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - cd /tmp/cache && ls -aR
+
+- name: test-wheel
+  image: ivigns/nice-linux:ubuntu-0.0.3
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - python3.6 -m pip install $(ls -d /tmp/cache/dist/pysdsl*.whl)
+  - python3.6 -m pip install -U pytest
+  - pytest --verbose --showlocals --color=yes tests
+
+- name: publish
+  image: plugins/github-release
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  settings:
+    api_key:
+      from_secret: repo_token
+    files:
+      - /tmp/cache/dist/pysdsl*.whl
+    title: ${DRONE_TAG}
+  when:
+    event: tag
+
+volumes:
+- name: cache
+  temp: {}
+
+---
+kind: pipeline
+name: build-3.7
+
+steps:
+- name: build
+  image: ivigns/nice-linux:ubuntu-0.0.3
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - git submodule sync
+  - git submodule update --init --recursive
+  - cd /drone/src/libdivsufsort
+  - git pull origin master
+  - cd /drone/src/sdsl-lite
+  - git pull origin master
+  - cd /drone/src/sdsl-lite/external/libdivsufsort
+  - git pull origin master
+  - cd /drone/src/pybind11
+  - git pull origin master
+  - cd /tmp
+  - mkdir sdsl-lite-build
+  - mkdir libdivsufsort-build
+  - export CC=clang
+  - export CXX=clang++
+  - export CFLAGS="-O3 -static -lc -fPIC -static-libgcc -pipe -fcolor-diagnostics -lpthread -Wl,-Bstatic"
+  - cd /tmp/libdivsufsort-build
+  - cmake -D BUILD_SHARED_LIBS=OFF /drone/src/libdivsufsort
+  - make install
+  - export CXXFLAGS="-O3 -pipe -fcolor-diagnostics -static-libgcc -static-libstdc++ -fPIC -lpthread  -Wl,-Bstatic -Wl,-Bdynamic"
+  - cd /tmp/sdsl-lite-build
+  - cmake /drone/src/sdsl-lite
+  - make install
+  - export CXXFLAGS="-O3 -pipe -stdlib=libc++ -fcolor-diagnostics -fPIC"
+  - export CFLAGS="-O3 -pipe -fcolor-diagnostics -fPIC"
+  - cd /drone/src/pybind11
+  - python3.7 -m pip install --no-binary ':all:' --no-cache-dir . --verbose
+  - cd /drone/src
+  - python3.7 -m pip wheel --no-binary ':all:' --no-cache-dir -w dist . --verbose
+  - cp -r . /tmp/cache
+
+- name: show
+  image: debian:testing
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - cd /tmp/cache && ls -aR
+
+- name: test-wheel
+  image: ivigns/nice-linux:ubuntu-0.0.3
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  commands:
+  - python3.7 -m pip install $(ls -d /tmp/cache/dist/pysdsl*.whl)
+  - python3.7 -m pip install -U pytest
+  - pytest --verbose --showlocals --color=yes tests
+
+- name: publish
+  image: plugins/github-release
+  volumes:
+  - name: cache
+    path: /tmp/cache
+  settings:
+    api_key:
+      from_secret: repo_token
+    files:
+      - /tmp/cache/dist/pysdsl*.whl
     title: ${DRONE_TAG}
   when:
     event: tag
