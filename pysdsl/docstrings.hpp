@@ -258,3 +258,7 @@ const char* doc_csa_wt(
     "A class for the Compressed Suffix Array (CSA) based on a Wavelet Tree "
     "(WT) of the Burrow Wheeler Transform of the original text."
 );
+
+const char* doc_sorted_int_stack(
+    "A stack class which can contain integers in strictly increasing order."
+);
