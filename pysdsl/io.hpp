@@ -64,16 +64,16 @@ inline auto add_to_string(py::class_<T>& cls)
 }
 
 
-template <class T>
-inline auto add_serialization(py::class_<T>& cls)
+template <class T, typename... TCtorArgs>
+inline auto add_serialization(py::class_<T>& cls, TCtorArgs&&... args)
 {
     cls.def(py::pickle(
-        [](const T& self){
+        [&](const T& self){
             std::stringstream fout;
             self.serialize(fout);
             return py::bytes(fout.str()); },
-        [](const py::bytes& serialized){
-            T result;
+        [&](const py::bytes& serialized){
+            T result(args...);
             std::stringstream fin(serialized);
             result.load(fin);
             return result; }));
@@ -86,8 +86,8 @@ inline auto add_serialization(py::class_<T>& cls)
 
     cls.def_static(
         "load_from_file",
-        [](const std::string& file_name) {
-            T self;
+        [&](const std::string& file_name) {
+            T self(args...);
             if (sdsl::load_from_file(self, file_name)) {
                 return self; }
             throw std::exception(); },
@@ -103,8 +103,8 @@ inline auto add_serialization(py::class_<T>& cls)
 
     cls.def_static(
         "load_from_checkded_file",
-        [](const std::string& file_name) {
-            T self;
+        [&](const std::string& file_name) {
+            T self(args...);
             if (sdsl::load_from_checked_file(self, file_name)) {
                 return self; }
             throw std::exception(); },
