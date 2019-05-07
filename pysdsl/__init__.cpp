@@ -16,6 +16,7 @@
 #include "types/intvector.hpp"
 #include "types/suffixarray.hpp"
 #include "types/wavelet.hpp"
+#include "types/sorted_int_stack.hpp"
 
 namespace py = pybind11;
 
@@ -43,6 +44,8 @@ PYBIND11_MODULE(pysdsl, m)
 
     auto csa_classes = add_csa(m);
 
+    auto sorted_stack = add_sorted_int_stack(m);
+
     for_each_in_tuple(iv_classes, make_inits_many_functor(iv_classes));
     for_each_in_tuple(iv_classes, make_inits_many_functor(enc_classes));
     for_each_in_tuple(iv_classes,
@@ -50,6 +53,8 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(iv_classes, make_inits_many_functor(wavelet_classes));
 
     for_each_in_tuple(enc_classes, make_inits_many_functor(iv_classes));
+
+    for_each_in_tuple(sorted_stack, make_inits_many_functor(sorted_stack));
 #ifndef NOCROSSCONSTRUCTORS
     for_each_in_tuple(enc_classes, make_inits_many_functor(enc_classes));
     //for_each_in_tuple(enc_classes, make_inits_many_functor(wavelet_classes));
