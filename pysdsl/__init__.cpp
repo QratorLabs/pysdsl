@@ -24,7 +24,10 @@ PYBIND11_MODULE(pysdsl, m)
 {
     m.doc() = "sdsl-lite bindings for python";
 
-    auto iv_classes = add_int_vectors(m);
+    auto iv_classes_tpl = add_int_vectors(m);
+
+    auto iv_classes = std::get<0>(iv_classes_tpl);
+    auto iv_classes_as_params = std::get<1>(iv_classes_tpl);
 
     py::class_<sdsl::int_vector<1>>& bit_vector_cls = std::get<1>(iv_classes);
 
@@ -55,7 +58,8 @@ PYBIND11_MODULE(pysdsl, m)
     for_each_in_tuple(compressed_bit_vector_classes,
                       make_inits_many_functor(bit_vector_classes));
 #ifndef NOCROSSCONSTRUCTORS
-    for_each_in_tuple(compressed_bit_vector_classes, make_inits_many_functor(compressed_bit_vector_classes));
+    for_each_in_tuple(compressed_bit_vector_classes, 
+                      make_inits_many_functor(compressed_bit_vector_classes));
 #endif
 
     for_each_in_tuple(wavelet_classes, make_inits_many_functor(iv_classes));
