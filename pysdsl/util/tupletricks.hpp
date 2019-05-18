@@ -24,7 +24,7 @@ decltype(auto) for_each(const std::tuple<T...>& t, Function&& f) {
 
 template<typename... T, typename Function>
 constexpr
-decltype(auto) for_each(std::tuple<T...>&& t, Function&& f) {
+decltype(auto) for_each(std::tuple<T...>& t, Function&& f) {
     return for_each_impl(t, f, std::index_sequence_for<T...>{}); }
 
 template<typename P, typename Function, std::size_t... Is>
@@ -58,7 +58,7 @@ decltype(auto) for_each_in_tuple(const std::tuple<Ts...> &t, F f) {
 
 template <typename... Ts, typename F>
 constexpr
-decltype(auto) for_each_in_tuple(std::tuple<Ts...> &&t, F f) {
+decltype(auto) for_each_in_tuple(std::tuple<Ts...> &t, F f) {
     return detail::for_each(t, f); }
 
 template <typename... Ts, typename F>
