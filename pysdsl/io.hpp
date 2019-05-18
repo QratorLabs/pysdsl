@@ -28,9 +28,13 @@ decltype(auto) to_string(const T &self, const size_t max_elements=100,
     for (auto i = detail::cbegin(self); i != detail::cend(self); i++) {
         if (count) fout << sep;
 
-        const value_type value = *i;
-
-        fout << value;
+        if constexpr (std::is_same<value_type, uint8_t>::value) {
+            const uint64_t value = *i;
+            fout << value;
+        } else {
+            const value_type value = *i;
+            fout << value;
+        }
 
         if (max_elements > 0 && count >= max_elements) {
             fout << sep << "...(" << self.size() << " elements)";
