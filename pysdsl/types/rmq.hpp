@@ -201,7 +201,8 @@ auto make_rmq_params(const std::tuple<py::class_<Ts>&...>& params) {
 }
 
 
-inline auto add_rmq_classes(py::module& m, auto params)
+template <typename... Ts>
+inline auto add_rmq_classes(py::module& m, const std::tuple<py::class_<Ts>&...>& params)
 {
     m.attr("rmq_sparse_tables") = py::dict();
     m.attr("rmq_sada") = py::dict();
