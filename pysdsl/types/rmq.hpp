@@ -35,7 +35,7 @@ void add_rac_constructor(PybindClass& cls)
 } // namespace details
 
 
-// containers names
+// containers names for sparse
 namespace RAC_names {
     constexpr char INT_VECTOR_NAME[] = "IntVector",
                    INT16_VECTOR_NAME[] = "Int16Vector";
@@ -80,7 +80,8 @@ struct add_rmq_sparse_table_functor {
         std::string key = std::string(t_min ? "Min" : "Max") + "_in_" + rac_name;
 
         m.attr("rmq_sparse_tables").attr("__setitem__")(key, cls);
-        m.attr("all_rmq_classes").attr("append")(cls);
+        m.attr((std::string("all_range_") + (t_min ? "min" : "max") + "_classes").c_str())
+            .attr("append")(cls);
 
         return cls;
     }
@@ -111,7 +112,7 @@ struct add_rmq_sada_functor {
             .def("__call__",
                 (size_type (RMQClass::*)(size_type, size_type) const)& RMQClass::operator(),
                  (std::string("Returns an index of the ") + (t_min ? "minimal" : "maximal") +
-                             " value on the segment [l,r].").c_str());;
+                              " value on the segment [l,r].").c_str());;
 
         detail::add_rac_constructor<decltype(cls), t_rac...>(cls);
 
@@ -122,7 +123,8 @@ struct add_rmq_sada_functor {
         cls.doc() = doc;
 
         m.attr("rmq_sada").attr("__setitem__")(t_min ? "Min" : "Max", cls);
-        m.attr("all_rmq_classes").attr("append")(cls);
+        m.attr((std::string("all_range_") + (t_min ? "min" : "max") + "_classes").c_str())
+            .attr("append")(cls);
 
         return cls;
     }
@@ -165,7 +167,8 @@ struct add_rmq_sct_functor {
         cls.doc() = doc;
 
         m.attr("rmq_sct").attr("__setitem__")(t_min ? "Min" : "Max", cls);
-        m.attr("all_rmq_classes").attr("append")(cls);
+        m.attr((std::string("all_range_") + (t_min ? "min" : "max") + "_classes").c_str())
+            .attr("append")(cls);
 
         return cls;
     }
@@ -190,12 +193,21 @@ using general_rmq_sct = py::class_<
                               typename sdsl::range_maximum_sct<>::type>::type>;
 
 
-inline auto add_rmq_classes(py::module& m)
+template <typename... Ts>
+static
+auto make_rmq_params(const std::tuple<py::class_<Ts>&...>& params) {
+    return std::tuple<std::tuple<std::tuple<Ts...>, std::integral_constant<bool, true>>,
+                      std::tuple<std::tuple<Ts...>, std::integral_constant<bool, false>>>();
+}
+
+
+inline auto add_rmq_classes(py::module& m, auto params)
 {
     m.attr("rmq_sparse_tables") = py::dict();
     m.attr("rmq_sada") = py::dict();
     m.attr("rmq_sct") = py::dict();
-    m.attr("all_rmq_classes") = py::list();
+    m.attr("all_range_min_classes") = py::list();
+    m.attr("all_range_max_classes") = py::list();
 
     using rmq_support_sparse_table_params = std::tuple<
         std::tuple<sdsl::int_vector<>,
@@ -212,25 +224,11 @@ inline auto add_rmq_classes(py::module& m)
                    std::integral_constant<bool, false>>
     >;
 
-    using rmq_sada_params = std::tuple<
-        std::tuple<std::tuple<sdsl::int_vector<>, sdsl::int_vector<16>>,
-                   std::integral_constant<bool, true>>,
-        std::tuple<std::tuple<sdsl::int_vector<>, sdsl::int_vector<16>>,
-                   std::integral_constant<bool, false>>
-    >;
-
-    using rmq_sct_params = std::tuple<
-        std::tuple<std::tuple<sdsl::int_vector<>, sdsl::int_vector<16>>,
-                   std::integral_constant<bool, true>>,
-        std::tuple<std::tuple<sdsl::int_vector<>, sdsl::int_vector<16>>,
-                   std::integral_constant<bool, false>>
-    >;
-
     auto rmq_sparse_tables = for_each_in_tuple(rmq_support_sparse_table_params(), 
                                 add_rmq_sparse_table_functor(m, doc_rmq_sparse_table));
-    auto rmq_sada_classes = for_each_in_tuple(rmq_sada_params(),
+    auto rmq_sada_classes = for_each_in_tuple(make_rmq_params(params),
                                 add_rmq_sada_functor(m, doc_rmq_sada));
-    auto rmq_sct_classes = for_each_in_tuple(rmq_sct_params(),
+    auto rmq_sct_classes = for_each_in_tuple(make_rmq_params(params),
                                 add_rmq_sct_functor(m, doc_rmq_sct));
     
     return std::make_tuple(rmq_sparse_tables, rmq_sada_classes, rmq_sct_classes);

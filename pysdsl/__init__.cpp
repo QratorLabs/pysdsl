@@ -44,7 +44,7 @@ PYBIND11_MODULE(pysdsl, m)
 
     auto csa_classes = add_csa(m);
 
-    auto rmq_classes_tuple = add_rmq_classes(m);
+    auto rmq_classes_tuple = add_rmq_classes(m, iv_classes_as_params);
     auto& rmq_sparse_tables = std::get<0>(rmq_classes_tuple);
     auto& rmq_sada = std::get<1>(rmq_classes_tuple);
     auto& rmq_sct = std::get<2>(rmq_classes_tuple);
