@@ -35,14 +35,14 @@ inline auto add_sorted_int_stack(py::module& m)
             auto ans = self.top(); 
             self.pop(); 
             return ans;
-        }, "Removes the topmost element from the stack and returns its copy.")
+        }, "Removes the topmost element from the stack and returns its copy. Not thread safe.")
         .def("push", [](Stack& self, const Stack::size_type& x) {
             if (self.empty() || self.top() < x)
                 self.push(x);
             else
                 throw py::value_error("elements have to be pushed in strictly increasing order");
         }, "Adds new element to the top of the stack."
-           "(n.b. it has to be not less than the stored ones)")
+           "(n.b. it has to be not less than the stored ones). Not thread safe.")
         .def(py::init([](Stack::size_type x) {
             return Stack(x);
         }), py::arg("max_value"),
