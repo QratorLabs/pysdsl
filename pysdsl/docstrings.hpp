@@ -258,3 +258,18 @@ const char* doc_csa_wt(
     "A class for the Compressed Suffix Array (CSA) based on a Wavelet Tree "
     "(WT) of the Burrow Wheeler Transform of the original text."
 );
+
+const char* doc_rmq_sada(
+    "A class to support range minimum or range maximum queries on a random access container "
+    "in constant time and 4n+o(n) bits space."
+);
+
+const char* doc_rmq_sparse_table(
+    "A class to support range minimum or range maximum queries on a random access container "
+    "in constant time and O( n log^2(n) ) bits space."
+);
+
+const char* doc_rmq_sct(
+    "A class to support range minimum or range maximum queries on a random access container "
+    "in constant time and 2n+o(n) bits space."
+);

@@ -91,4 +91,3 @@ template <template <typename...> typename general_template, typename... Ts>
 auto make_general_subset_functor(std::tuple<Ts...>& tpl) {
     return GeneralSubsetFunctor<general_template, Ts...>(tpl);
 }
-
